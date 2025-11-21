@@ -1,0 +1,95 @@
+:root{
+  --nav-border: #eee;
+  --nav-gap: 16px;
+  --brand-font-size: 16px;
+  --search-border: #ddd;
+  --primary-bg: transparent;
+}
+
+.nav {
+  border-bottom: 1px solid var(--nav-border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: var(--nav-gap);
+  background: var(--primary-bg);
+}
+
+.nav__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav__toggle {
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.nav__brand {
+  font-weight: 700;
+  font-size: var(--brand-font-size);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: orange;
+}
+
+.nav__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.nav__search-form {
+  width: 100%;
+  max-width: 560px;
+}
+
+.nav__search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--search-border);
+  font-size: 14px;
+  outline: none;
+}
+
+.nav__search-input:focus {
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.12);
+}
+
+.nav__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav__link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  font-size: 14px;
+}
+
+.nav__login {
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+/* 작은 화면에서 검색 입력을 줄이고 요소 간격을 축소 */
+@media (max-width: 640px) {
+  .nav { padding: 10px 12px; gap: 8px; }
+  .nav__center { justify-content: flex-start; }
+  .nav__search-form { max-width: 320px; }
+}
+

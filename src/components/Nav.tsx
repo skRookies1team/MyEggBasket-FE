@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Nav.css';
+import '../assets/Nav.css';
 
 interface NavProps {
   onToggleSidebar?: () => void;

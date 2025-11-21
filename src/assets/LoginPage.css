@@ -1,0 +1,63 @@
+/* 전체 로그인 컨테이너 */
+.login-container {
+  padding: 20px;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* 로그인 제목 */
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* 기본 입력 그룹 */
+.input-group {
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  font-weight: 500;
+}
+
+/* Input box 스타일 */
+.input-group input {
+  width: 100%;
+  padding: 12px;             /* 버튼과 동일한 height 위함 */
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+/* 로그인 버튼 */
+.login-btn {
+  width: 100%;
+  padding: 12px;              /* input과 동일한 padding → 크기 맞춤 */
+  border-radius: 6px;
+  background-color: #0070f3;  /* 기본 색 */
+  color: white;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease; /* 부드러운 hover 효과 */
+}
+
+/* hover 시에만 색이 진해짐 */
+.login-btn:hover {
+  background-color: #005fcc;
+}
+
+/* 하단 링크 버튼 공통 */
+.link-btn {
+  background: none;
+  border: none;
+  color: #0070f3;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  font-size: 14px;
+}

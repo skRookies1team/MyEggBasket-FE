@@ -9,7 +9,7 @@ import { StockFinancials } from '../components/stock/StockFinancials';
 import { StockReports } from '../components/stock/StockReports';
 
 type RealtimePoint = { price: number; volume?: number; time?: string } | undefined;
-import type { StockDetailData, Period, TabType, StockPriceData } from '../types/stock';
+import type { StockDetailData, Period, TabType, StockPriceData, FinancialData } from '../types/stock';
 
 type RealtimeInfo = { askp1?: number; bidp1?: number; acml_vol?: number; time?: string } | undefined;
 
@@ -28,6 +28,11 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
     // 분봉 설정: 창 길이(포인트 수)와 변동성(multiplier)
     const [minuteWindow, setMinuteWindow] = useState<number>(120);
     const [volatility, setVolatility] = useState<'low'|'normal'|'high'>('normal');
+    // 재무제표 상태: props에서 초기값을 사용하고, 사용자 입력으로 서버에서 불러올 수 있음
+    const [corpRegNo, setCorpRegNo] = useState<string>('');
+    const [financials, setFinancials] = useState<FinancialData>(data?.financials ?? { revenue: [], profit: [] });
+    const [finLoading, setFinLoading] = useState<boolean>(false);
+    const [finError, setFinError] = useState<string | null>(null);
 
     // 분봉 데이터는 목데이터 사용하지 않고 로컬스토리지에 수집된 실시간 포인트를 사용합니다.
     const STORAGE_KEY = 'live_chart_points_005930';
@@ -231,7 +236,41 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
 
                 {activeTab === 'news' && <StockNews data={data.news} query={"삼성전자"} />}
 
-                {activeTab === 'info' && <StockFinancials data={data.financials} />}
+                {activeTab === 'info' && (
+                    <div>
+                        <div className="mb-4 flex items-center gap-3">
+                            <input value={corpRegNo} onChange={(e) => setCorpRegNo(e.target.value)} placeholder="법인등록번호(corp_reg_no) 입력" className="px-3 py-2 border rounded w-64" />
+                            <button
+                                onClick={async () => {
+                                    if (!corpRegNo) return setFinError('법인등록번호를 입력하세요.');
+                                    setFinLoading(true);
+                                    setFinError(null);
+                                    try {
+                                        const resp = await fetch(`/api/financials?corp_reg_no=${encodeURIComponent(corpRegNo)}&yearsCount=5`);
+                                        if (!resp.ok) {
+                                            const txt = await resp.text();
+                                            throw new Error(txt || '서버 오류');
+                                        }
+                                        const json = await resp.json();
+                                        // 간단 검증
+                                        setFinancials({ revenue: json.revenue || [], profit: json.profit || [] });
+                                    } catch (err: any) {
+                                        setFinError(err?.message || '재무제표 조회 오류');
+                                    } finally {
+                                        setFinLoading(false);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-[#4f378a] text-white rounded"
+                            >
+                                재무제표 불러오기
+                            </button>
+                            {finLoading && <span className="text-sm text-[#666]">불러오는 중...</span>}
+                            {finError && <span className="text-sm text-red-500">{finError}</span>}
+                        </div>
+
+                        <StockFinancials data={financials} />
+                    </div>
+                )}
 
                 {activeTab === 'indicators' && <StockIndicators />}
 

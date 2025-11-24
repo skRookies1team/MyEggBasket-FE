@@ -77,10 +77,8 @@ async function getApprovalKey(): Promise<string> {
 
 // 실시간 데이터 파싱 함수 (WebSocket 메시지 파싱)
 function parseRealtimeData(message: string): Partial<RealtimePriceData> | null {
-    if (typeof message !== 'string') return null;
-
-    // 메시지 구조: 접두(0/1)|TR_ID|TR_KEY|데이터
-    if (message.startsWith('0') || message.startsWith('1')) {
+     // 메시지 구조: 접두(0/1)|TR_ID|TR_KEY|데이터
+     if (message.startsWith('0') || message.startsWith('1')) {
         const parts = message.split('|');
         if (parts.length < 4) return null;
 
@@ -134,103 +132,157 @@ function parseRealtimeData(message: string): Partial<RealtimePriceData> | null {
 }
 
 // Throttle WS updates to reduce render frequency
-export function useRealtimeStock(): RealtimePriceData {
+// 훅 반환 타입 정의
+export interface UseRealtimeResult {
+    realtimeData: RealtimePriceData;
+    connected: boolean;
+    loading: boolean;
+}
+
+export function useRealtimeStock(): UseRealtimeResult {
+    // 개발용: 환경변수로 WS 비활성화 (예: VITE_DISABLE_WS=true)
+    const DISABLE_WS = import.meta.env.VITE_DISABLE_WS === 'true';
     const [realtimeData, setRealtimeData] = useState<RealtimePriceData>(initialData);
+    // 연결 상태 및 로딩 상태 추가
+    const [connected, setConnected] = useState<boolean>(false);
+    // DISABLE_WS면 초기 loading을 false로 하여 첫 렌더에서 Loading이 뜨지 않게 함
+    const [loading, setLoading] = useState<boolean>(() => (DISABLE_WS ? false : true));
     const wsRef = useRef<WebSocket | null>(null);
-    // Throttle/flush control
-    const lastFlushRef = useRef<number>(0);
-    const pendingRef = useRef<Partial<RealtimePriceData> | null>(null);
-    const flushTimerRef = useRef<number | null>(null);
-    const FLUSH_INTERVAL = 500; // ms
+     // Throttle/flush control
+     const lastFlushRef = useRef<number>(0);
+     const pendingRef = useRef<Partial<RealtimePriceData> | null>(null);
+     const flushTimerRef = useRef<number | null>(null);
+     const FLUSH_INTERVAL = 500; // ms
 
-    useEffect(() => {
-        let isCancelled = false;
+     useEffect(() => {
+         let isCancelled = false;
+         let connectTimeout: number | null = null;
 
-        const flushPending = () => {
-            const pending = pendingRef.current;
-            if (pending) {
-                setRealtimeData(prev => ({ ...prev, ...pending } as RealtimePriceData));
-                pendingRef.current = null;
-                lastFlushRef.current = Date.now();
-            }
-            if (flushTimerRef.current) {
-                window.clearTimeout(flushTimerRef.current);
-                flushTimerRef.current = null;
-            }
-        };
+         // 안전한 상태 업데이트: 동기적 setState로 인한 렌더링 카스케이드 방지
+         const scheduleDisconnect = () => {
+             // 비동기적으로 실행하여 ESLint 경고 회피
+             window.setTimeout(() => {
+                 if (!isCancelled) {
+                     setConnected(false);
+                     setLoading(false);
+                 }
+             }, 0);
+         };
 
-        const connectWebSocket = async () => {
-            if (isCancelled) return;
+         const flushPending = () => {
+             const pending = pendingRef.current;
+             if (pending) {
+                 setRealtimeData(prev => ({ ...prev, ...pending } as RealtimePriceData));
+                 pendingRef.current = null;
+                 lastFlushRef.current = Date.now();
+             }
+             if (flushTimerRef.current) {
+                 window.clearTimeout(flushTimerRef.current);
+                 flushTimerRef.current = null;
+             }
+         };
 
-            const approvalKey = await getApprovalKey();
+         const connectWebSocket = async () => {
+             if (isCancelled) return;
 
-            if (isCancelled || !approvalKey) {
-                console.warn('WebSocket 연결 실패: Approval Key가 유효하지 않습니다. APP_KEY/APP_SECRET 확인 필요');
-                return;
-            }
+             const approvalKey = await getApprovalKey();
 
-            const socket = new WebSocket(WS_URL);
-            wsRef.current = socket;
+             if (isCancelled || !approvalKey) {
+                 console.warn('WebSocket 연결 실패: Approval Key가 유효하지 않습니다. APP_KEY/APP_SECRET 확인 필요');
+                 // approvalKey가 없으면 더 이상 로딩 상태로 남기지 않음
+                 scheduleDisconnect();
+                 return;
+             }
 
-            socket.onopen = () => {
-                if (isCancelled) {
-                    socket.close();
-                    return;
-                }
-                console.log("WebSocket 연결 성공. 구독 요청 전송...");
+             const socket = new WebSocket(WS_URL);
+             wsRef.current = socket;
 
-                // 실시간 체결가 구독 요청
-                const subscribeData = {
-                    header: { approval_key: approvalKey, custtype: 'P', tr_type: '1', 'content-type': 'utf-8' },
-                    body: { input: { tr_id: TR_ID, tr_key: STOCK_CODE } },
-                };
-                // socket은 분명히 할당되어 있으므로 안전하게 사용
-                socket.send(JSON.stringify(subscribeData));
-            };
+             socket.onopen = () => {
+                 if (isCancelled) {
+                     socket.close();
+                     return;
+                 }
+                 console.log("WebSocket 연결 성공. 구독 요청 전송...");
+                 setConnected(true);
+                 setLoading(false);
 
-            socket.onmessage = (event) => {
-                const parsedData = parseRealtimeData(event.data);
-                if (!parsedData || isCancelled) return;
+                 // 실시간 체결가 구독 요청
+                 const subscribeData = {
+                     header: { approval_key: approvalKey, custtype: 'P', tr_type: '1', 'content-type': 'utf-8' },
+                     body: { input: { tr_id: TR_ID, tr_key: STOCK_CODE } },
+                 };
+                 // socket은 분명히 할당되어 있으므로 안전하게 사용
+                 socket.send(JSON.stringify(subscribeData));
+             };
 
-                // Throttle updates: if last flush older than interval -> flush immediately
-                const now = Date.now();
-                const timeSince = now - lastFlushRef.current;
-                if (timeSince >= FLUSH_INTERVAL) {
-                    setRealtimeData(prev => ({ ...prev, ...parsedData } as RealtimePriceData));
-                    lastFlushRef.current = now;
-                } else {
-                    // store pending and schedule flush
-                    pendingRef.current = { ...pendingRef.current, ...parsedData };
-                    if (flushTimerRef.current) {
-                        window.clearTimeout(flushTimerRef.current);
-                    }
-                    flushTimerRef.current = window.setTimeout(() => flushPending(), FLUSH_INTERVAL - timeSince);
-                }
-            };
+             socket.onmessage = (event) => {
+                 const parsedData = parseRealtimeData(event.data);
+                 if (!parsedData || isCancelled) return;
 
-            socket.onerror = (error) => { console.error('WebSocket 오류:', error); };
+                 // Throttle updates: if last flush older than interval -> flush immediately
+                 const now = Date.now();
+                 const timeSince = now - lastFlushRef.current;
+                 if (timeSince >= FLUSH_INTERVAL) {
+                     setRealtimeData(prev => ({ ...prev, ...parsedData } as RealtimePriceData));
+                     lastFlushRef.current = now;
+                 } else {
+                     // store pending and schedule flush
+                     pendingRef.current = { ...pendingRef.current, ...parsedData };
+                     if (flushTimerRef.current) {
+                         window.clearTimeout(flushTimerRef.current);
+                     }
+                     flushTimerRef.current = window.setTimeout(() => flushPending(), FLUSH_INTERVAL - timeSince);
+                 }
+             };
 
-            socket.onclose = () => {
-                if (!isCancelled) {
-                    console.log('WebSocket 종료. 재접속 로직 필요 시 구현.');
-                }
-            };
-        };
+             socket.onerror = (error) => { console.error('WebSocket 오류:', error); };
 
-        connectWebSocket();
+             socket.onclose = () => {
+                 if (!isCancelled) {
+                     console.log('WebSocket 종료. 재접속 로직 필요 시 구현.');
+                     // 비동기 업데이트로 렌더 카스케이드 방지
+                     scheduleDisconnect();
+                 }
+             };
+         };
 
-        // 클린업: 컴포넌트 언마운트 시 연결 해제
-        return () => {
-            isCancelled = true;
-            if (wsRef.current) {
-                wsRef.current.close(1000, "Component unmounted");
-            }
-            if (flushTimerRef.current) {
-                window.clearTimeout(flushTimerRef.current);
-                flushTimerRef.current = null;
-            }
-        };
-    }, []);
+         // 개발용 스위치: effect 내부에서만 처리하여 훅 호출 순서 보장
+         if (DISABLE_WS) {
+             console.info('WebSocket 연결 비활성화(VITE_DISABLE_WS=true) — 연결을 시도하지 않습니다.');
+             scheduleDisconnect();
+             return;
+         }
 
-    return realtimeData;
+         connectWebSocket();
+
+         // 연결 시도가 일정 시간(예: 3초) 안에 이루어지지 않으면 로딩 해제
+         connectTimeout = window.setTimeout(() => {
+             if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+                 console.warn('WebSocket 연결 대기 시간 초과. 연결 불가로 간주합니다.');
+                 scheduleDisconnect();
+                 if (wsRef.current) {
+                     try { wsRef.current.close(); } catch { /* ignore */ }
+                 }
+             }
+         }, 3000);
+
+         // 클린업: 컴포넌트 언마운트 시 연결 해제
+         return () => {
+             isCancelled = true;
+             if (wsRef.current) {
+                 wsRef.current.close(1000, "Component unmounted");
+             }
+             if (flushTimerRef.current) {
+                 window.clearTimeout(flushTimerRef.current);
+                 flushTimerRef.current = null;
+             }
+             if (connectTimeout) {
+                 window.clearTimeout(connectTimeout);
+                 connectTimeout = null;
+             }
+         };
+     }, [DISABLE_WS]);
+
+    // 데이터 + 연결/로딩 상태 반환
+    return { realtimeData, connected, loading };
 }

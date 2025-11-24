@@ -25,6 +25,7 @@ export interface NewsItem {
     title: string;
     source: string;
     time: string;
+    url?: string; // 원문 링크 (옵션)
 }
 
 export interface FinancialItem {

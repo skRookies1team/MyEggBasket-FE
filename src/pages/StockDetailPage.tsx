@@ -229,7 +229,7 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
                     <StockOrderBook orderBook={data.orderBook} currentPrice={data.currentPrice} />
                 )}
 
-                {activeTab === 'news' && <StockNews data={data.news} />}
+                {activeTab === 'news' && <StockNews data={data.news} query={"삼성전자"} />}
 
                 {activeTab === 'info' && <StockFinancials data={data.financials} />}
 
@@ -242,4 +242,3 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
 }
 
 export default StockDetailPage;
-

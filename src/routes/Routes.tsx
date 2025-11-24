@@ -10,10 +10,10 @@ const handleBack = () => {
 
 
 export default function Router() {
-    // 실시간 데이터 훅 사용
-    const realtimeData = useRealtimeStock();
+    // 실시간 데이터 훅 사용 (realtimeData, connected, loading 반환)
+    const { realtimeData, loading } = useRealtimeStock();
 
-    const hasRealtime = realtimeData.currentPrice !== 0;
+    const hasRealtime = realtimeData && realtimeData.currentPrice !== 0;
 
     // 최소한의 combinedData를 실시간 기반으로 생성 (목데이터 사용 안함)
     const combinedData: StockDetailData = {
@@ -58,7 +58,7 @@ export default function Router() {
                              stockName="삼성전자 주식 (005930)"
                              data={combinedData}
                              onBack={handleBack}
-                             isLoading={!hasRealtime} // 실시간 없을 땐 로딩 UI 허용
+                             isLoading={loading} // useRealtimeStock의 loading 상태로 제어
                              realtimePoint={realtimePoint}
                              realtimeInfo={realtimeInfo}
                         />

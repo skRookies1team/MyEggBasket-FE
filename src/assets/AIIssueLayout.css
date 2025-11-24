@@ -1,0 +1,13 @@
+.ai-layout {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.left-area {
+  flex: 1.2;
+}
+
+.right-area {
+  flex: 1;
+}

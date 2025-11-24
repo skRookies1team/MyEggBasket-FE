@@ -1,0 +1,52 @@
+.ticker-container {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  background: #ffffff;
+  border-bottom: 1px solid #ececec;
+  padding: 8px 0;
+}
+
+.ticker-track {
+  display: inline-flex;
+  gap: 40px;
+  animation: tickerScroll 18s linear infinite;
+}
+
+/* 호버하면 멈춤 */
+.ticker-container:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.ticker-name {
+  font-weight: 600;
+}
+
+.ticker-value {
+  color: #111;
+}
+
+.ticker-percent.up {
+  color: #ff383c;
+}
+
+.ticker-percent.down {
+  color: #0066ff;
+}
+
+/* 무한 흘러가기 keyframes */
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%); /* 복제한 리스트 길이 때문 */
+  }
+}

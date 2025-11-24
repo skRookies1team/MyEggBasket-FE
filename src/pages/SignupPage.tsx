@@ -6,11 +6,10 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    userId: "",
+    email: "",
     password: "",
     passwordConfirm: "",
     name: "",
-    email: "",
     appKey: "",
     appSecret: "",
   });
@@ -35,14 +34,15 @@ export default function SignupPage() {
       <h2 className="login-title">회원가입</h2>
 
       <div className="input-group">
-        <label>아이디</label>
+        <label>이메일</label>
         <input
-          type="text"
-          value={formData.userId}
-          onChange={handleChange("userId")}
-          placeholder="아이디를 입력하세요"
+          type="email"
+          value={formData.email}
+          onChange={handleChange("email")}
+          placeholder="이메일을 입력하세요"
         />
       </div>
+
 
       <div className="input-group">
         <label>이름</label>
@@ -54,15 +54,6 @@ export default function SignupPage() {
         />
       </div>
 
-      <div className="input-group">
-        <label>이메일</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={handleChange("email")}
-          placeholder="이메일을 입력하세요"
-        />
-      </div>
 
       <div className="input-group">
         <label>비밀번호</label>

@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [showFindPassword, setShowFindPassword] = useState(false);
 
   const [loginData, setLoginData] = useState({
-    userId: "",
+    email: "",
     password: "",
   });
 
@@ -47,12 +47,12 @@ export default function LoginPage() {
 
       {/* 아이디 */}
       <div className="input-group">
-        <label>아이디</label>
+        <label>이메일</label>
         <input
           type="text"
-          value={loginData.userId}
-          onChange={handleLoginChange("userId")}
-          placeholder="아이디를 입력하세요"
+          value={loginData.email}
+          onChange={handleLoginChange("email")}
+          placeholder="이메일를 입력하세요"
         />
       </div>
 

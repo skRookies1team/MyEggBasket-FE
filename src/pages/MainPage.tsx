@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { MarketIndexCard } from "../components/MarketIndex/MarketIndexCard";
 import MarketIndexTicker from "../components/MarketIndex/MarketIndexTicker";
 import Top5Rolling from "../components/Top5Rolling";
-import AIIssueBubbleCircular from "../components/AIIssueBubble/AIIssueLayout";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import "../assets/MaingPage.css";
 import type { StockItem } from "../types/Stock";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
+import NewsTabs from "../components/News/NewTabs";
+import InvestorTrend from "../components/Investor/InvestorTrend";
 
 interface MainPageProps {
   isLoggedIn?: boolean;
@@ -62,13 +63,13 @@ export default function MainPage({ isLoggedIn = true }: MainPageProps) {
   ];
 
   const issueBubbles = [
-    { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#ff383c" },
-    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#4f378a" },
-    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#00b050" },
-    { name: "K-POP", size: 75, mentions: 1850, change: 4.1, color: "#ffa500" },
-    { name: "바이오", size: 120, mentions: 7940, change: -2.8, color: "#0066ff" },
-    { name: "메타버스", size: 65, mentions: 1200, change: 3.2, color: "#9c27b0" },
-    { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#00bcd4" }
+    { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#FF5A4E" },
+    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#FF5A4E"  },
+    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#FF5A4E"  },
+    { name: "K-POP", size: 75, mentions: 1850, change: 4.1, color: "#FF5A4E"  },
+    { name: "바이오", size: 120, mentions: 7940, change: -2.8, color: "#4169E1" },
+    { name: "메타버스", size: 65, mentions: 1200, change: 3.2, color: "#4169E1" },
+    { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#4169E1" }
   ];
 
 const dummyLiveStockData: {
@@ -119,10 +120,8 @@ const dummyLiveStockData: {
         </div>
       </div>
 
-      <h2 className="top5-title">🔥 실시간 종목 TOP 5</h2>
       <Top5Rolling data={hotStocksTop5} interval={2000} />
 
-      {/* 탭 메뉴 */}
       <div className="tab-menu">
         {[
           { id: "main", label: "메인" },
@@ -147,15 +146,9 @@ const dummyLiveStockData: {
         {activeTab === "main" && (
           <div>
 
-            {/* 🔥 AI 이슈포착 */}
             <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
               AI 이슈포착
             </h2>
-
-            <p className="text-[13px] text-[#49454f] mb-4">
-              최근 7일간 뉴스에서 가장 많이 언급된 종목 및 테마입니다.
-              버블을 클릭하여 상세 정보를 확인하세요.
-            </p>
 
             <AIIssueLayout bubbles={issueBubbles} />
 
@@ -168,8 +161,14 @@ const dummyLiveStockData: {
         )}
 
         {activeTab === "watchlist" && "관심종목 콘텐츠"}
-        {activeTab === "news" && "뉴스 콘텐츠"}
-        {activeTab === "investor" && "투자자 동향 콘텐츠"}
+
+        {activeTab === "news" && (
+          <NewsTabs />
+        )}
+
+        {activeTab === "investor" && (
+          <InvestorTrend />
+        )}
       </div>
     </div>
   );

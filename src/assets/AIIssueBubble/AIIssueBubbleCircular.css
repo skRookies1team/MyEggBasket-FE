@@ -1,70 +1,81 @@
-.bubble-container {
-  position: relative;
-  width: 320px;
-  height: 320px;
-  margin: 0 auto;
-  border-radius: 50%;
- }
+/* ================================
+   🟣 Modern Bubble Chart UI (No Gradient)
+   ================================ */
 
+.bubble-modern-container {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* 🚀 모든 버블 공통 스타일 */
 .bubble-item {
   position: absolute;
+  left: var(--bubble-left, 50%);
+  top: var(--bubble-top, 50%);
+  width: var(--bubble-size);
+  height: var(--bubble-size);
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  color: #fff;
+  background: var(--bubble-color);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 4px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  /* Soft Shadow + 유리 효과 */
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.15),
+    inset 0 0 10px rgba(255, 255, 255, 0.25);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.bubble-item:hover {
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+/* 중앙 버블: 단색 강조 */
+.modern-center {
+  z-index: 10;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.22),
+    inset 0 0 14px rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  font-size: 18px;
 }
 
-.bubble-name {
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.bubble-mentions {
-  font-size: 11px;
+/* 주변 버블 */
+.modern-bubble {
   opacity: 0.9;
 }
 
-.bubble-change {
-  font-size: 11px;
-  margin-top: 2px;
+.modern-bubble:hover,
+.modern-center:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.25),
+    inset 0 0 16px rgba(255, 255, 255, 0.45);
+  opacity: 1;
 }
 
-.bubble-change.up {
-  color: #ffe9ec;
-}
-
-.bubble-change.down {
-  color: #e0f0ff;
-}
-
-.bubble-svg {
-  display: block;
-  margin: 0 auto;
-}
-
-.bubble-label,
-.bubble-center-label {
-  fill: white;
-  font-size: 12px;
+/* 텍스트 스타일 */
+.bubble-label {
+  color: #fff;
   font-weight: 600;
-  text-anchor: middle;
-  pointer-events: none;
+  font-size: 14px;
+  text-align: center;
+  padding: 0 6px;
+  line-height: 1.2;
+  user-select: none;
 }
 
-.bubble-center-label {
-  font-size: 14px;
+/* 작은 화면 대응 */
+@media (max-width: 480px) {
+  .bubble-modern-container {
+    max-width: 300px;
+  }
+  .bubble-label {
+    font-size: 12px;
+  }
 }

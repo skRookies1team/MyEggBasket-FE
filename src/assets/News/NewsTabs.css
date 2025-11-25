@@ -1,0 +1,33 @@
+.news-top-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.news-tab {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f4f4f4;
+  cursor: pointer;
+}
+
+.news-tab.active {
+  background: black;
+  color: white;
+  border-color: black;
+}
+
+.news-item {
+  margin-bottom: 10px;
+}
+
+.news-item .ticker {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.time {
+  font-size: 12px;
+  color: gray;
+}

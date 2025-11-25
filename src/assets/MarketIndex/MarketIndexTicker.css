@@ -5,6 +5,10 @@
   background: #ffffff;
   border-bottom: 1px solid #ececec;
   padding: 8px 0;
+
+  position: sticky;
+  top: 0;
+  z-index: 9999;   
 }
 
 .ticker-track {

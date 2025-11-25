@@ -1,0 +1,93 @@
+/* 상단 순매수 / 순매도 탭 */
+.trend-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.trend-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f3f3f3;
+  cursor: pointer;
+}
+
+.trend-tab.active {
+  background: black;
+  color: white;
+  border-color: black;
+}
+
+/* 전체 3분할 레이아웃 */
+.investor-trend-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* 한 섹션 */
+.investor-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.investor-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 14px;
+  border-left: 4px solid black;
+  padding-left: 8px;
+}
+
+/* 종목 리스트 */
+.investor-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.investor-item:last-child {
+  border-bottom: none;
+}
+/* 왼쪽 (종목명 + 증감비율) */
+.item-left .item-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 현재가 + 비율 나란히 표시 */
+.price-rate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-rate.plus {
+  color: #e30000;
+  font-weight: bold;
+}
+
+.item-rate.minus {
+  color: #0051c7;
+  font-weight: bold;
+}
+
+
+/* 오른쪽 (가격 + 거래대금) */
+.item-right {
+  text-align: right;
+}
+
+.item-price {
+  font-size: 14px;
+}
+
+.item-amount {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 4px;
+}

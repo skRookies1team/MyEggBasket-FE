@@ -17,79 +17,52 @@ interface Props {
 export default function AIIssueBubbleCircular({ bubbles, onSelect }: Props) {
   if (!bubbles || bubbles.length === 0) return null;
 
-  // 1) mentions 기준으로 내림차순 정렬
   const sorted = [...bubbles].sort((a, b) => b.mentions - a.mentions);
-
-  // 2) 중심 버블 = mentions 가장 큰 항목
   const centerBubble = sorted[0];
-
-  // 3) 주변 버블 = 나머지 항목들
   const others = sorted.slice(1);
 
   const count = others.length;
-  const radiusPercent = 38; // 원둘레로 퍼지는 정도
+  const radiusPercent = 38;
 
   return (
-    <div className="bubble-container">
+    <div className="bubble-modern-container">
 
-      {/* ===== 중앙 버블 ===== */}
+      {/* 중앙 버블 */}
       <div
-        className="bubble-item center-bubble"
+        className="bubble-item modern-center"
         style={{
-          width: centerBubble.size * 1.15, // 중앙 강조 효과
-          height: centerBubble.size * 1.15,
-          backgroundColor: centerBubble.color,
-          left: "50%",
-          top: "50%",
+          ["--bubble-size" as any]: `${centerBubble.size * 1.2}px`,
+          ["--bubble-color" as any]: centerBubble.color,
         }}
+        title={`검색량: ${centerBubble.mentions.toLocaleString()}
+등락률: ${centerBubble.change}%`}
         onClick={() => onSelect?.(centerBubble)}
       >
-        <p className="bubble-name">{centerBubble.name}</p>
-        <p className="bubble-mentions">
-          {centerBubble.mentions.toLocaleString()}건
-        </p>
-        <p
-          className={`bubble-change ${centerBubble.change >= 0 ? "up" : "down"}`}
-        >
-          {centerBubble.change > 0 ? "+" : ""}
-          {centerBubble.change}%
-        </p>
+        <p className="bubble-label">{centerBubble.name}</p>
       </div>
 
-      {/* ===== 주변 버블들 (원형 균등 배치) ===== */}
+      {/* 주변 버블 */}
       {others.map((item, idx) => {
         const angle = (2 * Math.PI * idx) / count;
-
-        // 버블 크기 고려하여 여유 공간 자동 조절
-        const dynamicRadius =
-          radiusPercent + item.size * 0.1; // 겹침 자동 보정
-
+        const dynamicRadius = radiusPercent + item.size * 0.08;
         const left = 50 + dynamicRadius * Math.cos(angle);
         const top = 50 + dynamicRadius * Math.sin(angle);
 
         return (
           <div
             key={idx}
-            className="bubble-item"
+            className="bubble-item modern-bubble"
             style={{
-              width: item.size,
-              height: item.size,
-              backgroundColor: item.color,
-              left: `${left}%`,
-              top: `${top}%`,
+              ["--bubble-size" as any]: `${item.size}px`,
+              ["--bubble-color" as any]: item.color,
+              ["--bubble-left" as any]: `${left}%`,
+              ["--bubble-top" as any]: `${top}%`,
             }}
+            title={`검색량: ${item.mentions.toLocaleString()}
+등락률: ${item.change}%`}
             onClick={() => onSelect?.(item)}
           >
-            <p className="bubble-name">{item.name}</p>
-            <p className="bubble-mentions">
-              {item.mentions.toLocaleString()}건
-            </p>
-            <p
-              className={`bubble-change ${item.change >= 0 ? "up" : "down"}`}
-            >
-              {item.change > 0 ? "+" : ""}
-              {item.change}%
-            </p>
+            <p className="bubble-label">{item.name}</p>
           </div>
         );
       })}

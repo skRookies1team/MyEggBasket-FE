@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import AIIssueBubbleCircular, { BubbleItem } from "../components/AIIssueBubbleCircular";
-import AIIssueDetailPanel from "../components/AIIssueDetailPanel";
-import "../assets/AIIssueLayout.css";
+import AIIssueBubbleCircular, { type BubbleItem } from "../AIIssueBubble/AIIssueBubbleCircular";
+import AIIssueDetailPanel from "../AIIssueBubble/AIIssueDetailPanel";
+import "../../assets/AIIssueBubble/AIIssueLayout.css";
 
 export default function AIIssueLayout({ bubbles }: { bubbles: BubbleItem[] }) {
   const [selected, setSelected] = useState<BubbleItem | null>(null);
@@ -11,7 +11,7 @@ export default function AIIssueLayout({ bubbles }: { bubbles: BubbleItem[] }) {
       <div className="left-area">
         <AIIssueBubbleCircular 
           bubbles={bubbles} 
-          onSelect={(item) => setSelected(item)}   // 🔥 이제 타입 정상 적용
+          onSelect={(item) => setSelected(item)}   
         />
       </div>
 

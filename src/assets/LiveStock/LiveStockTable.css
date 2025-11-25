@@ -1,0 +1,84 @@
+.stock-table {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #eee;
+  margin-top: 10px;
+}
+
+/* 헤더 */
+.table-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  padding: 12px 10px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  color: #777;
+  font-weight: 600;
+}
+
+/* 행 */
+.table-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  padding: 12px 10px;
+  border-bottom: 1px solid #f2f2f2;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.table-row:hover {
+  background: #f8f8f8;
+}
+
+/* 종목명 + 코드 */
+.name {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.code {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.up {
+  color: #ff383c;
+  font-weight: 600;
+}
+
+.down {
+  color: #0066ff;
+  font-weight: 600;
+}
+
+/* 모바일 대응 */
+@media (max-width: 480px) {
+  .table-header {
+    display: none;
+  }
+
+  .table-row {
+    grid-template-columns: 1fr 1fr;
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .table-row span:nth-child(2),
+  .table-row span:nth-child(3) {
+    justify-content: flex-end;
+  }
+
+  .table-row span:nth-child(4),
+  .table-row span:nth-child(5) {
+    grid-column: span 2;
+    margin-top: 6px;
+    color: #777;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,70 @@
+.bubble-container {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  border-radius: 50%;
+ }
+
+.bubble-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bubble-item:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.bubble-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.bubble-mentions {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.bubble-change {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.bubble-change.up {
+  color: #ffe9ec;
+}
+
+.bubble-change.down {
+  color: #e0f0ff;
+}
+
+.bubble-svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.bubble-label,
+.bubble-center-label {
+  fill: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.bubble-center-label {
+  font-size: 14px;
+}

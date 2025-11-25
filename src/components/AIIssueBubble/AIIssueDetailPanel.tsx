@@ -7,7 +7,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import "../assets/AIIssueDetailPanel.css";
+import "../../assets/AIIssueBubble/AIIssueDetailPanel.css";
 
 interface BubbleItem {
   name: string;

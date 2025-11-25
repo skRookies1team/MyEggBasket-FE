@@ -1,4 +1,4 @@
-import "../assets/MarketIndexTicker.css";
+import "../../assets/MarketIndex/MarketIndexTicker.css";
 
 interface MarketIndex {
   name: string;

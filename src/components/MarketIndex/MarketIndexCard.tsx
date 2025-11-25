@@ -6,6 +6,7 @@ import {
   YAxis,
   XAxis,
 } from "recharts";
+import "../../assets/MarketIndex/MarketIndexCard.css";
 
 interface MarketIndexCardProps {
   name: string;

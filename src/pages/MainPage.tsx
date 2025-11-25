@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { MarketIndexCard } from "../components/MarketIndexCard";
-import MarketIndexTicker from "../components/MarketIndexTicker";
+import { MarketIndexCard } from "../components/MarketIndex/MarketIndexCard";
+import MarketIndexTicker from "../components/MarketIndex/MarketIndexTicker";
 import Top5Rolling from "../components/Top5Rolling";
-import AIIssueBubbleCircular from "../components/AIIssueBubbleCircular";  
-import { Flame } from "lucide-react";
+import AIIssueBubbleCircular from "../components/AIIssueBubble/AIIssueLayout";
+import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import "../assets/MaingPage.css";
-import AIIssueLayout from "../components/AIIssueLayout";
+import type { StockItem } from "../types/Stock";
+import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 
 interface MainPageProps {
   isLoggedIn?: boolean;
@@ -44,12 +45,12 @@ export default function MainPage({ isLoggedIn = true }: MainPageProps) {
   }, []);
 
   const marketIndices: MarketIndex[] = [
-    { name: "코스피", value: "2,645.50", change: "+15.20", percent: "+0.58%", isUp: true, miniChartData: [2630,2635,2628,2642,2638,2645,2643,2645] },
-    { name: "코스닥", value: "745.30", change: "-3.40", percent: "-0.45%", isUp: false, miniChartData: [752,750,748,749,747,746,745,745] },
-    { name: "S&P 500", value: "4,567.80", change: "+12.30", percent: "+0.27%", isUp: true, miniChartData: [4555,4558,4562,4560,4565,4563,4567,4568] },
-    { name: "나스닥", value: "14,123.45", change: "+45.67", percent: "+0.32%", isUp: true, miniChartData: [14080,14090,14095,14100,14110,14115,14120,14123] },
-    { name: "다우존스", value: "35,456.78", change: "-23.45", percent: "-0.07%", isUp: false, miniChartData: [35480,35475,35470,35465,35460,35458,35456,35457] },
-    { name: "WTI", value: "72.45", change: "+0.85", percent: "+1.19%", isUp: true, miniChartData: [71.5,71.7,71.9,72.1,72.3,72.2,72.4,72.45] }
+    { name: "코스피", value: "2,645.50", change: "+15.20", percent: "+0.58%", isUp: true, miniChartData: [2630, 2635, 2628, 2642, 2638, 2645, 2643, 2645] },
+    { name: "코스닥", value: "745.30", change: "-3.40", percent: "-0.45%", isUp: false, miniChartData: [752, 750, 748, 749, 747, 746, 745, 745] },
+    { name: "S&P 500", value: "4,567.80", change: "+12.30", percent: "+0.27%", isUp: true, miniChartData: [4555, 4558, 4562, 4560, 4565, 4563, 4567, 4568] },
+    { name: "나스닥", value: "14,123.45", change: "+45.67", percent: "+0.32%", isUp: true, miniChartData: [14080, 14090, 14095, 14100, 14110, 14115, 14120, 14123] },
+    { name: "다우존스", value: "35,456.78", change: "-23.45", percent: "-0.07%", isUp: false, miniChartData: [35480, 35475, 35470, 35465, 35460, 35458, 35456, 35457] },
+    { name: "WTI", value: "72.45", change: "+0.85", percent: "+1.19%", isUp: true, miniChartData: [71.5, 71.7, 71.9, 72.1, 72.3, 72.2, 72.4, 72.45] }
   ];
 
   const hotStocksTop5 = [
@@ -69,6 +70,34 @@ export default function MainPage({ isLoggedIn = true }: MainPageProps) {
     { name: "메타버스", size: 65, mentions: 1200, change: 3.2, color: "#9c27b0" },
     { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#00bcd4" }
   ];
+
+const dummyLiveStockData: {
+  volume: StockItem[];
+  amount: StockItem[];
+  rise: StockItem[];
+  fall: StockItem[];
+} = {
+  volume: [
+    { code: "005930", name: "삼성전자", price: 72500, change: 1650, percent: 2.3, amount: 239000000000, volume: 32100000 },
+    { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
+    { code: "035420", name: "NAVER", price: 208000, change: -2530, percent: -1.2, amount: 181000000000, volume: 8700000 },
+  ],
+
+  amount: [
+    { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
+    { code: "005930", name: "삼성전자", price: 72500, change: 1650, percent: 2.3, amount: 239000000000, volume: 32100000 },
+  ],
+
+  rise: [
+    { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
+    { code: "005380", name: "현대차", price: 195000, change: 3450, percent: 1.8, amount: 136000000000, volume: 6100000 },
+  ],
+
+  fall: [
+    { code: "035420", name: "NAVER", price: 208000, change: -2530, percent: -1.2, amount: 181000000000, volume: 8700000 },
+    { code: "051910", name: "LG화학", price: 520000, change: -6500, percent: -1.1, amount: 89000000000, volume: 210000 },
+  ],
+};
 
   return (
     <div className="main-container">
@@ -114,19 +143,27 @@ export default function MainPage({ isLoggedIn = true }: MainPageProps) {
       {/* 탭 콘텐츠 */}
       <div className="tab-content">
 
-        {/* 메인 탭일 때 AI 이슈포착 포함 */}
+        {/* 메인 탭일 때 AI 이슈포착 + 실시간 주가 포함 */}
         {activeTab === "main" && (
           <div>
+
+            {/* 🔥 AI 이슈포착 */}
             <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
               AI 이슈포착
             </h2>
 
             <p className="text-[13px] text-[#49454f] mb-4">
-              최근 7일간 뉴스에서 가장 많이 언급된 종목 및 테마입니다.  
+              최근 7일간 뉴스에서 가장 많이 언급된 종목 및 테마입니다.
               버블을 클릭하여 상세 정보를 확인하세요.
             </p>
 
             <AIIssueLayout bubbles={issueBubbles} />
+
+            {/* 실시간 종목 주가 패널 추가 */}
+            <div style={{ marginTop: "32px" }}>
+              <LiveStockPanel data={dummyLiveStockData} />
+            </div>
+
           </div>
         )}
 

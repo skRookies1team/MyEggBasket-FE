@@ -61,7 +61,7 @@ export default function Router() {
                 <Route path="*" element={<div style={{ padding: 24 }}>No match</div>} />
                 <Route path="*" element={<div style={{ padding: 24 }}>No match</div>} />
                 <Route
-                    path="/"
+                    path="/stock"
                     element={
                         <StockDetailPage
                              stockName="삼성전자 주식 (005930)"

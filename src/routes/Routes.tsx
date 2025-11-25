@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import StockDetailPage from "../pages/StockDetailPage.tsx";
 import type { StockDetailData } from '../types/stock';
 import { useRealtimeStock } from '../hooks/useRealtimeStock.ts'; // 훅 import 추가
+import { useRef, useMemo } from 'react';
 
 const handleBack = () => {
     console.log("Back button clicked! (Go back logic here)");
@@ -12,20 +13,21 @@ const handleBack = () => {
 export default function Router() {
     // 실시간 데이터 훅 사용 (realtimeData, connected, loading 반환)
     const { realtimeData, loading } = useRealtimeStock();
+    // 뉴스 배열은 빈 배열로 고정 (실시간 데이터 변경 시 재생성되지 않도록)
+    const newsRef = useRef([]);
 
-    const hasRealtime = realtimeData && realtimeData.currentPrice !== 0;
-
-    // 최소한의 combinedData를 실시간 기반으로 생성 (목데이터 사용 안함)
-    const combinedData: StockDetailData = {
+    const combinedData: StockDetailData = useMemo(() => ({
         currentPrice: realtimeData.currentPrice,
         changeAmount: realtimeData.changeAmount,
         changeRate: realtimeData.changeRate,
         chartData: [],
         orderBook: { sell: [], buy: [] },
-        news: [],
+        news: newsRef.current, // 안정된 참조
         financials: { revenue: [], profit: [] },
         reports: [],
-    } as StockDetailData;
+    }), [realtimeData.currentPrice, realtimeData.changeAmount, realtimeData.changeRate]);
+
+    const hasRealtime = realtimeData && realtimeData.currentPrice !== 0;
 
     // 실시간 포인트 객체: StockDetailPage에서 분봉 실시간 업데이트에 사용
     const realtimePoint = hasRealtime

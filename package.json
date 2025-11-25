@@ -10,12 +10,18 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix && npm run format",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,json,css,md,html}\"",
     "preview": "vite preview",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "start:server": "node server/index.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "react-router-dom": "^7.9.6",
+    "recharts": "^3.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

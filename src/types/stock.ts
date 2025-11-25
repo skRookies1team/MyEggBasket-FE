@@ -34,8 +34,15 @@ export interface FinancialItem {
 }
 
 export interface FinancialData {
-    revenue: FinancialItem[];
-    profit: FinancialItem[];
+    revenue: FinancialItem[];      // 매출액 enpSaleAmt
+    profit: FinancialItem[];       // 영업이익 enpBzopPft
+    capital?: FinancialItem[];     // 자본금 enpCptlAmt
+    netProfit?: FinancialItem[];   // 당기순이익 enpCrtmNpf
+    totalAssets?: FinancialItem[]; // 총자산 enpTastAmt
+    equity?: FinancialItem[];      // 자기자본 enpTcptAmt
+    totalDebt?: FinancialItem[];   // 총부채 enpTdbtAmt
+    debtRatio?: FinancialItem[];   // 부채비율 fnclDebtRto
+    comprehensiveIncome?: FinancialItem[]; // 포괄손익 iclsPalClcAmt
 }
 
 export interface ReportItem {

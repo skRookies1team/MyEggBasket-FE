@@ -7,6 +7,8 @@ import { StockTabNav } from '../components/stock/StockTabNav';
 import { StockNews } from '../components/stock/StockNews';
 import { StockFinancials } from '../components/stock/StockFinancials';
 import { StockReports } from '../components/stock/StockReports';
+// Step 2-1: FINANCIAL_SERVICE_KEY 임포트
+import { FINANCIAL_SERVICE_KEY } from '../config/api';
 
 type RealtimePoint = { price: number; volume?: number; time?: string } | undefined;
 import type { StockDetailData, Period, TabType, StockPriceData, FinancialData } from '../types/stock';
@@ -112,7 +114,7 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
         } catch {
             collectedRef.current = [];
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // displayChartData: minute면 local storage 기반, 아니면 서버에서 받은 data.chartData (비어있음)
@@ -188,6 +190,150 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
+    // Step 2-2: 재무제표 불러오기 함수 정의 (공공데이터포털 API 연동)
+    const fetchFinancials = async (corpRegNo: string, yearsCount: number = 5) => {
+        if (!FINANCIAL_SERVICE_KEY) {
+            setFinError('FINANCIAL_SERVICE_KEY가 설정되어 있지 않습니다.');
+            return;
+        }
+        if (!corpRegNo) {
+            setFinError('법인등록번호를 입력하세요.');
+            return;
+        }
+
+        setFinLoading(true);
+        setFinError(null);
+
+        const decodedServiceKey = decodeURIComponent(FINANCIAL_SERVICE_KEY);
+
+        const safeParseNumber = (val: any) => {
+            if (typeof val === 'number') return val;
+            if (typeof val === 'string') {
+                const cleaned = val.replace(/,/g, '').trim();
+                const num = Number(cleaned);
+                return Number.isFinite(num) ? num : 0;
+            }
+            return 0;
+        };
+
+        try {
+            const currentYear = new Date().getFullYear();
+            const yearsToFetch = Array.from({ length: yearsCount }, (_, i) => String(currentYear - i));
+
+            const results: FinancialData = {
+                revenue: [],
+                profit: [],
+                capital: [],
+                netProfit: [],
+                totalAssets: [],
+                equity: [],
+                totalDebt: [],
+                debtRatio: [],
+                comprehensiveIncome: [],
+            };
+            let successCount = 0;
+
+            for (const bizYear of yearsToFetch) {
+                const API_URL = 'http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getSummFinaStat_V2';
+                const params = new URLSearchParams({
+                    serviceKey: decodedServiceKey,
+                    bizYear: bizYear,
+                    // 🔁 실제 API는 "crno"를 사용하므로 여기서 맞춰줍니다.
+                    crno: corpRegNo,
+                    numOfRows: '1',
+                    pageNo: '1',
+                    resultType: 'json',
+                });
+
+                const resp = await fetch(`${API_URL}?${params.toString()}`);
+
+                if (!resp.ok) {
+                    if (resp.status === 401) {
+                        setFinError('API 키 오류: 서비스 키 인증에 실패했습니다 (401 Unauthorized). 환경변수 VITE_FINANCIAL_SERVICE_KEY를 확인하세요.');
+                        throw new Error('401 Unauthorized');
+                    }
+                    console.warn(`[${bizYear}] 재무제표 조회 실패: HTTP 상태 ${resp.status}`);
+                    continue;
+                }
+
+                const json = await resp.json();
+
+                if (json.response?.header?.resultCode !== '00') {
+                    console.warn(`[${bizYear}] API 응답 오류:`, json.response?.header?.resultMsg);
+                    continue;
+                }
+
+                // 실제 응답 구조 예시
+                // json.response.body.items.item[0] = {
+                //   basDt: '20250630',
+                //   bizYear: '2025',
+                //   crno: '1101110003345',
+                //   enpSaleAmt: '1476972318390', // 매출액
+                //   enpBzopPft: '74488038737',   // 영업이익
+                //   enpCptlAmt: '...',           // 자본금
+                //   enpCrtmNpf: '...',           // 당기순이익
+                //   enpTastAmt: '...',           // 총자산
+                //   enpTcptAmt: '...',           // 자기자본
+                //   enpTdbtAmt: '...',           // 총부채
+                //   fnclDebtRto: '...',          // 부채비율
+                //   iclsPalClcAmt: '...',        // 포괄손익
+                //   ...생략
+                // }
+                const item = json?.response?.body?.items?.item;
+
+                if (item && item.length > 0) {
+                    const financialItem = item[0];
+
+                    const revenueValue = safeParseNumber(financialItem.enpSaleAmt) || 0;
+                    const profitValue = safeParseNumber(financialItem.enpBzopPft) || 0;
+                    const capitalValue = safeParseNumber(financialItem.enpCptlAmt) || 0;
+                    const netProfitValue = safeParseNumber(financialItem.enpCrtmNpf) || 0;
+                    const totalAssetsValue = safeParseNumber(financialItem.enpTastAmt) || 0;
+                    const equityValue = safeParseNumber(financialItem.enpTcptAmt) || 0;
+                    const totalDebtValue = safeParseNumber(financialItem.enpTdbtAmt) || 0;
+                    const debtRatioValue = safeParseNumber(financialItem.fnclDebtRto) || 0;
+                    const comprehensiveIncomeValue = safeParseNumber(financialItem.iclsPalClcAmt) || 0;
+
+                    results.revenue.push({ year: bizYear, value: revenueValue });
+                    results.profit.push({ year: bizYear, value: profitValue });
+                    results.capital.push({ year: bizYear, value: capitalValue });
+                    results.netProfit.push({ year: bizYear, value: netProfitValue });
+                    results.totalAssets.push({ year: bizYear, value: totalAssetsValue });
+                    results.equity.push({ year: bizYear, value: equityValue });
+                    results.totalDebt.push({ year: bizYear, value: totalDebtValue });
+                    results.debtRatio.push({ year: bizYear, value: debtRatioValue });
+                    results.comprehensiveIncome.push({ year: bizYear, value: comprehensiveIncomeValue });
+                    successCount++;
+                }
+            }
+
+            if (successCount === 0) {
+                setFinError('조회된 재무제표 데이터가 없습니다. 법인등록번호(crno)를 확인하세요.');
+            }
+
+            const sortByYearDesc = (a: { year: string }, b: { year: string }) => b.year.localeCompare(a.year);
+
+            results.revenue.sort(sortByYearDesc);
+            results.profit.sort(sortByYearDesc);
+            results.capital.sort(sortByYearDesc);
+            results.netProfit.sort(sortByYearDesc);
+            results.totalAssets.sort(sortByYearDesc);
+            results.equity.sort(sortByYearDesc);
+            results.totalDebt.sort(sortByYearDesc);
+            results.debtRatio.sort(sortByYearDesc);
+            results.comprehensiveIncome.sort(sortByYearDesc);
+
+            setFinancials(results);
+        } catch (err: any) {
+            console.error('재무제표 조회 오류:', err);
+            if (err.message !== '401 Unauthorized') {
+                setFinError(err?.message || '재무제표 조회 오류가 발생했습니다.');
+            }
+        } finally {
+            setFinLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#fef7ff] pb-20">
             <StockHeader
@@ -240,26 +386,26 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
                     <div>
                         <div className="mb-4 flex items-center gap-3">
                             <input value={corpRegNo} onChange={(e) => setCorpRegNo(e.target.value)} placeholder="법인등록번호(corp_reg_no) 입력" className="px-3 py-2 border rounded w-64" />
+                            <button type="button" onClick={() => setCorpRegNo('1234567890')} title="예시값 채우기" className="px-3 py-2 border rounded bg-gray-100 text-sm">예시값 채우기</button>
+                            <button type="button" onClick={() => {
+                                // 샘플 데이터 즉시 표시 (API 없이 UI 테스트용)
+                                const now = new Date().getFullYear();
+                                setFinancials({
+                                    revenue: [
+                                        { year: String(now), value: 123456789 },
+                                        { year: String(now - 1), value: 110234567 },
+                                        { year: String(now - 2), value: 98012345 },
+                                    ],
+                                    profit: [
+                                        { year: String(now), value: 12345678 },
+                                        { year: String(now - 1), value: 10234567 },
+                                        { year: String(now - 2), value: 9012345 },
+                                    ],
+                                });
+                            }} title="샘플 데이터로 보기" className="px-3 py-2 border rounded bg-gray-100 text-sm">샘플 데이터로 보기</button>
+
                             <button
-                                onClick={async () => {
-                                    if (!corpRegNo) return setFinError('법인등록번호를 입력하세요.');
-                                    setFinLoading(true);
-                                    setFinError(null);
-                                    try {
-                                        const resp = await fetch(`/api/financials?corp_reg_no=${encodeURIComponent(corpRegNo)}&yearsCount=5`);
-                                        if (!resp.ok) {
-                                            const txt = await resp.text();
-                                            throw new Error(txt || '서버 오류');
-                                        }
-                                        const json = await resp.json();
-                                        // 간단 검증
-                                        setFinancials({ revenue: json.revenue || [], profit: json.profit || [] });
-                                    } catch (err: any) {
-                                        setFinError(err?.message || '재무제표 조회 오류');
-                                    } finally {
-                                        setFinLoading(false);
-                                    }
-                                }}
+                                onClick={() => fetchFinancials(corpRegNo, 5)} // 새 함수 호출
                                 className="px-4 py-2 bg-[#4f378a] text-white rounded"
                             >
                                 재무제표 불러오기
@@ -281,3 +427,4 @@ export function StockDetailPage({ stockName, data, onBack, isLoading = false, re
 }
 
 export default StockDetailPage;
+

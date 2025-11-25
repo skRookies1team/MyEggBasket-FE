@@ -239,9 +239,19 @@ export function useRealtimeStock(): UseRealtimeResult {
 
              socket.onclose = () => {
                  if (!isCancelled) {
-                     console.log('WebSocket 종료. 재접속 로직 필요 시 구현.');
+                     console.log('WebSocket 종료. 5초 후 재접속 시도.');
                      // 비동기 업데이트로 렌더 카스케이드 방지
                      scheduleDisconnect();
+
+                     // 5초 후 재접속 시도 (지연 로직 추가)
+                     connectTimeout = window.setTimeout(() => {
+                         // 재접속 전에 isCancelled 플래그를 확인합니다.
+                         if (!isCancelled) {
+                             // 로딩 상태를 다시 활성화하고 연결 시도
+                             setLoading(true);
+                             connectWebSocket();
+                         }
+                     }, 5000);
                  }
              };
          };

@@ -1,0 +1,63 @@
+/* 전체 로그인/회원가입 컨테이너 */
+.login-container {
+  padding: 20px;
+  max-width: 350px;
+  margin: 0 auto;
+  padding-top: 60px;
+}
+
+/* 페이지 제목 */
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* 기본 입력 그룹 */
+.input-group {
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+/* 버튼 */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: #0070f3;
+  color: white;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* hover 시 색상 진하게 */
+.login-btn:hover {
+  background-color: #005fcc;
+}
+
+/* 아래 링크 버튼 */
+.link-btn {
+  background: none;
+  border: none;
+  color: #0070f3;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  font-size: 14px;
+}

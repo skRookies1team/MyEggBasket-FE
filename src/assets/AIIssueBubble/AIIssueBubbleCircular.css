@@ -1,0 +1,81 @@
+/* ================================
+   🟣 Modern Bubble Chart UI (No Gradient)
+   ================================ */
+
+.bubble-modern-container {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* 🚀 모든 버블 공통 스타일 */
+.bubble-item {
+  position: absolute;
+  left: var(--bubble-left, 50%);
+  top: var(--bubble-top, 50%);
+  width: var(--bubble-size);
+  height: var(--bubble-size);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--bubble-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  /* Soft Shadow + 유리 효과 */
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.15),
+    inset 0 0 10px rgba(255, 255, 255, 0.25);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 중앙 버블: 단색 강조 */
+.modern-center {
+  z-index: 10;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.22),
+    inset 0 0 14px rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* 주변 버블 */
+.modern-bubble {
+  opacity: 0.9;
+}
+
+.modern-bubble:hover,
+.modern-center:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.25),
+    inset 0 0 16px rgba(255, 255, 255, 0.45);
+  opacity: 1;
+}
+
+/* 텍스트 스타일 */
+.bubble-label {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  padding: 0 6px;
+  line-height: 1.2;
+  user-select: none;
+}
+
+/* 작은 화면 대응 */
+@media (max-width: 480px) {
+  .bubble-modern-container {
+    max-width: 300px;
+  }
+  .bubble-label {
+    font-size: 12px;
+  }
+}

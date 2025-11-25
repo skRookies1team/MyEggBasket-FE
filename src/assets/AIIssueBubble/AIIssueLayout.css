@@ -1,0 +1,47 @@
+/* 전체 wrapper */
+.ai-layout-wrapper {
+  margin-top: 16px;
+  padding: 10px 0;
+}
+
+/* 상단 제목 */
+.ai-layout-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* 좌우 패널 그 자체 */
+.ai-layout-panels {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+/* ★ 핵심: 개별 패널이 박스 형태를 가지게 하기 */
+.panel-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  flex: 1;
+  min-height: 420px;
+
+  /* 그림자 + border */
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* 버블 패널: 중앙 정렬 */
+.bubble-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 상세 패널은 스크롤 가능 */
+.detail-panel {
+  overflow-y: auto;
+}

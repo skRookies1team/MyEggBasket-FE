@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import "../assets/Modal.css";
 import "../assets/LoginPage.css";
+import { loginApi } from "../store/auth";
+import axios from "axios";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -45,14 +46,14 @@ export default function LoginPage() {
     <div className="login-container">
       <h2 className="login-title">로그인</h2>
 
-      {/* 아이디 */}
+      {/* 이메일 */}
       <div className="input-group">
         <label>이메일</label>
         <input
           type="text"
           value={loginData.email}
           onChange={handleLoginChange("email")}
-          placeholder="이메일를 입력하세요"
+          placeholder="이메일을 입력하세요"
         />
       </div>
 

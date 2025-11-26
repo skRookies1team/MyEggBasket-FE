@@ -1,4 +1,4 @@
-import type { OrderBookData } from '../../types/stock';
+import type { OrderBookData } from '../../types/stock.ts';
 
 interface StockOrderBookProps {
     orderBook: OrderBookData;

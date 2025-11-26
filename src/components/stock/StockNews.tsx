@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import type { NewsItem } from '../../types/stock';
+import type { NewsItem } from '../../types/stock.ts';
 
 interface StockNewsProps {
     data: NewsItem[];

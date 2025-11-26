@@ -1,4 +1,4 @@
-import type { StockItem } from "../../types/Stock";
+import type { StockItem } from "../../types/stock.ts";
 import "../../assets/LiveStock/LiveStockTable.css";
 
 interface Props {

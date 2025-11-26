@@ -5,7 +5,7 @@ import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import { Routes, Route } from "react-router-dom";
 import StockDetailPage from "../pages/StockDetailPage.tsx";
-import type { StockDetailData } from '../types/stock';
+import type { StockDetailData } from '../types/stock.ts';
 import { useRealtimeStock } from '../hooks/useRealtimeStock.ts'; // 훅 import 추가
 
 const handleBack = () => {

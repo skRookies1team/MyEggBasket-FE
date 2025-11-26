@@ -4,7 +4,7 @@ import MarketIndexTicker from "../components/MarketIndex/MarketIndexTicker";
 import Top5Rolling from "../components/Top5Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import "../assets/MaingPage.css";
-import type { StockItem } from "../types/Stock";
+import type { StockItem } from "../types/stock.ts";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import LiveStockTabs from "../LiveStock/LiveStockTabs";
 import LiveStockPeriodTabs from "../LiveStock/LiveStockPeriodTabs";
 import LiveStockTable from "../LiveStock/LiveStockTable";
-import type { StockItem } from "../../types/Stock";
+import type { StockItem } from "../../types/stock.ts";
 
 interface Props {
   data: {

@@ -1,5 +1,5 @@
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
-import type { Period } from '../../types/stock';
+import type { Period } from '../../types/stock.ts';
 
 interface StockHeaderProps {
     stockName: string;

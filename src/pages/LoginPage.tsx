@@ -33,9 +33,33 @@ export default function LoginPage() {
       setFindPasswordData({ ...findPasswordData, [field]: e.target.value });
     };
 
-  const handleLogin = () => {
-    console.log("로그인 요청:", loginData);
-    // 로그인 API 호출 추가 가능
+    // 🔥 로그인 API 연동
+    const handleLogin = async () => {
+        try {
+            console.log("로그인 요청:", loginData);
+
+            const res = await loginApi(loginData.email, loginData.password);
+
+            // 🔥 accessToken 및 user 정보 저장
+            localStorage.setItem("accessToken", res.accessToken);
+            localStorage.setItem("tokenType", res.tokenType);
+            localStorage.setItem("user", JSON.stringify(res.user));
+
+            alert("로그인 성공!");
+            navigate("/");
+
+        } catch (err: unknown) {
+            console.error(err);
+
+            if (axios.isAxiosError(err)) {
+                const msg =
+                    err.response?.data?.message ??
+                    "로그인 중 오류가 발생했습니다.";
+                alert(msg);
+            } else {
+                alert("알 수 없는 오류가 발생했습니다.");
+            }
+        }
   };
 
   const handleFindPassword = () => {

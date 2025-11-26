@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
-import type { NewsItem } from '../../types/stock.ts';
+import { useEffect, useState, useRef, memo } from 'react';
+import type { NewsItem } from '../../types/stock';
 
 interface StockNewsProps {
     data: NewsItem[];
     query?: string; // 검색어
 }
 
-export function StockNews({ data, query }: StockNewsProps) {
+export const StockNews = memo(function StockNews({ data, query }: StockNewsProps) {
     const [articles, setArticles] = useState<NewsItem[]>(data || []);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -70,12 +70,10 @@ export function StockNews({ data, query }: StockNewsProps) {
     const onIframeLoad = () => {
         if (!iframeRef.current) return;
         try {
-            // cross-origin이면 접근 시 SecurityError가 발생함
-            // 접근 가능한 경우 iframe이 허용된 것
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const href = iframeRef.current.contentWindow?.location?.href;
+            // cross-origin 접근 시 SecurityError 발생 -> 허용 여부 판별만
+            iframeRef.current.contentWindow?.location?.href;
             setIframeAllowed(true);
-        } catch (e) {
+        } catch {
             setIframeAllowed(false);
         } finally {
             setIframeLoading(false);
@@ -183,7 +181,7 @@ export function StockNews({ data, query }: StockNewsProps) {
                             <h4 className="text-lg font-semibold">{selectedNews.title}</h4>
                             <div className="text-[13px] text-[#666]">{selectedNews.source}</div>
                         </div>
-                        <div className="mb-4" style={{ height: 800, width: 1400 }}>
+                        <div className="mb-4" style={{ height: '80vh', width: '80vw'}}>
                             {/* iframe 시도: 로드 성공 여부를 onLoad에서 검사하여 차단 시 fallback 메시지를 표시함 */}
                             <iframe
                                 ref={iframeRef}
@@ -214,4 +212,4 @@ export function StockNews({ data, query }: StockNewsProps) {
              )}
         </div>
     );
-}
+});

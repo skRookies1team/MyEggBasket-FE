@@ -63,7 +63,7 @@ export function StockChart({ data, period = 'day', fixedDomain }: StockChartProp
                             <XAxis dataKey="time" tickFormatter={formatTick} />
                             <YAxis />
                             <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toLocaleString() : value} />
-                            <Bar dataKey="volume" fill="#4f378a" />
+                            <Bar dataKey="volume" fill="orange" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

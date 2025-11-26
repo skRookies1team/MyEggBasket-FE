@@ -14,10 +14,9 @@ import {
     fetchHistoricalData,
     getAccessToken,
     fetchCurrentPrice,
-    type CurrentPriceResult
 } from '../api/stockApi';
 
-import type { StockDetailData, Period, TabType, StockPriceData, FinancialData } from '../types/stock';
+import type { StockDetailData, Period, TabType, StockPriceData, FinancialData, CurrentPriceResult } from '../types/stock';
 
 type RealtimePoint = { price: number; volume?: number; time?: string } | undefined;
 type RealtimeInfo = { askp1?: number; bidp1?: number; acml_vol?: number; time?: string; stck_prpr?: number; prdy_vrss?: number; prdy_ctrt?: number; } | undefined;

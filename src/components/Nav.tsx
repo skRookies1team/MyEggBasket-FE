@@ -26,8 +26,9 @@ const Nav: React.FC<NavProps> = ({
   return (
     <nav className="nav">
       <div className="nav__left">
-        <button onClick={() => onToggleSidebar?.()} aria-label="toggle" className="nav__toggle">☰</button>
         <button onClick={() => navigate('/')} className="nav__brand">MyEggBasket</button>
+        <button onClick={() => navigate('/portfolio')} className="nav__link">포트폴리오</button>
+        <button onClick={() => navigate('/history')} className="nav__link">히스토리</button>
       </div>
 
       <div className="nav__center">
@@ -42,8 +43,6 @@ const Nav: React.FC<NavProps> = ({
       </div>
 
       <div className="nav__right">
-        <button onClick={() => navigate('/portfolio')} className="nav__link">포트폴리오</button>
-        <button onClick={() => navigate('/history')} className="nav__link">히스토리</button>
 
         {isLoggedIn ? (
           <>
@@ -58,6 +57,8 @@ const Nav: React.FC<NavProps> = ({
         ) : (
           <button onClick={() => navigate('/login')} className="nav__login">로그인</button>
         )}
+
+        <button onClick={() => onToggleSidebar?.()} aria-label="toggle" className="nav__toggle">☰</button>
       </div>
     </nav>
   );

@@ -1,11 +1,14 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/LoginPage.css";
-import { loginApi } from "../store/auth";
 import axios from "axios";
+import { useAuthStore } from "../store/auth"; 
 
 export default function LoginPage() {
   const navigate = useNavigate();
+
+  // ⭐ Zustand login 함수 가져오기
+  const login = useAuthStore((state) => state.login);
 
   const [showFindPassword, setShowFindPassword] = useState(false);
 
@@ -19,34 +22,31 @@ export default function LoginPage() {
     email: "",
   });
 
-  // 로그인 입력 변경
+  // 로그인 input 핸들러
   const handleLoginChange =
     (field: keyof typeof loginData) =>
     (e: ChangeEvent<HTMLInputElement>) => {
       setLoginData({ ...loginData, [field]: e.target.value });
     };
 
-  // 비밀번호 찾기 입력 변경
+  // 비밀번호 찾기 input 핸들러
   const handleFindPasswordChange =
     (field: keyof typeof findPasswordData) =>
     (e: ChangeEvent<HTMLInputElement>) => {
       setFindPasswordData({ ...findPasswordData, [field]: e.target.value });
     };
 
-    // 🔥 로그인 API 연동
-    const handleLogin = async () => {
-        try {
-            console.log("로그인 요청:", loginData);
+  const handleLogin = async () => {
+    try {
+      console.log("로그인 요청:", loginData);
 
-            const res = await loginApi(loginData.email, loginData.password);
+      await login({
+        email: loginData.email,
+        password: loginData.password,
+      });
 
-            // 🔥 accessToken 및 user 정보 저장
-            localStorage.setItem("accessToken", res.accessToken);
-            localStorage.setItem("tokenType", res.tokenType);
-            localStorage.setItem("user", JSON.stringify(res.user));
-
-            alert("로그인 성공!");
-            navigate("/");
+      alert("로그인 성공!");
+      navigate("/");
 
         } catch (err: unknown) {
             console.error(err);
@@ -97,19 +97,11 @@ export default function LoginPage() {
         로그인
       </button>
 
-      {/* 비밀번호 찾기 */}
-      <button
-        className="link-btn"
-        onClick={() => setShowFindPassword(true)}
-      >
+      <button className="link-btn" onClick={() => setShowFindPassword(true)}>
         비밀번호 찾기
       </button>
 
-      {/* 회원가입 이동 */}
-      <button
-        className="link-btn"
-        onClick={() => navigate("/signup")}
-      >
+      <button className="link-btn" onClick={() => navigate("/signup")}>
         아직 회원이 아닌가요? 가입하기
       </button>
 
@@ -146,10 +138,7 @@ export default function LoginPage() {
               >
                 취소
               </button>
-              <button
-                className="modal-btn ok"
-                onClick={handleFindPassword}
-              >
+              <button className="modal-btn ok" onClick={handleFindPassword}>
                 찾기
               </button>
             </div>

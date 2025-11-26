@@ -1,11 +1,14 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/LoginPage.css";
-import { signupApi } from "../store/auth";
 import axios from "axios";
+import { useAuthStore } from "../store/auth";  
 
 export default function SignupPage() {
   const navigate = useNavigate();
+
+  // ⭐ Zustand에서 signup 함수 가져오기
+  const signup = useAuthStore((state) => state.signup);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -13,7 +16,7 @@ export default function SignupPage() {
     confirmPassword: "",
     username: "",
     appkey: "",
-    appsecret: ""
+    appsecret: "",
   });
 
   const handleChange =
@@ -34,7 +37,8 @@ export default function SignupPage() {
     try {
       console.log("회원가입 요청:", formData);
 
-      await signupApi({
+      // ⭐ Zustand signup API 호출
+      await signup({
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,

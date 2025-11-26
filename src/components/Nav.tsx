@@ -4,12 +4,15 @@ import '../assets/Nav.css';
 
 interface NavProps {
   onToggleSidebar?: () => void;
-  currentUser?: { name: string } | null;
   isLoggedIn?: boolean;
   onLogout?: () => void;
 }
 
-const Nav: React.FC<NavProps> = ({ onToggleSidebar, currentUser = null, isLoggedIn = false, onLogout }) => {
+const Nav: React.FC<NavProps> = ({
+  onToggleSidebar,
+  isLoggedIn = false,
+  onLogout
+}) => {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
 
@@ -42,10 +45,15 @@ const Nav: React.FC<NavProps> = ({ onToggleSidebar, currentUser = null, isLogged
         <button onClick={() => navigate('/portfolio')} className="nav__link">포트폴리오</button>
         <button onClick={() => navigate('/history')} className="nav__link">히스토리</button>
 
-        {isLoggedIn && currentUser ? (
+        {isLoggedIn ? (
           <>
-            <button onClick={() => navigate('/mypage')} className="nav__link">{currentUser.name}</button>
-            <button onClick={() => { onLogout?.(); }} className="nav__link">로그아웃</button>
+            <button
+              onClick={() => navigate('/mypage')}
+              className="nav__link"
+            >
+              마이페이지
+            </button>
+            <button onClick={() => onLogout?.()} className="nav__link">로그아웃</button>
           </>
         ) : (
           <button onClick={() => navigate('/login')} className="nav__login">로그인</button>

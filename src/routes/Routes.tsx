@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import MainPage from "../pages/MainPage";
 import Nav from "../components/Nav";
+import MainPage from "../pages/MainPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import StockDetailPage from "../pages/StockDetailPage.tsx";

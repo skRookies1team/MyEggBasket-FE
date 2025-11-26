@@ -1,5 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import type { StockPriceData, Period } from '../../types/stock';
+import type { StockPriceData, Period } from '../../types/stock.ts';
 
 interface StockChartProps {
     data: StockPriceData[];

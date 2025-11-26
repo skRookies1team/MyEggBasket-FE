@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { FinancialData } from '../../types/stock';
+import type { FinancialData } from '../../types/stock.ts';
 
 interface StockFinancialsProps {
     data: FinancialData;

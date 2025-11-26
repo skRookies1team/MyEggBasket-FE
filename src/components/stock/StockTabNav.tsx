@@ -1,4 +1,4 @@
-import type { TabType } from '../../types/stock';
+import type { TabType } from '../../types/stock.ts';
 
 interface StockTabNavProps {
     activeTab: TabType;

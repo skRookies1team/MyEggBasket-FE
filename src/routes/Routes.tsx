@@ -1,7 +1,11 @@
 // src/routes/Routes.tsx
+import MainPage from "../pages/MainPage";
+import Nav from "../components/Nav";
+import LoginPage from "../pages/LoginPage";
+import SignupPage from "../pages/SignupPage";
 import { Routes, Route } from "react-router-dom";
 import StockDetailPage from "../pages/StockDetailPage.tsx";
-import type { StockDetailData } from '../types/stock';
+import type { StockDetailData } from '../types/stock.ts';
 import { useRealtimeStock } from '../hooks/useRealtimeStock.ts'; // 훅 import 추가
 import { useRef, useMemo } from 'react';
 
@@ -51,10 +55,15 @@ export default function Router() {
 
     return (
         <>
+        <Nav />
             <Routes>
+              <Route path="/" element={<MainPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="*" element={<div style={{ padding: 24 }}>No match</div>} />
                 <Route path="*" element={<div style={{ padding: 24 }}>No match</div>} />
                 <Route
-                    path="/"
+                    path="/stock"
                     element={
                         <StockDetailPage
                              stockName="삼성전자 주식 (005930)"

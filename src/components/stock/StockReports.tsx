@@ -1,4 +1,4 @@
-import type { ReportItem } from '../../types/stock';
+import type { ReportItem } from '../../types/stock.ts';
 
 interface StockReportsProps {
     data: ReportItem[];

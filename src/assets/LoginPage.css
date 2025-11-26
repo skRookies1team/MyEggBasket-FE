@@ -3,6 +3,7 @@
   padding: 20px;
   max-width: 350px;
   margin: 0 auto;
+  padding-top: 60px; /* Nav 높이 */
 }
 
 /* 로그인 제목 */

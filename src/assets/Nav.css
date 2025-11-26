@@ -3,10 +3,16 @@
   --nav-gap: 16px;
   --brand-font-size: 16px;
   --search-border: #ddd;
-  --primary-bg: transparent;
+  --primary-bg: #fff;
 }
 
 .nav {
+  position: fixed;      /* 🔥 항상 상단에 고정 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2000;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--nav-border);
   padding: 12px 16px;
   display: flex;
@@ -68,6 +74,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;   /* 🔥 오른쪽 영역이 눌리지 않게 */
 }
 
 .nav__link {
@@ -86,10 +93,8 @@
   border: 1px solid transparent;
 }
 
-/* 작은 화면에서 검색 입력을 줄이고 요소 간격을 축소 */
 @media (max-width: 640px) {
   .nav { padding: 10px 12px; gap: 8px; }
   .nav__center { justify-content: flex-start; }
   .nav__search-form { max-width: 320px; }
 }
-

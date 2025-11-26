@@ -1,0 +1,28 @@
+.period-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+.period-tab {
+  background: none;
+  border: none;
+  font-size: 13px;
+  padding: 4px 6px;
+  cursor: pointer;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: 0.2s;
+}
+
+.period-tab:hover {
+  color: #222;
+}
+
+.period-tab.active {
+  font-weight: 600;
+  color: #222;
+  border-color: #222;
+}

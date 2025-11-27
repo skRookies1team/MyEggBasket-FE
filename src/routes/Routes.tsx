@@ -1,20 +1,21 @@
+// src/routes/Router.tsx
 import { Routes, Route } from "react-router-dom";
-import Nav from "../components/Nav";
 import MainPage from "../pages/MainPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import StockDetailPage from "../pages/StockDetailPage";
+import MyPage from "../pages/MyPage";
 import type { StockDetailData } from "../types/stock";
 import { useRealtimeStock } from "../hooks/useRealtimeStock";
 import { useRef, useMemo } from "react";
 import PrivateRoute from "../routes/PrivateRoute";
+import Layout from "../components/Layout";
 
 const handleBack = () => {
   console.log("Back button clicked!");
 };
 
 export default function Router() {
-  // 🔹 실시간 데이터 훅
   const { realtimeData, loading } = useRealtimeStock();
 
   const newsRef = useRef([]);
@@ -57,18 +58,14 @@ export default function Router() {
     : undefined;
 
   return (
-    <>
-      <Nav />
-
+    <Layout>
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        
+
         <Route element={<PrivateRoute />}>
-        
-        {/* 404 */}
-        <Route path="*" element={<div style={{ padding: 24 }}>No match</div>} />
+          <Route path="/mypage" element={<MyPage />} />
           <Route
             path="/stock"
             element={
@@ -82,9 +79,12 @@ export default function Router() {
               />
             }
           />
+          <Route
+            path="*"
+            element={<div style={{ padding: 24 }}>No match</div>}
+          />
         </Route>
-
       </Routes>
-    </>
+    </Layout>
   );
 }

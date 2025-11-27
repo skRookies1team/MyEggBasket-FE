@@ -1,34 +1,44 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../assets/Nav.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import "../assets/Nav.css";
 
 interface NavProps {
   onToggleSidebar?: () => void;
-  isLoggedIn?: boolean;
-  onLogout?: () => void;
+  isSidebarOpen?: boolean;  
 }
 
-const Nav: React.FC<NavProps> = ({
-  onToggleSidebar,
-  isLoggedIn = false,
-  onLogout
-}) => {
+const Nav: React.FC<NavProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState("");
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const logout = useAuthStore((state) => state.logout);
 
   const submitSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!q.trim()) return;
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
-    setQ('');
+    setQ("");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
     <nav className="nav">
       <div className="nav__left">
-        <button onClick={() => navigate('/')} className="nav__brand">MyEggBasket</button>
-        <button onClick={() => navigate('/portfolio')} className="nav__link">포트폴리오</button>
-        <button onClick={() => navigate('/history')} className="nav__link">히스토리</button>
+        <button onClick={() => navigate("/")} className="nav__brand">
+          MyEggBasket
+        </button>
+        <button onClick={() => navigate("/portfolio")} className="nav__link">
+          포트폴리오
+        </button>
+        <button onClick={() => navigate("/history")} className="nav__link">
+          히스토리
+        </button>
       </div>
 
       <div className="nav__center">
@@ -43,22 +53,29 @@ const Nav: React.FC<NavProps> = ({
       </div>
 
       <div className="nav__right">
-
-        {isLoggedIn ? (
+        {isAuthenticated ? (
           <>
-            <button
-              onClick={() => navigate('/mypage')}
-              className="nav__link"
-            >
+            <button className="nav__link" onClick={() => navigate("/mypage")}>
               마이페이지
             </button>
-            <button onClick={() => onLogout?.()} className="nav__link">로그아웃</button>
+            <button className="nav__link" onClick={handleLogout}>
+              로그아웃
+            </button>
           </>
         ) : (
-          <button onClick={() => navigate('/login')} className="nav__login">로그인</button>
+          <button className="nav__login" onClick={() => navigate("/login")}>
+            로그인
+          </button>
         )}
 
-        <button onClick={() => onToggleSidebar?.()} aria-label="toggle" className="nav__toggle">☰</button>
+        {isAuthenticated && (
+          <button
+            className="nav__toggle"
+            onClick={() => onToggleSidebar?.()}
+          >
+            {isSidebarOpen ? "✕" : "☰"}
+          </button>
+        )}
       </div>
     </nav>
   );

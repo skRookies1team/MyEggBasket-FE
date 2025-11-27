@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { OrderBookData } from '../../types/stock';
 import { placeOrder, getAccessToken } from '../../api/stockApi';
-import MyBalance from "../MyBalance.tsx";
 
 interface StockOrderBookProps {
     orderBook: OrderBookData;
@@ -99,7 +98,6 @@ export function StockOrderBook({ orderBook, currentPrice }: StockOrderBookProps)
                     ))}
                 </div>
             </div>
-            <MyBalance/>
             {/* 주문 폼 */}
             <div className="bg-white rounded-2xl border border-[#d9d9d9] p-6 h-fit">
                 <h3 className="text-[#1e1e1e] mb-4">주문</h3>

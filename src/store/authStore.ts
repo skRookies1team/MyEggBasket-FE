@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "../store/axios"; 
+import api from "../store/axiosStore"; 
 
 interface LoginRequest {
   email: string;

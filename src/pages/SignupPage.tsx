@@ -2,7 +2,7 @@ import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/LoginPage.css";
 import axios from "axios";
-import { useAuthStore } from "../store/auth";  
+import { useAuthStore } from "../store/authStore";  
 
 export default function SignupPage() {
   const navigate = useNavigate();

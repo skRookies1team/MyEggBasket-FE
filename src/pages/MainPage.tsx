@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MarketIndexCard } from "../components/MarketIndex/MarketIndexCard";
-import MarketIndexTicker from "../components/MarketIndex/MarketIndexTicker";
+import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer.tsx";
 import Top5Rolling from "../components/Top5Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import "../assets/MaingPage.css";
@@ -11,15 +10,6 @@ import InvestorTrend from "../components/Investor/InvestorTrend";
 
 interface MainPageProps {
   isLoggedIn?: boolean;
-}
-
-interface MarketIndex {
-  name: string;
-  value: string;
-  change: string;
-  percent: string;
-  isUp: boolean;
-  miniChartData: number[];
 }
 
 export default function MainPage({ isLoggedIn = true }: MainPageProps) {
@@ -44,15 +34,6 @@ export default function MainPage({ isLoggedIn = true }: MainPageProps) {
     observer.observe(indexSectionRef.current);
     return () => observer.disconnect();
   }, []);
-
-  const marketIndices: MarketIndex[] = [
-    { name: "코스피", value: "2,645.50", change: "+15.20", percent: "+0.58%", isUp: true, miniChartData: [2630, 2635, 2628, 2642, 2638, 2645, 2643, 2645] },
-    { name: "코스닥", value: "745.30", change: "-3.40", percent: "-0.45%", isUp: false, miniChartData: [752, 750, 748, 749, 747, 746, 745, 745] },
-    { name: "S&P 500", value: "4,567.80", change: "+12.30", percent: "+0.27%", isUp: true, miniChartData: [4555, 4558, 4562, 4560, 4565, 4563, 4567, 4568] },
-    { name: "나스닥", value: "14,123.45", change: "+45.67", percent: "+0.32%", isUp: true, miniChartData: [14080, 14090, 14095, 14100, 14110, 14115, 14120, 14123] },
-    { name: "다우존스", value: "35,456.78", change: "-23.45", percent: "-0.07%", isUp: false, miniChartData: [35480, 35475, 35470, 35465, 35460, 35458, 35456, 35457] },
-    { name: "WTI", value: "72.45", change: "+0.85", percent: "+1.19%", isUp: true, miniChartData: [71.5, 71.7, 71.9, 72.1, 72.3, 72.2, 72.4, 72.45] }
-  ];
 
   const hotStocksTop5 = [
     { rank: 1, name: "삼성전자", price: 72500, change: "+1,650", percent: "+2.3%", isUp: true },
@@ -103,21 +84,16 @@ const dummyLiveStockData: {
   return (
     <div className="main-container">
 
-      {/* 상단 ticker (조건부 표시) */}
       {showTicker && (
         <div className="ticker-sticky">
-          <MarketIndexTicker indices={marketIndices} />
+          <MarketIndexContainer showTickerOnly/>
         </div>
       )}
 
-      {/* 주요 지수 섹션 */}
       <div className="market-index-section" ref={indexSectionRef}>
-        <h2 className="market-index-title"> 주요 지수</h2>
-        <div className="market-index-grid">
-          {marketIndices.map((index) => (
-            <MarketIndexCard key={index.name} {...index} />
-          ))}
-        </div>
+        <h2 className="market-index-title"> 주요 지수 </h2>
+
+        <MarketIndexContainer />
       </div>
 
       <Top5Rolling data={hotStocksTop5} interval={2000} />

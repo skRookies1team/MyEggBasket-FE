@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "../store/axios"; 
+import api from "../store/axiosStore"; 
 
 interface LoginRequest {
   email: string;
@@ -16,6 +16,7 @@ interface SignupRequest {
 }
 
 interface User {
+  id: number;
   email: string;
   password: string;
   confirmPassword: string;
@@ -43,7 +44,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: localStorage.getItem("accessToken"),
   user: null,
 
-  // ⭐ axios → api 로 변경
   setToken: (accessToken) => {
     localStorage.setItem("accessToken", accessToken);
     api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
@@ -58,7 +58,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isAuthenticated: false, accessToken: null, user: null });
   },
 
-  // ⭐ axios → api, 경로도 수정
   login: async (loginData: LoginRequest) => {
     const tokenRes = await api.post("/auth/login", loginData);
     const { accessToken } = tokenRes.data;

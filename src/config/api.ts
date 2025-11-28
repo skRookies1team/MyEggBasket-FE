@@ -10,7 +10,7 @@ export const CANO = import.meta.env.VITE_CANO ?? '';
 export const ACNT_PRDT_CD = import.meta.env.VITE_ACNT_PRDT_CD ?? '01';
 
 export const REST_BASE_URL = "/api";
-export const WS_URL = "ws://ops.koreainvestment.com:31000/tryitout/websocket";
+export const WS_URL = "ws://ops.koreainvestment.com:21000";
 
 // 구독할 종목 코드와 TR ID
 export const TR_ID = "H0STCNT0";

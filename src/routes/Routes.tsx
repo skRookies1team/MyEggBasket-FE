@@ -1,9 +1,8 @@
-// src/routes/Routes.tsx
-import MainPage from "../pages/MainPage";
+import { Routes, Route } from "react-router-dom";
 import Nav from "../components/Nav";
+import MainPage from "../pages/MainPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
-import { Routes, Route } from "react-router-dom";
 import StockDetailPage from "../pages/StockDetailPage.tsx";
 
 export default function Router() {

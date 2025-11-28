@@ -13,5 +13,4 @@ export const REST_BASE_URL = "/api";
 export const WS_URL = "ws://ops.koreainvestment.com:21000";
 
 // 구독할 종목 코드와 TR ID
-export const STOCK_CODE = "005930";
 export const TR_ID = "H0STCNT0";

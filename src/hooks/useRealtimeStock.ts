@@ -1,6 +1,6 @@
 // src/hooks/useRealtimeStock.ts
 import { useState, useEffect, useRef } from 'react';
-import {WS_URL, STOCK_CODE, TR_ID } from '../config/api';
+import {WS_URL, TR_ID } from '../config/api';
 
 // 실시간 데이터 구조 (매핑된 필드 포함)
 interface RealtimePriceData {
@@ -25,12 +25,6 @@ interface RealtimePriceData {
     total_askp_rsqn?: number;
     total_bidp_rsqn?: number;
 }
-
-const initialData: RealtimePriceData = {
-    currentPrice: 0,
-    changeAmount: 0,
-    changeRate: 0,
-};
 
 // H0STCNT0 필드 인덱스 매핑
 const H0STCNT0_FIELD_MAP: Record<string, number> = {
@@ -139,11 +133,14 @@ export interface UseRealtimeResult {
     loading: boolean;
 }
 
-export function useRealtimeStock(): UseRealtimeResult {
+export function useRealtimeStock(stockCode: string): UseRealtimeResult {
     // 개발용: 환경변수로 WS 비활성화 (예: VITE_DISABLE_WS=true)
     const DISABLE_WS = import.meta.env.VITE_DISABLE_WS === 'true';
-    const [realtimeData, setRealtimeData] = useState<RealtimePriceData>(initialData);
-    // 연결 상태 및 로딩 상태 추가
+    const [realtimeData, setRealtimeData] = useState<RealtimePriceData>({
+        currentPrice: 0,
+        changeAmount: 0,
+        changeRate: 0,
+    });    // 연결 상태 및 로딩 상태 추가
     const [connected, setConnected] = useState<boolean>(false);
     // DISABLE_WS면 초기 loading을 false로 하여 첫 렌더에서 Loading이 뜨지 않게 함
     const [loading, setLoading] = useState<boolean>(() => (DISABLE_WS ? false : true));
@@ -155,6 +152,8 @@ export function useRealtimeStock(): UseRealtimeResult {
      const FLUSH_INTERVAL = 500; // ms
 
      useEffect(() => {
+         if (!stockCode) return;
+
          let isCancelled = false;
          let connectTimeout: number | null = null;
 
@@ -202,14 +201,14 @@ export function useRealtimeStock(): UseRealtimeResult {
                      socket.close();
                      return;
                  }
-                 console.log("WebSocket 연결 성공. 구독 요청 전송...");
+                 console.log("WebSocket 연결 성공. 종목코드 [${stockCode}] 구독 요청...");
                  setConnected(true);
                  setLoading(false);
 
                  // 실시간 체결가 구독 요청
                  const subscribeData = {
                      header: { approval_key: approvalKey, custtype: 'P', tr_type: '1', 'content-type': 'utf-8' },
-                     body: { input: { tr_id: TR_ID, tr_key: STOCK_CODE } },
+                     body: { input: { tr_id: TR_ID, tr_key: stockCode } },
                  };
                  // socket은 분명히 할당되어 있으므로 안전하게 사용
                  socket.send(JSON.stringify(subscribeData));
@@ -291,7 +290,7 @@ export function useRealtimeStock(): UseRealtimeResult {
                  connectTimeout = null;
              }
          };
-     }, [DISABLE_WS]);
+     }, [DISABLE_WS, stockCode]);
 
     // 데이터 + 연결/로딩 상태 반환
     return { realtimeData, connected, loading };

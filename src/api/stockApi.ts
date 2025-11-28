@@ -9,7 +9,7 @@ import type { IndexData } from "../api/stockIndex";
  * TR_ID: VTTC8434R (모의투자)
  */
 export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
-    const trId = 'VTTC8434R'; // 모의투자 잔고조회 TR ID
+    const trId = 'TTTC8434R'; // 모의투자 잔고조회 TR ID
 
     // API 문서에 따른 필수 쿼리 파라미터 구성
     const queryParams = new URLSearchParams({
@@ -102,7 +102,7 @@ export async function placeOrder(
 ): Promise<{ success: boolean; msg: string }> {
     // 1. 모의투자용 TR ID 설정
     // 매도: VTTC0011U, 매수: VTTC0012U
-    const trId = type === 'buy' ? 'VTTC0012U' : 'VTTC0011U';
+    const trId = type === 'buy' ? 'TTTC0012U' : 'TTTC0011U';
 
     // 2. 주문 구분 (00: 지정가, 01: 시장가)
     const orderDivision = price === 0 ? '01' : '00';
@@ -187,123 +187,6 @@ export async function getAccessToken(): Promise<string> {
     }
 }
 
-/* ============================================================
-    🔵 2) 잔고 조회
-============================================================ */
-export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
-    const trId = 'TTTC8434R';
-
-    const queryParams = new URLSearchParams({
-        CANO,
-        ACNT_PRDT_CD,
-        AFHR_FLPR_YN: 'N',
-        OFL_YN: '',
-        INQR_DVSN: '02',
-        UNPR_DVSN: '01',
-        FUND_STTL_ICLD_YN: 'N',
-        FNCG_AMT_AUTO_RDPT_YN: 'N',
-        PRCS_DVSN: '00',
-        CTX_AREA_FK100: '',
-        CTX_AREA_NK100: '',
-    });
-
-    try {
-        const response = await fetch(`${REST_BASE_URL}/uapi/domestic-stock/v1/trading/inquire-balance?${queryParams.toString()}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                authorization: `Bearer ${accessToken}`,
-                appkey: APP_KEY,
-                appsecret: APP_SECRET,
-                tr_id: trId,
-                custtype: 'P',
-            },
-        });
-
-        const json = await response.json();
-        if (json.rt_cd !== '0') return null;
-
-        const holdings = (json.output1 || []).map((item: any) => ({
-            pdno: item.pdno,
-            prdt_name: item.prdt_name,
-            hldg_qty: Number(item.hldg_qty),
-            ord_psbl_qty: Number(item.ord_psbl_qty),
-            pchs_avg_pric: Number(item.pchs_avg_pric),
-            prpr: Number(item.prpr),
-            evlu_amt: Number(item.evlu_amt),
-            evlu_pfls_amt: Number(item.evlu_pfls_amt),
-            evlu_pfls_rt: Number(item.evlu_pfls_rt),
-        }));
-
-        const summary = json.output2?.[0] || {};
-
-        return {
-            holdings,
-            summary: {
-                dnca_tot_amt: Number(summary.dnca_tot_amt),
-                nxdy_excc_amt: Number(summary.nxdy_excc_amt),
-                prvs_rcdl_excc_amt: Number(summary.prvs_rcdl_excc_amt),
-                scts_evlu_amt: Number(summary.scts_evlu_amt),
-                tot_evlu_amt: Number(summary.tot_evlu_amt),
-                nass_amt: Number(summary.nass_amt),
-                asst_icdc_amt: Number(summary.asst_icdc_amt),
-                tot_loan_amt: Number(summary.tot_loan_amt),
-                evlu_pfls_smtl_amt: Number(summary.evlu_pfls_smtl_amt),
-            }
-        };
-
-    } catch (error) {
-        console.error('잔고 조회 오류:', error);
-        return null;
-    }
-}
-
-/* ============================================================
-    🔵 3) 국내 주식 주문
-============================================================ */
-export async function placeOrder(
-    accessToken: string,
-    type: 'buy' | 'sell',
-    price: number,
-    quantity: number
-) {
-    const trId = type === 'buy' ? 'TTTC0012U' : 'TTTC0011U';
-    const orderDivision = price === 0 ? '01' : '00';
-
-    const body = {
-        CANO,
-        ACNT_PRDT_CD,
-        PDNO: STOCK_CODE,
-        ORD_DVSN: orderDivision,
-        ORD_QTY: String(quantity),
-        ORD_UNPR: String(price),
-    };
-
-    try {
-        const response = await fetch(`${REST_BASE_URL}/uapi/domestic-stock/v1/trading/order-cash`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                authorization: `Bearer ${accessToken}`,
-                appkey: APP_KEY,
-                appsecret: APP_SECRET,
-                tr_id: trId,
-                custtype: 'P',
-            },
-            body: JSON.stringify(body),
-        });
-
-        const json = await response.json();
-        if (json.rt_cd === '0') {
-            return { success: true, msg: `주문 성공 (번호: ${json.output?.ODNO})` };
-        }
-
-        return { success: false, msg: json.msg1 };
-
-    } catch (err) {
-        return { success: false, msg: "주문 오류" };
-    }
-}
 
 /* ============================================================
     🔵 4) 해외 지수 조회 API (추가된 부분)
@@ -390,7 +273,7 @@ export async function fetchHistoricalData(
     else if (period === 'week') startDateObj.setFullYear(today.getFullYear() - 2);
     else startDateObj.setFullYear(today.getFullYear() - 5);
 
-    const startDate = start.toISOString().slice(0, 10).replace(/-/g, '');
+    const startDate = startDateObj.toISOString().slice(0, 10).replace(/-/g, '');
 
     const queryParams = new URLSearchParams({
         FID_COND_MRKT_DIV_CODE: 'J',

@@ -1,4 +1,4 @@
-// src/components/MyBalance.tsx
+// File: `src/components/MyBalance.tsx` (수익 색상 일관성 유지: 양수 빨강, 음수 파랑)
 import { useEffect, useState } from 'react';
 import { fetchAccountBalance, getAccessToken } from '../api/stockApi';
 import type { AccountBalanceData } from '../types/stock';
@@ -38,6 +38,8 @@ export default function MyBalance() {
     if (!balance) return null;
 
     const { summary, holdings } = balance;
+    const positiveColor = '#ff383c';
+    const negativeColor = '#0066ff';
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -50,7 +52,6 @@ export default function MyBalance() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">총 자산</div>
-                        {/* 수정: tot_evlu_amt 대신 scts_evlu_amt 사용 (값 스왑) */}
                         <div className="text-lg font-bold">{summary.scts_evlu_amt.toLocaleString()}원</div>
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
@@ -59,12 +60,11 @@ export default function MyBalance() {
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">주식 평가금액</div>
-                        {/* 수정: scts_evlu_amt 대신 tot_evlu_amt 사용 (값 스왑) */}
                         <div className="text-lg font-bold">{summary.tot_evlu_amt.toLocaleString()}원</div>
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">손익 합계</div>
-                        <div className={`text-lg font-bold ${summary.evlu_pfls_smtl_amt >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                        <div className="text-lg font-bold" style={{ color: summary.evlu_pfls_smtl_amt >= 0 ? positiveColor : negativeColor }}>
                             {summary.evlu_pfls_smtl_amt > 0 ? '+' : ''}{summary.evlu_pfls_smtl_amt.toLocaleString()}원
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default function MyBalance() {
                                     <td className="px-4 py-3 text-right">{stock.pchs_avg_pric.toLocaleString()}원</td>
                                     <td className="px-4 py-3 text-right">{stock.prpr.toLocaleString()}원</td>
                                     <td className="px-4 py-3 text-right font-medium">{stock.evlu_amt.toLocaleString()}원</td>
-                                    <td className={`px-4 py-3 text-right font-bold ${stock.evlu_pfls_rt >= 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                                    <td className="px-4 py-3 text-right font-bold" style={{ color: stock.evlu_pfls_rt >= 0 ? positiveColor : negativeColor }}>
                                         {stock.evlu_pfls_rt > 0 ? '+' : ''}{stock.evlu_pfls_rt.toFixed(2)}%
                                     </td>
                                 </tr>

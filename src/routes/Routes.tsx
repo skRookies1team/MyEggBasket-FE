@@ -13,12 +13,9 @@ import { useRef, useMemo } from "react";
 import PrivateRoute from "../routes/PrivateRoute";
 import Layout from "../components/Layout";
 
-const handleBack = () => {
-  console.log("Back button clicked!");
-};
-
 export default function Router() {
-  const { realtimeData, loading } = useRealtimeStock();
+  const stockCode = "";
+  const { realtimeData } = useRealtimeStock(stockCode);
   const navigate = useNavigate(); // 네비게이션 함수 생성
   const newsRef = useRef([]);
 
@@ -53,15 +50,17 @@ export default function Router() {
 
   return (
     <Layout>
+      <Nav/>
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route
+        
+        <Route element={<PrivateRoute />}>
+          <Route
                     path="/portfolio"
                     element={<PortfolioPage onNavigateToHistory={() => navigate('/history')} />}
                 />
-        <Route element={<PrivateRoute />}>
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/stock/:code" element={<StockDetailPage />} />
           <Route

@@ -93,6 +93,7 @@ export async function fetchAccountBalance(accessToken: string): Promise<AccountB
  * @param quantity 주문 수량
  */
 export async function placeOrder(
+    stockCode: string,
     accessToken: string,
     type: 'buy' | 'sell',
     price: number,
@@ -109,7 +110,7 @@ export async function placeOrder(
     const requestBody = {
         CANO: CANO,                 // 종합계좌번호
         ACNT_PRDT_CD: ACNT_PRDT_CD, // 계좌상품코드
-        PDNO: STOCK_CODE,           // 종목코드
+        PDNO: stockCode,           // 종목코드
         ORD_DVSN: orderDivision,    // 주문구분
         ORD_QTY: String(quantity),  // 주문수량
         ORD_UNPR: String(price),    // 주문단가 (시장가일 경우 0)
@@ -214,6 +215,7 @@ function formatApiDate(dateStr: string) {
  * 기간별 시세 조회 (일/주/월/년)
  */
 export async function fetchHistoricalData(
+    stockCode: string,
     period: 'day' | 'week' | 'month' | 'year',
     accessToken: string
 ): Promise<StockPriceData[]> {
@@ -228,7 +230,6 @@ export async function fetchHistoricalData(
     // 2. 조회 기간 계산
     const today = new Date();
     const endDate = today.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
-
     const startDateObj = new Date();
     if (period === 'day') startDateObj.setMonth(today.getMonth() - 6);
     else if (period === 'week') startDateObj.setFullYear(today.getFullYear() - 2);
@@ -239,7 +240,7 @@ export async function fetchHistoricalData(
     // 3. 쿼리 파라미터 구성
     const queryParams = new URLSearchParams({
         FID_COND_MRKT_DIV_CODE: 'J',
-        FID_INPUT_ISCD: STOCK_CODE,
+        FID_INPUT_ISCD: stockCode,
         FID_INPUT_DATE_1: startDate,
         FID_INPUT_DATE_2: endDate,
         FID_PERIOD_DIV_CODE: periodMap[period],
@@ -285,11 +286,14 @@ export async function fetchHistoricalData(
  * 주식 현재가 시세 조회 (REST API)
  * API: /uapi/domestic-stock/v1/quotations/inquire-price
  */
-export async function fetchCurrentPrice(accessToken: string): Promise<CurrentPriceResult | null> {
+export async function fetchCurrentPrice(
+    accessToken: string,
+    stockCode: string
+): Promise<CurrentPriceResult | null> {
     try {
         const queryParams = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: 'J',
-            FID_INPUT_ISCD: STOCK_CODE,
+            FID_INPUT_ISCD: stockCode,
         });
 
         const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-price?${queryParams.toString()}`;

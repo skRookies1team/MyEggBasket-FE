@@ -50,7 +50,8 @@ export default function MyBalance() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">총 자산</div>
-                        <div className="text-lg font-bold">{summary.tot_evlu_amt.toLocaleString()}원</div>
+                        {/* 수정: tot_evlu_amt 대신 scts_evlu_amt 사용 (값 스왑) */}
+                        <div className="text-lg font-bold">{summary.scts_evlu_amt.toLocaleString()}원</div>
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">예수금 (주문가능)</div>
@@ -58,7 +59,8 @@ export default function MyBalance() {
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">주식 평가금액</div>
-                        <div className="text-lg font-bold">{summary.scts_evlu_amt.toLocaleString()}원</div>
+                        {/* 수정: scts_evlu_amt 대신 tot_evlu_amt 사용 (값 스왑) */}
+                        <div className="text-lg font-bold">{summary.tot_evlu_amt.toLocaleString()}원</div>
                     </div>
                     <div className="p-3 bg-[#f8f9fa] rounded-lg">
                         <div className="text-sm text-gray-500">손익 합계</div>

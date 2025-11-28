@@ -180,3 +180,52 @@ app.get('/api/financials', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
 });
+
+// 🔥 실전투자 잔고 조회 프록시
+app.get('/api/account/balance', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    const appkey = process.env.VITE_APP_KEY || process.env.APP_KEY;
+    const appsecret = process.env.VITE_APP_SECRET || process.env.APP_SECRET;
+    const CANO = process.env.CANO;
+    const ACNT = process.env.ACNT_PRDT_CD || '01';
+
+    if (!token) return res.status(400).json({ error: "Missing access token" });
+
+    const query = new URLSearchParams({
+      CANO,
+      ACNT_PRDT_CD: ACNT,
+      AFHR_FLPR_YN: 'N',
+      OFL_YN: '',
+      INQR_DVSN: '02',
+      UNPR_DVSN: '01',
+      FUND_STTL_ICLD_YN: 'N',
+      FNCG_AMT_AUTO_RDPT_YN: 'N',
+      PRCS_DVSN: '00',
+      CTX_AREA_FK100: '',
+      CTX_AREA_NK100: '',
+    }).toString();
+
+    const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/trading/inquire-balance?${query}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: `Bearer ${token}`,
+        appkey,
+        appsecret,
+        tr_id: 'TTTC8434R',   // 실전투자 TR
+        custtype: 'P',
+      }
+    });
+
+    const json = await response.json();
+    return res.json(json);
+
+  } catch (err) {
+    console.error("잔고조회 프록시 에러:", err);
+    return res.status(500).json({ error: "서버 내부 오류" });
+  }
+});
+

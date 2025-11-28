@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
-import type { OrderBookData } from '../../types/stock';
-import { placeOrder, getAccessToken } from '../../api/stockApi';
+import {useState, useEffect} from 'react';
+import type {OrderBookData} from '../../types/stock';
+import {placeOrder, getAccessToken} from '../../api/stockApi';
 import MyBalance from "../MyBalance.tsx";
 
 interface StockOrderBookProps {
-    orderBook: OrderBookData;
-    currentPrice: number;
+    orderBook: OrderBookData,
+    currentPrice: number,
+    stockCode: string
 }
 
-export function StockOrderBook({ orderBook, currentPrice }: StockOrderBookProps) {
+export function StockOrderBook({orderBook, currentPrice, stockCode}: StockOrderBookProps) {
     // 입력 상태 관리
     const [price, setPrice] = useState<number>(currentPrice);
     const [quantity, setQuantity] = useState<number>(0);
@@ -44,7 +45,7 @@ export function StockOrderBook({ orderBook, currentPrice }: StockOrderBookProps)
             }
 
             // 2. 주문 요청
-            const result = await placeOrder(token, type, price, quantity);
+            const result = await placeOrder(stockCode, token, type, price, quantity);
 
             alert(result.msg);
 
@@ -68,10 +69,11 @@ export function StockOrderBook({ orderBook, currentPrice }: StockOrderBookProps)
                 <div className="space-y-1">
                     {/* 매도 잔량 (역순) */}
                     {orderBook.sell?.slice().reverse().map((order, idx) => (
-                        <div key={`sell-${idx}`} className="relative p-2 rounded cursor-pointer hover:bg-blue-50" onClick={() => setPrice(order.price)}>
+                        <div key={`sell-${idx}`} className="relative p-2 rounded cursor-pointer hover:bg-blue-50"
+                             onClick={() => setPrice(order.price)}>
                             <div
                                 className="absolute inset-0 bg-[#e3f2fd] rounded transition-all duration-300 opacity-50"
-                                style={{ width: `${order.percent}%` }}
+                                style={{width: `${order.percent}%`}}
                             />
                             <div className="relative flex justify-between text-[13px] z-10">
                                 <span className="text-[#0066ff]">₩{order.price.toLocaleString()}</span>
@@ -86,10 +88,11 @@ export function StockOrderBook({ orderBook, currentPrice }: StockOrderBookProps)
 
                     {/* 매수 잔량 */}
                     {orderBook.buy?.map((order, idx) => (
-                        <div key={`buy-${idx}`} className="relative p-2 rounded cursor-pointer hover:bg-red-50" onClick={() => setPrice(order.price)}>
+                        <div key={`buy-${idx}`} className="relative p-2 rounded cursor-pointer hover:bg-red-50"
+                             onClick={() => setPrice(order.price)}>
                             <div
                                 className="absolute inset-0 bg-[#ffebee] rounded transition-all duration-300 opacity-50"
-                                style={{ width: `${order.percent}%` }}
+                                style={{width: `${order.percent}%`}}
                             />
                             <div className="relative flex justify-between text-[13px] z-10">
                                 <span className="text-[#ff383c]">₩{order.price.toLocaleString()}</span>

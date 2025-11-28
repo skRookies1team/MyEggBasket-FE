@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type ChangeEvent } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { StockHeader } from '../components/stock/StockHeader';
 import { StockChart } from '../components/stock/StockChart';
 import { StockOrderBook } from '../components/stock/StockOrderBook';
@@ -9,33 +10,121 @@ import { StockFinancials } from '../components/stock/StockFinancials';
 import { StockReports } from '../components/stock/StockReports';
 import { FINANCIAL_SERVICE_KEY } from '../config/api';
 
-// ★ API 함수들 import
+// ★ API 및 훅 import
 import {
     fetchHistoricalData,
     getAccessToken,
     fetchCurrentPrice,
 } from '../api/stockApi';
+import { useRealtimeStock } from '../hooks/useRealtimeStock'; // 실시간 훅 추가
 
 import type { StockDetailData, Period, TabType, StockPriceData, FinancialData, CurrentPriceResult } from '../types/stock';
 
+// --------------------------------------------------------------------------
+// Types
+// --------------------------------------------------------------------------
 type RealtimePoint = { price: number; volume?: number; time?: string } | undefined;
 type RealtimeInfo = { askp1?: number; bidp1?: number; acml_vol?: number; time?: string; stck_prpr?: number; prdy_vrss?: number; prdy_ctrt?: number; } | undefined;
 
-interface StockDetailPageProps {
+interface StockDetailViewProps {
     stockName: string;
+    stockCode: string; // 종목 코드 추가
     data: StockDetailData | null;
     onBack: () => void;
     isLoading?: boolean;
+    realtimePoint?: RealtimePoint;
+    realtimeInfo?: RealtimeInfo;
 }
 
-export function StockDetailPage({
-                                    stockName,
-                                    data,
-                                    onBack,
-                                    isLoading = false,
-                                    realtimePoint,
-                                    realtimeInfo
-                                }: StockDetailPageProps & { realtimePoint?: RealtimePoint; realtimeInfo?: RealtimeInfo }) {
+// --------------------------------------------------------------------------
+// [Container] 데이터 로딩 및 상태 관리 (진입점)
+// --------------------------------------------------------------------------
+export default function StockDetailPage() {
+    const { code } = useParams<{ code: string }>();
+    const navigate = useNavigate();
+
+    // URL에 코드가 없으면 기본값(삼성전자) 사용 (혹은 에러 처리)
+    const stockCode = code || "005930";
+
+    // 간단한 종목명 매핑 헬퍼 (실제 서비스에서는 종목 마스터 API 필요)
+    const getStockName = (code: string) => {
+        const map: Record<string, string> = {
+            "005930": "삼성전자",
+            "000660": "SK하이닉스",
+            "035420": "NAVER",
+            "005380": "현대차",
+            "051910": "LG화학"
+        };
+        return map[code] || `종목(${code})`;
+    };
+
+    // 1. 훅을 통해 해당 종목(stockCode)의 실시간 데이터 구독
+    const { realtimeData, loading } = useRealtimeStock(stockCode);
+
+    // 2. 뉴스 데이터 (예시용 고정값 유지, 필요시 API 호출로 변경 가능)
+    const newsRef = useRef([]);
+
+    // 3. 데이터 조합 (Routes.tsx에 있던 로직 이동)
+    const combinedData: StockDetailData = useMemo(() => ({
+        currentPrice: realtimeData.currentPrice,
+        changeAmount: realtimeData.changeAmount,
+        changeRate: realtimeData.changeRate,
+        chartData: [],
+        orderBook: { sell: [], buy: [] },
+        news: newsRef.current,
+        financials: { revenue: [], profit: [] },
+        reports: [],
+    }), [realtimeData.currentPrice, realtimeData.changeAmount, realtimeData.changeRate]);
+
+    const hasRealtime = realtimeData && realtimeData.currentPrice !== 0;
+
+    // 실시간 포인트 (분봉 차트 업데이트용)
+    const realtimePoint = hasRealtime
+        ? {
+            price: realtimeData.currentPrice,
+            volume: realtimeData.acml_vol ?? 0,
+            time: new Date().toISOString(),
+        }
+        : undefined;
+
+    // 실시간 헤더 정보 (호가, 누적거래량 등)
+    const realtimeInfo = hasRealtime
+        ? {
+            askp1: realtimeData.askp1,
+            bidp1: realtimeData.bidp1,
+            acml_vol: realtimeData.acml_vol,
+            time: new Date().toISOString(),
+            stck_prpr: realtimeData.stck_prpr,
+            prdy_vrss: realtimeData.prdy_vrss,
+            prdy_ctrt: realtimeData.prdy_ctrt,
+        }
+        : undefined;
+
+    return (
+        <StockDetailView
+            stockName={getStockName(stockCode)}
+            stockCode={stockCode}
+            data={combinedData}
+            onBack={() => navigate(-1)}
+            isLoading={loading}
+            realtimePoint={realtimePoint}
+            realtimeInfo={realtimeInfo}
+        />
+    );
+}
+
+// --------------------------------------------------------------------------
+// [View] 실제 UI 렌더링 (기존 StockDetailPage 로직)
+// --------------------------------------------------------------------------
+function StockDetailView({
+                             stockName,
+                             stockCode,
+                             data,
+                             onBack,
+                             isLoading = false,
+                             realtimePoint,
+                             realtimeInfo
+                         }: StockDetailViewProps) {
 
     const [period, setPeriod] = useState<Period>('day');
     const [activeTab, setActiveTab] = useState<TabType>('chart');
@@ -54,13 +143,14 @@ export function StockDetailPage({
     const [historicalData, setHistoricalData] = useState<StockPriceData[]>([]);
     const [isChartLoading, setIsChartLoading] = useState<boolean>(false);
 
-    // ★ REST API로 받아온 현재가 정보 (누적거래량 포함)
+    // REST API 현재가 정보
     const [restInfo, setRestInfo] = useState<CurrentPriceResult | null>(null);
 
     // --------------------------------------------------------------------------
     // 분봉 전용 로직 (Websocket + LocalStorage)
     // --------------------------------------------------------------------------
-    const STORAGE_KEY = 'live_chart_points_005930';
+    // 종목 코드별로 로컬스토리지 키 분리
+    const STORAGE_KEY = `live_chart_points_${stockCode}`;
     const collectedRef = useRef<StockPriceData[]>([]);
     const [collectedVersion, setCollectedVersion] = useState(0);
 
@@ -87,11 +177,13 @@ export function StockDetailPage({
                     ? parsed.map(p => ({ ...p, time: normalizeTimeLabel(p.time) })).slice(-minuteWindow)
                     : [];
                 setCollectedVersion(v => v + 1);
+            } else {
+                collectedRef.current = []; // 키가 바뀌면 초기화
             }
         } catch {
             collectedRef.current = [];
         }
-    }, []);
+    }, [STORAGE_KEY, minuteWindow]); // STORAGE_KEY 변경 시 재실행
 
     // 실시간 포인트 수집
     useEffect(() => {
@@ -117,7 +209,7 @@ export function StockDetailPage({
             // ignore
         }
         setCollectedVersion(v => v + 1);
-    }, [realtimePoint, minuteWindow]);
+    }, [realtimePoint, minuteWindow, STORAGE_KEY]);
 
 
     // --------------------------------------------------------------------------
@@ -133,7 +225,7 @@ export function StockDetailPage({
                 const token = await getAccessToken();
                 if (!token || !isMounted) return;
 
-                const result = await fetchHistoricalData(period, token);
+                const result = await fetchHistoricalData(stockCode, period, token);
                 if (isMounted) {
                     setHistoricalData(result);
                 }
@@ -146,10 +238,10 @@ export function StockDetailPage({
 
         loadHistory();
         return () => { isMounted = false; };
-    }, [period]);
+    }, [period, stockCode]); // stockCode 변경 시 재조회
 
     // --------------------------------------------------------------------------
-    // ★ [추가] 초기 REST API 현재가/누적거래량 로드
+    // 초기 REST API 현재가/누적거래량 로드
     // --------------------------------------------------------------------------
     useEffect(() => {
         let isMounted = true;
@@ -157,7 +249,8 @@ export function StockDetailPage({
             const token = await getAccessToken();
             if (!token) return;
 
-            const info = await fetchCurrentPrice(token);
+            // *주의*: fetchCurrentPrice도 stockCode 인자 필요 (현재는 상수 사용 중)
+            const info = await fetchCurrentPrice(token, stockCode);
             if (isMounted && info) {
                 setRestInfo(info);
             }
@@ -165,7 +258,7 @@ export function StockDetailPage({
 
         loadCurrentInfo();
         return () => { isMounted = false; };
-    }, []);
+    }, [stockCode]);
 
 
     // --------------------------------------------------------------------------
@@ -205,7 +298,7 @@ export function StockDetailPage({
 
     }, [period, data, collectedVersion, realtimePoint, minuteWindow, historicalData]);
 
-    const fixedDomainRef = useRef<[number, number] | null>([80000, 100000]);
+    const fixedDomainRef = useRef<[number, number] | null>([80000, 100000]); // 종목별로 달라져야 할 수 있음
 
     if (isLoading || !data) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -284,7 +377,7 @@ export function StockDetailPage({
         }
     };
 
-    // ★ 표시할 데이터 결정 (웹소켓 실시간 > REST 조회 > 초기 Props)
+    // 데이터 결정
     const displayPrice = realtimeInfo?.stck_prpr ?? restInfo?.stck_prpr ?? data.currentPrice;
     const displayChange = realtimeInfo?.prdy_vrss ?? restInfo?.prdy_vrss ?? data.changeAmount;
     const displayRate = realtimeInfo?.prdy_ctrt ?? restInfo?.prdy_ctrt ?? data.changeRate;
@@ -304,7 +397,7 @@ export function StockDetailPage({
                 lastUpdate={realtimeInfo?.time}
                 askp1={realtimeInfo?.askp1}
                 bidp1={realtimeInfo?.bidp1}
-                acmlVol={displayVol} // ★ REST 또는 WS로 받은 정확한 거래량 전달
+                acmlVol={displayVol}
             />
 
             {period === 'minute' && (
@@ -345,10 +438,14 @@ export function StockDetailPage({
                 )}
 
                 {activeTab === 'order' && (
-                    <StockOrderBook orderBook={data.orderBook} currentPrice={displayPrice} />
+                    <StockOrderBook
+                        stockCode={stockCode}
+                        orderBook={data.orderBook}
+                        currentPrice={displayPrice}
+                    />
                 )}
 
-                {activeTab === 'news' && <StockNews data={data.news} query={"삼성전자"} />}
+                {activeTab === 'news' && <StockNews data={data.news} query={stockName.split(' ')[0]} />}
 
                 {activeTab === 'info' && (
                     <div>
@@ -374,5 +471,3 @@ export function StockDetailPage({
         </div>
     );
 }
-
-export default StockDetailPage;

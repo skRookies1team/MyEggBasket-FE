@@ -1,5 +1,5 @@
 // src/api/stockApi.ts
-import { REST_BASE_URL, APP_KEY, APP_SECRET, STOCK_CODE, CANO, ACNT_PRDT_CD } from '../config/api';
+import { REST_BASE_URL, APP_KEY, APP_SECRET, CANO, ACNT_PRDT_CD } from '../config/api';
 import type { StockPriceData, CurrentPriceResult, AccountBalanceData } from '../types/stock';
 
 /**

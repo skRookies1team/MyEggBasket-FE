@@ -13,6 +13,7 @@ interface SignupRequest {
   username: string;
   appkey: string;
   appsecret: string;
+  account: string;
 }
 
 interface User {

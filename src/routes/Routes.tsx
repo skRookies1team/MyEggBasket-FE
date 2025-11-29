@@ -7,10 +7,11 @@ import StockDetailPage from "../pages/StockDetailPage";
 import {PortfolioPage} from "../pages/PortfolioPage.tsx";
 import MyPage from "../pages/MyPage";
 import PrivateRoute from "../routes/PrivateRoute";
-import Layout from "../components/Layout";
+import Layout from "../components/Layout.tsx";
 
 export default function Router() {
   const navigate = useNavigate(); // 네비게이션 함수 생성
+
 
   return (
     <Layout>

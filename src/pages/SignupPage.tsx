@@ -1,8 +1,8 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/LoginPage.css";
-import axios from "axios";
 import { useAuthStore } from "../store/authStore";  
+import axios from "axios";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ export default function SignupPage() {
     username: "",
     appkey: "",
     appsecret: "",
+    account: ""
   });
 
   const handleChange =
@@ -45,6 +46,7 @@ export default function SignupPage() {
         username: formData.username,
         appkey: formData.appkey,
         appsecret: formData.appsecret,
+        account: formData.account
       });
 
       alert("회원가입 완료!");
@@ -126,6 +128,17 @@ export default function SignupPage() {
           value={formData.appsecret}
           onChange={handleChange("appsecret")}
           placeholder="한국투자증권 APP_SECRET"
+        />
+      </div>
+
+      
+      <div className="input-group">
+        <label>계좌번호</label>
+        <input
+          type="text"
+          value={formData.account}
+          onChange={handleChange("account")}
+          placeholder="한국투자증권 계좌번호"
         />
       </div>
 

@@ -1,0 +1,145 @@
+/* ===== 전체 페이지 공통 ===== */
+.main-container {
+  padding: 0 16px;
+  background: #fff;
+}
+
+/* ===== 주요 지수 섹션 (sticky) ===== */
+
+.ticker-sticky {
+  position: sticky;
+  top: 56px; /* Nav 높이에 맞춤 */
+  z-index: 20;
+  background: white;
+}
+
+.market-index-section {
+  position: relative;
+  top: 56px; /* 네비게이션 높이 */
+  z-index: 10;
+  background: #fff;
+  padding: 12px 0 8px 0;
+  margin-bottom: 60px;
+
+}
+
+.market-index-title {
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===== 주요 지수 그리드 ===== */
+.market-index-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+/* ===== 탭 메뉴 ===== */
+.tab-menu {
+  margin-top: 28px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  background: #fff;
+
+  position: static !important;
+  top: auto !important;
+  z-index: 1;
+}
+
+
+.tab-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #222;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.tab-button.active {
+  background: #222;
+  color: #fff;
+}
+
+/* ===== 탭 콘텐츠 영역 ===== */
+.tab-content {
+  margin-top: 20px;
+  padding-bottom: 200px;
+  font-size: 16px;
+}
+
+/* ===== 실시간 종목 TOP 5 ===== */
+
+.top5-section {
+  margin-top: 24px;
+}
+
+.top5-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.top5-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.top5-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.top5-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top5-rank {
+  font-size: 15px;
+  color: #888;
+  width: 22px;
+  text-align: center;
+}
+
+.top5-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.top5-right {
+  text-align: right;
+}
+
+.top5-change {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.top5-change.up {
+  color: #ff383c; /* 빨강 */
+}
+
+.top5-change.down {
+  color: #0066ff; /* 파랑 */
+}
+
+.top5-price {
+  font-weight: 600;
+  font-size: 14px;
+}
+

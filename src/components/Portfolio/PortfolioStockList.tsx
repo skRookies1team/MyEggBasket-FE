@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Newspaper, FileText, Link2 } from 'lucide-react';
+import { Newspaper, FileText } from 'lucide-react';
 
 interface StockReason {
     news: string[];

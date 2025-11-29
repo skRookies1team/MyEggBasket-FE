@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, X } from 'lucide-react';
-import { fetchAccountBalance, getAccessToken } from '../api/stockApi';
-import type { AccountBalanceData } from '../types/stock';
+import { Plus, X, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { fetchAccountBalance, getAccessToken, fetchHistoricalData, fetchCurrentPrice } from '../api/stockApi';
+import type { AccountBalanceData, StockPriceData } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
 import '../assets/PortfolioPage.css';
@@ -10,29 +11,137 @@ import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
 import { PortfolioStockList } from '../components/Portfolio/PortfolioStockList';
 import { AddPortfolioModal } from '../components/Portfolio/AddPortfolioModal';
 
-interface PortfolioPageProps {
-    onNavigateToHistory: () => void;
+// ----------------------------------------------------------------------
+// [수정] 개별 종목 트렌드 카드 (CSS 클래스 + 인라인 스타일 적용)
+// ----------------------------------------------------------------------
+function StockTrendCard({ code, name, quantity, avgPrice }: { code: string, name: string, quantity: number, avgPrice: number }) {
+    const [chartData, setChartData] = useState<StockPriceData[]>([]);
+    const [currentPrice, setCurrentPrice] = useState<number>(0);
+    const [changeRate, setChangeRate] = useState<number>(0);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            const token = await getAccessToken();
+            if (!token) return;
+
+            // 1. 차트 데이터 (일봉, 최근 30일)
+            const history = await fetchHistoricalData(code, 'day', token);
+
+            // 2. 현재가 정보
+            const current = await fetchCurrentPrice(token, code);
+
+            if (isMounted) {
+                if (history && history.length > 0) {
+                    setChartData(history.slice(-30));
+                }
+                if (current) {
+                    setCurrentPrice(current.stck_prpr);
+                    setChangeRate(current.prdy_ctrt);
+                }
+            }
+        };
+        loadData();
+        return () => { isMounted = false; };
+    }, [code]);
+
+    // 수익금/수익률 계산
+    const profit = (currentPrice - avgPrice) * quantity;
+    const profitRate = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
+    const isPositive = changeRate >= 0;
+    const isProfit = profit >= 0;
+
+    const color = isPositive ? '#ff383c' : '#0066ff';
+    const profitColor = isProfit ? '#ff383c' : '#0066ff';
+
+    return (
+        // 기존 CSS 클래스 .stock-card 재사용 또는 인라인 스타일 적용
+        <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            border: '1px solid #d9d9d9',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+        }}>
+            <div style={{ marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e1e1e', marginBottom: '4px' }}>{name}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e1e1e' }}>
+                        {currentPrice ? `₩${currentPrice.toLocaleString()}` : '-'}
+                    </p>
+                    {currentPrice > 0 && (
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: color }}>
+                            {isPositive ? '+' : ''}{changeRate}%
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* 차트 영역 */}
+            <div style={{ height: '120px', width: '100%', marginBottom: '12px' }}>
+                {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                            <XAxis
+                                dataKey="time"
+                                tick={{ fontSize: 10, fill: '#999' }}
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={(val) => val.slice(5)}
+                                interval="preserveStartEnd"
+                            />
+                            <YAxis
+                                hide={true}
+                                domain={['auto', 'auto']}
+                            />
+                            <Tooltip
+                                formatter={(value: number) => [`₩${value.toLocaleString()}`, '주가']}
+                                labelFormatter={(label) => label}
+                                contentStyle={{ borderRadius: '8px', border: '1px solid #eee', fontSize: '12px' }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="price"
+                                stroke={color}
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '12px', color: '#999' }}>
+                        데이터 로딩중...
+                    </div>
+                )}
+            </div>
+
+            <div style={{
+                paddingTop: '12px',
+                borderTop: '1px solid #f0f0f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '12px'
+            }}>
+                <span style={{ color: '#666' }}>
+                    {quantity.toLocaleString()}주 (평단 ₩{avgPrice.toLocaleString()})
+                </span>
+                <span style={{ fontWeight: '600', color: profitColor }}>
+                    {isProfit ? '+' : ''}₩{profit.toLocaleString()} ({isProfit ? '+' : ''}{profitRate.toFixed(2)}%)
+                </span>
+            </div>
+        </div>
+    );
 }
 
-interface Portfolio {
-    id: number;
-    name: string;
-    type: 'risk' | 'neutral' | 'safe';
-    stocks: {
-        name: string;
-        allocation: number;
-        reason: {
-            news: string[];
-            reports: string[];
-            valueChain: string[];
-        };
-    }[];
-}
+// ----------------------------------------------------------------------
+// 메인 페이지 컴포넌트
+// ----------------------------------------------------------------------
 
 export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
-    // ----------------------------------------------------------------------
-    // 1. 실제 계좌 데이터 (Real Data)
-    // ----------------------------------------------------------------------
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -54,22 +163,26 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
     }, []);
 
     const myAssets = useMemo(() => {
-        if (!balanceData) return { total: 0, cash: 0, investment: 0, profit: 0, profitRate: 0, stockEval: 0 };
+        if (!balanceData) return { total: 0, cash: 0, d1Cash: 0, d2Cash: 0, investment: 0, profit: 0, profitRate: 0, stockEval: 0 };
         const { summary } = balanceData;
-        const total = summary.scts_evlu_amt;
-        const stockEval = summary.tot_evlu_amt;
+
+        const total = summary.tot_evlu_amt;
+        const stockEval = summary.scts_evlu_amt;
         const cash = summary.dnca_tot_amt;
+        const d1Cash = summary.nxdy_excc_amt;
+        const d2Cash = summary.prvs_rcdl_excc_amt;
         const profit = summary.evlu_pfls_smtl_amt;
         const investment = total - profit;
         const profitRate = investment !== 0 ? (profit / investment) * 100 : 0;
-        return { total, cash, investment, profit, profitRate, stockEval };
+
+        return { total, cash, d1Cash, d2Cash, investment, profit, profitRate, stockEval };
     }, [balanceData]);
 
     const assetCompositionData = useMemo(() => {
         if (myAssets.total === 0) return [];
         return [
             { name: '주식', value: myAssets.stockEval, color: '#4f378a' },
-            { name: '현금', value: myAssets.cash, color: '#00b050' },
+            { name: '현금', value: myAssets.d2Cash, color: '#00b050' },
         ];
     }, [myAssets]);
 
@@ -87,7 +200,6 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
         return data;
     }, [balanceData]);
 
-    // 섹터 데이터 (더미 - 실제 API가 제공하지 않음)
     const sectorCompositionData = [
         { name: 'IT/기술', value: 63, color: '#4f378a' },
         { name: '금융', value: 15, color: '#ffa500' },
@@ -95,9 +207,6 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
         { name: '기타', value: 10, color: '#d9d9d9' },
     ];
 
-    // ----------------------------------------------------------------------
-    // 2. 포트폴리오 관리 (Mock Data)
-    // ----------------------------------------------------------------------
     const [portfolios, setPortfolios] = useState<Portfolio[]>([
         {
             id: 1,
@@ -136,7 +245,7 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
             id: newId,
             name: `포트폴리오 ${newId}`,
             type: type,
-            stocks: [] // 실제로는 타입별 프리셋 데이터 로드
+            stocks: []
         };
         setPortfolios([...portfolios, newPortfolio]);
         setActivePortfolioId(newId);
@@ -193,10 +302,12 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                         {/* 1. 자산 요약 */}
                         <AssetSummary
                             total={myAssets.total}
-                            investment={myAssets.investment}
+                            stockEval={myAssets.stockEval}
                             profit={myAssets.profit}
                             profitRate={myAssets.profitRate}
                             cash={myAssets.cash}
+                            d1Cash={myAssets.d1Cash}
+                            d2Cash={myAssets.d2Cash}
                             loading={loading}
                         />
 
@@ -207,7 +318,33 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                             sectorData={sectorCompositionData}
                         />
 
-                        {/* 3. AI 추천 종목 리스트 */}
+                        {/* 3. 내 보유 주식 추이 */}
+                        {balanceData?.holdings && balanceData.holdings.length > 0 && (
+                            <div className="section-card">
+                                <div className="section-header" style={{ marginBottom: '20px' }}>
+                                    <TrendingUp className="size-5 text-purple" style={{ marginRight: '8px' }} />
+                                    <h3 className="section-title">내 보유 주식 추이</h3>
+                                </div>
+                                {/* Grid Layout with Inline Style */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                    gap: '24px'
+                                }}>
+                                    {balanceData.holdings.map((stock) => (
+                                        <StockTrendCard
+                                            key={stock.pdno}
+                                            code={stock.pdno}
+                                            name={stock.prdt_name}
+                                            quantity={stock.hldg_qty}
+                                            avgPrice={stock.pchs_avg_pric}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. AI 추천 종목 리스트 */}
                         <PortfolioStockList stocks={activePortfolio.stocks} />
                     </div>
                 )}

@@ -38,6 +38,26 @@ export async function searchStocksFromDB(keyword: string): Promise<StockSearchRe
     }
 }
 
+// [추가] 단일 종목 상세 정보 조회 (DB) - 섹터 정보 획득용
+export async function getStockInfoFromDB(code: string): Promise<StockSearchResult | null> {
+    try {
+        const response = await fetch(`${REST_BASE_URL}/app/stocks/${code}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Stock info fetch error:", error);
+        return null;
+    }
+}
+
 export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
     const trId = 'TTTC8434R'; // 모의투자 잔고조회 TR ID
 

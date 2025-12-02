@@ -13,4 +13,5 @@ export const REST_BASE_URL = "/api";
 export const WS_URL = "ws://ops.koreainvestment.com:21000";
 
 // 구독할 종목 코드와 TR ID
-export const TR_ID = "H0STCNT0";
+export const TR_ID1 = "H0STCNT0"; // 실시간 종목체결가
+export const TR_ID2 = "H0UPCNT0"; // 실시간 지수체결가

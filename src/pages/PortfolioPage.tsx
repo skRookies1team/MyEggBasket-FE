@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchAccountBalance, getAccessToken, fetchHistoricalData, fetchCurrentPrice } from '../api/stockApi';
+import { fetchAccountBalance, getAccessToken, fetchHistoricalData, fetchCurrentPrice, getStockInfoFromDB } from '../api/stockApi';
 import type { AccountBalanceData, StockPriceData } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
@@ -145,6 +145,7 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [sectorCompositionData, setSectorCompositionData] = useState<{ name: string, value: number, color: string }[]>([]);
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -188,24 +189,81 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
 
     const stockCompositionData = useMemo(() => {
         if (!balanceData?.holdings) return [];
-        const sorted = [...balanceData.holdings].sort((a, b) => b.evlu_amt - a.evlu_amt);
+
+        // 1. 보유 수량이 0보다 큰 종목만 필터링
+        const validHoldings = balanceData.holdings.filter(item => item.hldg_qty > 0);
+
+        // 2. 평가금액 순으로 정렬
+        const sorted = [...validHoldings].sort((a, b) => b.evlu_amt - a.evlu_amt);
+
+        // 3. 상위 4개 종목과 나머지(기타)로 분류
         const topStocks = sorted.slice(0, 4);
         const otherValue = sorted.slice(4).reduce((sum, item) => sum + item.evlu_amt, 0);
+
         const data = topStocks.map((stock, index) => ({
             name: stock.prdt_name,
             value: stock.evlu_amt,
             color: ['#ff383c', '#4f378a', '#00b050', '#ffa500'][index % 4]
         }));
-        if (otherValue > 0) data.push({ name: '기타', value: otherValue, color: '#d9d9d9' });
+
+        if (otherValue > 0) {
+            data.push({ name: '기타', value: otherValue, color: '#d9d9d9' });
+        }
+
         return data;
     }, [balanceData]);
 
-    const sectorCompositionData = [
-        { name: 'IT/기술', value: 63, color: '#4f378a' },
-        { name: '금융', value: 15, color: '#ffa500' },
-        { name: '바이오', value: 12, color: '#0066ff' },
-        { name: '기타', value: 10, color: '#d9d9d9' },
-    ];
+    useEffect(() => {
+        const calculateSectorComposition = async () => {
+            if (!balanceData?.holdings) return;
+
+            // 1. 보유 수량이 0보다 큰 종목만 필터링
+            const validHoldings = balanceData.holdings.filter(item => item.hldg_qty > 0);
+
+            if (validHoldings.length === 0) {
+                setSectorCompositionData([]);
+                return;
+            }
+
+            // 2. 각 종목의 섹터 정보 비동기 병렬 조회
+            const promises = validHoldings.map(async (stock) => {
+                const info = await getStockInfoFromDB(stock.pdno);
+                // 정보가 없거나 섹터가 빈 문자열이면 '기타'로 분류
+                const sectorName = (info && info.sector && info.sector.trim() !== "") ? info.sector : '기타';
+                return {
+                    sector: sectorName,
+                    value: stock.evlu_amt
+                };
+            });
+
+            const results = await Promise.all(promises);
+
+            // 3. 섹터별 금액 합산 (Grouping)
+            const sectorMap: Record<string, number> = {};
+            results.forEach(({ sector, value }) => {
+                sectorMap[sector] = (sectorMap[sector] || 0) + value;
+            });
+
+            // 4. 배열 변환 및 정렬 (금액 높은 순)
+            const sortedSectors = Object.entries(sectorMap)
+                .map(([name, value]) => ({ name, value }))
+                .sort((a, b) => b.value - a.value);
+
+            // 5. 색상 할당
+            const COLORS = ['#4f378a', '#ffa500', '#0066ff', '#ff383c', '#00b050', '#00bcd4', '#795548'];
+
+            const finalData = sortedSectors.map((item, index) => ({
+                name: item.name,
+                value: item.value,
+                // '기타'는 회색, 나머지는 순서대로 색상 부여
+                color: item.name === '기타' ? '#d9d9d9' : COLORS[index % COLORS.length]
+            }));
+
+            setSectorCompositionData(finalData);
+        };
+
+        calculateSectorComposition();
+    }, [balanceData]); // balanceData가 변경될 때마다 실행
 
     const [portfolios, setPortfolios] = useState<Portfolio[]>([
         {
@@ -331,14 +389,16 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                                     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                                     gap: '24px'
                                 }}>
-                                    {balanceData.holdings.map((stock) => (
-                                        <StockTrendCard
-                                            key={stock.pdno}
-                                            code={stock.pdno}
-                                            name={stock.prdt_name}
-                                            quantity={stock.hldg_qty}
-                                            avgPrice={stock.pchs_avg_pric}
-                                        />
+                                    {balanceData.holdings
+                                        .filter(stock => stock.hldg_qty > 0) // 필터 추가
+                                        .map((stock) => (
+                                            <StockTrendCard
+                                                key={stock.pdno}
+                                                code={stock.pdno}
+                                                name={stock.prdt_name}
+                                                quantity={stock.hldg_qty}
+                                                avgPrice={stock.pchs_avg_pric}
+                                            />
                                     ))}
                                 </div>
                             </div>

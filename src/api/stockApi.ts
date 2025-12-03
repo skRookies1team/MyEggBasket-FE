@@ -1,15 +1,15 @@
 // src/api/stockApi.ts
 import { REST_BASE_URL, APP_KEY, APP_SECRET, CANO, ACNT_PRDT_CD } from '../config/api';
 import type { StockPriceData, CurrentPriceResult, AccountBalanceData } from '../types/stock';
-import type { IndexData } from "../api/stockIndex";
+
 
 /**
  * 주식 잔고 조회 (모의투자)
  * API: /uapi/domestic-stock/v1/trading/inquire-balance
- * TR_ID: VTTC8434R (모의투자)
+ * TR_ID: TTTC8434R (실전투자) /  VTTC8434R (모의투자)
  */
 export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
-    const trId = 'TTTC8434R'; // 모의투자 잔고조회 TR ID
+    const trId = 'TTTC8434R'; // 실전투자 잔고조회 TR ID
 
     // API 문서에 따른 필수 쿼리 파라미터 구성
     const queryParams = new URLSearchParams({
@@ -40,7 +40,8 @@ export async function fetchAccountBalance(accessToken: string): Promise<AccountB
         });
 
         if (!response.ok) {
-            console.error(`Balance API Error: ${response.status}`);
+            const text = await response.text();
+            console.error(`Balance API Error: ${response.status}`, text);
             return null;
         }
 
@@ -100,8 +101,8 @@ export async function placeOrder(
     price: number,
     quantity: number
 ): Promise<{ success: boolean; msg: string }> {
-    // 1. 모의투자용 TR ID 설정
-    // 매도: VTTC0011U, 매수: VTTC0012U
+    // 1. 실전투자용 TR ID 설정
+    // 매도: TTTC0011U, 매수: TTTC0012U
     const trId = type === 'buy' ? 'TTTC0012U' : 'TTTC0011U';
 
     // 2. 주문 구분 (00: 지정가, 01: 시장가)
@@ -191,6 +192,15 @@ export async function getAccessToken(): Promise<string> {
 /* ============================================================
     🔵 4) 해외 지수 조회 API (추가된 부분)
 ============================================================ */
+export interface IndexData {
+  indexName: string;
+  time: string;
+  current: number;
+  change: number;
+  rate: number;
+  volume: number;
+}
+
 export async function fetchOverseasIndex(
     code: string,
     name: string
@@ -240,9 +250,9 @@ export async function fetchOverseasIndex(
 }
 
 // 해외 주요 지수 단축 호출
-export const fetchSP500 = () => fetchOverseasIndex("SPI", "S&P500");
+export const fetchSP500 = () => fetchOverseasIndex("SPX", "S&P500");
 export const fetchNasdaq100 = () => fetchOverseasIndex("NDX", "NASDAQ100");
-export const fetchDowJones = () => fetchOverseasIndex("DJI", "DOWJONES");
+export const fetchDowJones = () => fetchOverseasIndex("DOW", "DOWJONES");
 export const fetchWTI = () => fetchOverseasIndex("CL", "WTI");
 
 /* ============================================================
@@ -252,6 +262,16 @@ function formatApiDate(dateStr: string) {
     if (!dateStr || dateStr.length !== 8) return dateStr;
     return `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
 }
+
+export interface IndexData {
+  indexName: string;
+  time: string;
+  current: number;
+  change: number;
+  rate: number;
+  volume: number;
+}
+
 
 export async function fetchHistoricalData(
     stockCode: string,
@@ -356,6 +376,92 @@ export async function fetchCurrentPrice(
 
     } catch (err) {
         console.error("현재가 조회 실패:", err);
+        return null;
+    }
+}
+
+/* ============================================================
+    🔵 6) 국내 업종 지수 초단위 조회 (KOSPI / KOSDAQ)
+       TR_ID: FHPUP02110100
+       URL: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
+============================================================ */
+
+export interface IndexTickData {
+    time: string;     // HHMMSS
+    price: number;    // 현재 지수
+    change: number;   // 전일 대비
+    rate: number;     // 등락률
+    volume: number;   // 누적 거래량
+}
+
+export async function fetchIndexTickPrice(
+    indexCode: "0001" | "1001" | "2001" | "3003"
+): Promise<IndexTickData[] | null> {
+
+    try {
+        const token = await getAccessToken();
+
+        const params = new URLSearchParams({
+            FID_INPUT_ISCD: indexCode,
+            FID_COND_MRKT_DIV_CODE: "U", // 업종/지수
+        });
+
+        const response = await fetch(
+            `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-index-tickprice?${params}`,
+            {
+                method: "GET",
+                headers: {
+                    "content-type": "application/json; charset=utf-8",
+                    authorization: `Bearer ${token}`,
+                    appkey: APP_KEY,
+                    appsecret: APP_SECRET,
+                    tr_id: "FHPUP02110100",
+                    custtype: "P",
+                },
+            }
+        );
+
+        // HTTP 오류 확인
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("❌ 업종 지수 API HTTP Error:", response.status, text);
+            return null;
+        }
+
+        const raw = await response.text();
+
+        if (!raw || raw.trim() === "") {
+            console.error("❌ 업종 지수 API: 응답 body 없음");
+            return null;
+        }
+
+        let json;
+        try {
+            json = JSON.parse(raw);
+        } catch (err) {
+            console.error("❌ JSON 파싱 실패, 응답 원본:", raw);
+            return null;
+        }
+
+        if (json.rt_cd !== "0") {
+            console.error(
+                `❌ 업종 지수 조회 실패: ${json.msg1} (${json.msg_cd})`
+            );
+            return null;
+        }
+
+        const items = json.output || [];
+
+        // 변환 → React에서 쓰기 쉽게 숫자 형태로
+        return items.map((item: any) => ({
+            time: item.stck_cntg_hour,
+            price: Number(item.bstp_nmix_prpr),
+            change: Number(item.bstp_nmix_prdy_vrss),
+            rate: Number(item.bstp_nmix_prdy_ctrt),
+            volume: Number(item.acml_vol),
+        }));
+    } catch (err) {
+        console.error("❌ 업종 지수 API 오류:", err);
         return null;
     }
 }

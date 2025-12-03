@@ -64,8 +64,8 @@
   margin-top: 6px;
 }
 
-.positive { color: #27ae60; }
-.negative { color: #eb5757; }
+.positive { color: red; }
+.negative { color: blue; }
 
 .mybal-card-full {
   background: #ffffff;

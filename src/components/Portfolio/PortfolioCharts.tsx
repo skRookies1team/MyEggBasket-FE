@@ -48,7 +48,7 @@ export function PortfolioCharts({ assetData, stockData, sectorData }: PortfolioC
         <div className="charts-grid">
             {renderChart("자산 구성 (주식/현금)", assetData)}
             {renderChart("보유 종목 비중 (Top 5)", stockData)}
-            {renderChart("섹터별 비중 (예시)", sectorData)}
+            {renderChart("섹터별 비중", sectorData)}
         </div>
     );
 }

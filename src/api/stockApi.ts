@@ -8,6 +8,56 @@ import type { StockPriceData, CurrentPriceResult, AccountBalanceData } from '../
  * API: /uapi/domestic-stock/v1/trading/inquire-balance
  * TR_ID: TTTC8434R (실전투자) /  VTTC8434R (모의투자)
  */
+export interface StockSearchResult {
+    stockCode: string;
+    name: string;
+    marketType: string;
+    sector: string;
+    industryCode: string;
+}
+
+// [추가] DB 종목 검색 함수
+export async function searchStocksFromDB(keyword: string): Promise<StockSearchResult[]> {
+    if (!keyword) return [];
+    try {
+        // 백엔드 Controller 경로: /api/app/stocks/search
+        const response = await fetch(`${REST_BASE_URL}/app/stocks/search?keyword=${encodeURIComponent(keyword)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            return [];
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Stock search error:", error);
+        return [];
+    }
+}
+
+// [추가] 단일 종목 상세 정보 조회 (DB) - 섹터 정보 획득용
+export async function getStockInfoFromDB(code: string): Promise<StockSearchResult | null> {
+    try {
+        const response = await fetch(`${REST_BASE_URL}/app/stocks/${code}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Stock info fetch error:", error);
+        return null;
+    }
+}
+
 export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
     const trId = 'TTTC8434R'; // 실전투자 잔고조회 TR ID
 
@@ -384,7 +434,6 @@ export async function fetchCurrentPrice(
     🔵 6) 국내 업종 지수 초단위 조회 (KOSPI / KOSDAQ)
        TR_ID: FHPUP02110100
        URL: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
-============================================================ */
 
 export interface IndexTickData {
     time: string;     // HHMMSS
@@ -471,7 +520,6 @@ export async function fetchIndexTickPrice(
     🔵 7) 거래량 순위 Top 10 조회 (실전투자 전용)
        TR_ID: FHPST01710000
        URL: /uapi/domestic-stock/v1/quotations/volume-rank
-============================================================ */
 
 export interface VolumeRankItem {
     name: string;       // 종목명

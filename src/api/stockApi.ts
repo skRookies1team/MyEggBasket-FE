@@ -465,3 +465,90 @@ export async function fetchIndexTickPrice(
         return null;
     }
 }
+
+
+/* ============================================================
+    🔵 7) 거래량 순위 Top 10 조회 (실전투자 전용)
+       TR_ID: FHPST01710000
+       URL: /uapi/domestic-stock/v1/quotations/volume-rank
+============================================================ */
+
+export interface VolumeRankItem {
+    name: string;       // 종목명
+    code: string;       // 단축코드
+    rank: number;       // 순위
+    price: number;      // 현재가
+    change: number;     // 전일 대비
+    rate: number;       // 전일 대비율
+    volume: number;     // 누적 거래량
+    prevVolume: number; // 전일 거래량
+    turnover: number;   // 거래량 증가율
+}
+
+export async function fetchVolumeRankTop10(): Promise<VolumeRankItem[] | null> {
+    try {
+        const token = await getAccessToken();
+
+        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/volume-rank`;
+
+        const params = new URLSearchParams({
+            FID_COND_MRKT_DIV_CODE: "J",      // KRX 전체
+            FID_COND_SCR_DIV_CODE: "20171",   // 거래량순위 화면
+            FID_INPUT_ISCD: "0000",           // 전체
+            FID_DIV_CLS_CODE: "0",            // 전체
+            FID_BLNG_CLS_CODE: "0",           // 평균 거래량 기준
+            FID_TRGT_CLS_CODE: "111111111",   // 전체 허용
+            FID_TRGT_EXLS_CLS_CODE: "0000000000",   // 제외 없음
+            FID_INPUT_PRICE_1: "",
+            FID_INPUT_PRICE_2: "",
+            FID_VOL_CNT: "",
+            FID_INPUT_DATE_1: "",
+        });
+
+        const response = await fetch(`${url}?${params.toString()}`, {
+            method: "GET",
+            headers: {
+                "content-type": "application/json; charset=utf-8",
+                authorization: `Bearer ${token}`,
+                appkey: APP_KEY,
+                appsecret: APP_SECRET,
+                tr_id: "FHPST01710000",
+                custtype: "P",
+            },
+        });
+
+        if (!response.ok) {
+            console.error("❌ 거래량순위 API HTTP 오류:", await response.text());
+            return null;
+        }
+
+        const json = await response.json();
+
+        if (json.rt_cd !== "0") {
+            console.error(`❌ 거래량순위 실패: ${json.msg1} (${json.msg_cd})`);
+            return null;
+        }
+
+        const list = json.output || [];
+
+        // 30개 중 5개만
+        const top10 = list.slice(0, 10);
+
+        // 변환
+        return top10.map((item: any) => ({
+            name: item.hts_kor_isnm,
+            code: item.mksc_shrn_iscd,
+            rank: Number(item.data_rank),
+            price: Number(item.stck_prpr),
+            change: Number(item.prdy_vrss),
+            rate: Number(item.prdy_ctrt),
+            volume: Number(item.acml_vol),
+            prevVolume: Number(item.prdy_vol),
+            turnover: Number(item.vol_inrt),
+        }));
+
+    } catch (err) {
+        console.error("❌ 거래량순위 조회 오류:", err);
+        return null;
+    }
+}

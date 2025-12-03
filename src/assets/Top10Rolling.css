@@ -1,0 +1,54 @@
+.top-rolling-box {
+  display: flex;
+  align-items: center;
+  background: #1b1f27;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 16px;
+}
+
+.tr-rank {
+  font-size: 22px;
+  font-weight: 700;
+  width: 32px;
+  text-align: center;
+}
+
+.tr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.tr-name {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.tr-change {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tr-change.up {
+  color: #ff4d4f; /* 빨강 */
+}
+
+.tr-change.down {
+  color: #3ca8ff; /* 파랑 */
+}
+
+.tr-price {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tr-volume,
+.tr-turnover {
+  font-size: 12px;
+  color: #aaa;
+}

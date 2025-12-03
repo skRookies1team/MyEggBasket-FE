@@ -59,30 +59,30 @@ export default function StockDetailPage() {
     };
 
     // 1. 훅을 통해 해당 종목(stockCode)의 실시간 데이터 구독
-    const { realtimeData, loading } = useRealtimeStock(stockCode);
+    const { data: realtimeData, loading } = useRealtimeStock(stockCode);
 
     // 2. 뉴스 데이터 (예시용 고정값 유지, 필요시 API 호출로 변경 가능)
-    const newsRef = useRef([]);
+    // const newsRef = useRef([]);
 
     // 3. 데이터 조합 (Routes.tsx에 있던 로직 이동)
     const combinedData: StockDetailData = useMemo(() => ({
-        currentPrice: realtimeData.currentPrice,
-        changeAmount: realtimeData.changeAmount,
-        changeRate: realtimeData.changeRate,
+        currentPrice: realtimeData?.currentPrice ?? 0,
+        changeAmount: realtimeData?.changeAmount ?? 0,
+        changeRate: realtimeData?.changeRate ?? 0,
         chartData: [],
         orderBook: { sell: [], buy: [] },
-        news: newsRef.current,
+        news: [],
         financials: { revenue: [], profit: [] },
         reports: [],
-    }), [realtimeData.currentPrice, realtimeData.changeAmount, realtimeData.changeRate]);
+    }), [realtimeData?.currentPrice, realtimeData?.changeAmount, realtimeData?.changeRate]);
 
-    const hasRealtime = realtimeData && realtimeData.currentPrice !== 0;
+    const hasRealtime = !!(realtimeData && typeof realtimeData.currentPrice === 'number');
 
     // 실시간 포인트 (분봉 차트 업데이트용)
     const realtimePoint = hasRealtime
         ? {
-            price: realtimeData.currentPrice,
-            volume: realtimeData.acml_vol ?? 0,
+            price: realtimeData!.currentPrice,
+            volume: realtimeData?.acml_vol ?? 0,
             time: new Date().toISOString(),
         }
         : undefined;
@@ -90,13 +90,13 @@ export default function StockDetailPage() {
     // 실시간 헤더 정보 (호가, 누적거래량 등)
     const realtimeInfo = hasRealtime
         ? {
-            askp1: realtimeData.askp1,
-            bidp1: realtimeData.bidp1,
-            acml_vol: realtimeData.acml_vol,
+            askp1: realtimeData?.askp1,
+            bidp1: realtimeData?.bidp1,
+            acml_vol: realtimeData?.acml_vol,
             time: new Date().toISOString(),
-            stck_prpr: realtimeData.stck_prpr,
-            prdy_vrss: realtimeData.prdy_vrss,
-            prdy_ctrt: realtimeData.prdy_ctrt,
+            stck_prpr: realtimeData?.stck_prpr,
+            prdy_vrss: realtimeData?.prdy_vrss,
+            prdy_ctrt: realtimeData?.prdy_ctrt,
         }
         : undefined;
 
@@ -296,7 +296,7 @@ function StockDetailView({
 
         return data?.chartData ?? [];
 
-    }, [period, data, collectedVersion, realtimePoint, minuteWindow, historicalData]);
+    }, [period, data, realtimePoint, minuteWindow, historicalData]);
 
     const fixedDomainRef = useRef<[number, number] | null>([80000, 100000]); // 종목별로 달라져야 할 수 있음
 
@@ -318,8 +318,8 @@ function StockDetailView({
         setFinLoading(true);
         setFinError(null);
 
-        const decodedServiceKey = decodeURIComponent(FINANCIAL_SERVICE_KEY);
-        const safeParseNumber = (val: any) => {
+        const decodedServiceKey = decodeURIComponent(String(FINANCIAL_SERVICE_KEY));
+        const safeParseNumber = (val: unknown) => {
             if (typeof val === 'number') return val;
             if (typeof val === 'string') {
                 const cleaned = val.replace(/,/g, '').trim();
@@ -370,8 +370,8 @@ function StockDetailView({
             results.profit.sort(sortByYearDesc);
             setFinancials(results);
 
-        } catch (err: any) {
-            setFinError(err?.message || '재무제표 조회 오류');
+        } catch (err) {
+            setFinError(err instanceof Error ? err.message : '재무제표 조회 오류');
         } finally {
             setFinLoading(false);
         }
@@ -411,7 +411,7 @@ function StockDetailView({
                     </select>
 
                     <label className="text-sm text-[#49454f]">변동성</label>
-                    <select value={volatility} onChange={(e: ChangeEvent<HTMLSelectElement>) => setVolatility(e.target.value as any)} className="px-3 py-2 border rounded">
+                    <select value={volatility} onChange={(e: ChangeEvent<HTMLSelectElement>) => setVolatility(e.target.value as 'low'|'normal'|'high')} className="px-3 py-2 border rounded">
                         <option value="low">낮음</option>
                         <option value="normal">보통</option>
                         <option value="high">높음</option>

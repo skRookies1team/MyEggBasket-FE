@@ -8,56 +8,6 @@ import type { StockPriceData, CurrentPriceResult, AccountBalanceData } from '../
  * API: /uapi/domestic-stock/v1/trading/inquire-balance
  * TR_ID: TTTC8434R (실전투자) /  VTTC8434R (모의투자)
  */
-export interface StockSearchResult {
-    stockCode: string;
-    name: string;
-    marketType: string;
-    sector: string;
-    industryCode: string;
-}
-
-// [추가] DB 종목 검색 함수
-export async function searchStocksFromDB(keyword: string): Promise<StockSearchResult[]> {
-    if (!keyword) return [];
-    try {
-        // 백엔드 Controller 경로: /api/app/stocks/search
-        const response = await fetch(`${REST_BASE_URL}/app/stocks/search?keyword=${encodeURIComponent(keyword)}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            return [];
-        }
-        return await response.json();
-    } catch (error) {
-        console.error("Stock search error:", error);
-        return [];
-    }
-}
-
-// [추가] 단일 종목 상세 정보 조회 (DB) - 섹터 정보 획득용
-export async function getStockInfoFromDB(code: string): Promise<StockSearchResult | null> {
-    try {
-        const response = await fetch(`${REST_BASE_URL}/app/stocks/${code}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            return null;
-        }
-        return await response.json();
-    } catch (error) {
-        console.error("Stock info fetch error:", error);
-        return null;
-    }
-}
-
 export async function fetchAccountBalance(accessToken: string): Promise<AccountBalanceData | null> {
     const trId = 'TTTC8434R'; // 실전투자 잔고조회 TR ID
 
@@ -426,6 +376,92 @@ export async function fetchCurrentPrice(
 
     } catch (err) {
         console.error("현재가 조회 실패:", err);
+        return null;
+    }
+}
+
+/* ============================================================
+    🔵 6) 국내 업종 지수 초단위 조회 (KOSPI / KOSDAQ)
+       TR_ID: FHPUP02110100
+       URL: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
+============================================================ */
+
+export interface IndexTickData {
+    time: string;     // HHMMSS
+    price: number;    // 현재 지수
+    change: number;   // 전일 대비
+    rate: number;     // 등락률
+    volume: number;   // 누적 거래량
+}
+
+export async function fetchIndexTickPrice(
+    indexCode: "0001" | "1001" | "2001" | "3003"
+): Promise<IndexTickData[] | null> {
+
+    try {
+        const token = await getAccessToken();
+
+        const params = new URLSearchParams({
+            FID_INPUT_ISCD: indexCode,
+            FID_COND_MRKT_DIV_CODE: "U", // 업종/지수
+        });
+
+        const response = await fetch(
+            `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-index-tickprice?${params}`,
+            {
+                method: "GET",
+                headers: {
+                    "content-type": "application/json; charset=utf-8",
+                    authorization: `Bearer ${token}`,
+                    appkey: APP_KEY,
+                    appsecret: APP_SECRET,
+                    tr_id: "FHPUP02110100",
+                    custtype: "P",
+                },
+            }
+        );
+
+        // HTTP 오류 확인
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("❌ 업종 지수 API HTTP Error:", response.status, text);
+            return null;
+        }
+
+        const raw = await response.text();
+
+        if (!raw || raw.trim() === "") {
+            console.error("❌ 업종 지수 API: 응답 body 없음");
+            return null;
+        }
+
+        let json;
+        try {
+            json = JSON.parse(raw);
+        } catch (err) {
+            console.error("❌ JSON 파싱 실패, 응답 원본:", raw);
+            return null;
+        }
+
+        if (json.rt_cd !== "0") {
+            console.error(
+                `❌ 업종 지수 조회 실패: ${json.msg1} (${json.msg_cd})`
+            );
+            return null;
+        }
+
+        const items = json.output || [];
+
+        // 변환 → React에서 쓰기 쉽게 숫자 형태로
+        return items.map((item: any) => ({
+            time: item.stck_cntg_hour,
+            price: Number(item.bstp_nmix_prpr),
+            change: Number(item.bstp_nmix_prdy_vrss),
+            rate: Number(item.bstp_nmix_prdy_ctrt),
+            volume: Number(item.acml_vol),
+        }));
+    } catch (err) {
+        console.error("❌ 업종 지수 API 오류:", err);
         return null;
     }
 }

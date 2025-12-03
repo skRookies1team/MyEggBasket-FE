@@ -6,28 +6,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // 1. 한국투자증권 API용 (uapi 또는 oauth2로 시작하는 요청)
-      // 예: /api/uapi/..., /api/oauth2/... -> 한국투자증권 서버로
-      '/api/uapi': {
-        target: 'https://openapi.koreainvestment.com:9443',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // /api 제거하고 전송
-        secure: false,
-        ws: true,
-      },
-      '/api/oauth2': {
-        target: 'https://openapi.koreainvestment.com:9443',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        secure: false,
-      },
-
-      // 2. 내 로컬 백엔드용 (그 외 나머지 /api 요청)
-      // 예: /api/app/stocks/search, /api/auth/login -> localhost:8081로
+      // '/api'로 시작하는 요청을 한국투자증권 실제 서버로 전달 (CORS 우회) // https://openapivts.koreainvestment.com:29443
       '/api': {
-        target: 'http://localhost:8081',
+        target: 'https://openapi.koreainvestment.com:9443',
         changeOrigin: true,
-        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''), // 요청 경로에서 '/api' 제거
+        secure: false, // SSL 인증서 검증 무시 (필요한 경우)
+        ws: true,
       },
     },
   },

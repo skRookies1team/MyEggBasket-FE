@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { MarketIndexCard } from "../MarketIndex/MarketIndexCard";
 import MarketIndexTicker from "../MarketIndex/MarketIndexTicker";
-import { useRealtimeIndex } from "../../hooks/useRealtimeStock";                
+
 import {
   fetchSP500,
   fetchNasdaq100,
   fetchDowJones,
   fetchWTI,
+  fetchIndexTickPrice,
 } from "../../api/stockApi";
 
 interface Props {
@@ -14,42 +15,65 @@ interface Props {
 }
 
 export default function MarketIndexContainer({ showTickerOnly = false }: Props) {
-  const { data: kospi } = useRealtimeIndex("001");
-  const { data: kosdaq } = useRealtimeIndex("201");
+  /* ----------------------------------------------------
+      🔹 국내 지수 분봉 데이터 (REST)
+  ---------------------------------------------------- */
+  const [kospi, setKospi] = useState<any>(null);
+  const [kosdaq, setKosdaq] = useState<any>(null);
 
   const [kospiChart, setKospiChart] = useState<number[]>([]);
   const [kosdaqChart, setKosdaqChart] = useState<number[]>([]);
 
-  useEffect(() => {
-    if (!kospi || typeof kospi.current !== "number") return;
-
-    setKospiChart((prev) => {
-      if (prev[prev.length - 1] === kospi.current) return prev; // 동일 값이면 업데이트 X
-      return [...prev.slice(-19), kospi.current];
-    });
-  }, [kospi?.current]);
+  // 최근 n개 유지
+  const updateChart = (setter: any, list: number[]) => {
+    setter(list.slice(-20));
+  };
 
   useEffect(() => {
-    if (!kosdaq || typeof kosdaq.current !== "number") return;
+    const load = async () => {
+      const kospiData = await fetchIndexTickPrice("0001"); // KOSPI 1분봉
+      const kosdaqData = await fetchIndexTickPrice("1001"); // KOSDAQ 1분봉
 
-    setKosdaqChart((prev) => {
-      if (prev[prev.length - 1] === kosdaq.current) return prev;
-      return [...prev.slice(-19), kosdaq.current];
-    });
-  }, [kosdaq?.current]);
+      if (kospiData.length > 0) {
+        const last = kospiData[kospiData.length - 1];
+        setKospi({
+          current: last.price,
+          change: last.change,
+          rate: last.rate,
+        });
+        updateChart(
+          setKospiChart,
+          kospiData.map((d) => d.price)
+        );
+      }
 
+      if (kosdaqData.length > 0) {
+        const last = kosdaqData[kosdaqData.length - 1];
+        setKosdaq({
+          current: last.price,
+          change: last.change,
+          rate: last.rate,
+        });
+        updateChart(
+          setKosdaqChart,
+          kosdaqData.map((d) => d.price)
+        );
+      }
+    };
 
+    load();
+    const interval = setInterval(load, 60000); // 1분마다 새 분봉 로드
+    return () => clearInterval(interval);
+  }, []);
 
+  /* ----------------------------------------------------
+      🔹 해외 지수 (REST)
+  ---------------------------------------------------- */
   const [sp500, setSP500] = useState<any>(null);
   const [nasdaq, setNasdaq] = useState<any>(null);
   const [dow, setDow] = useState<any>(null);
   const [wti, setWTI] = useState<any>(null);
 
-  // 해외 지수 차트 데이터
-  const [sp500Chart, setSP500Chart] = useState<number[]>([]);
-  const [nasdaqChart, setNasdaqChart] = useState<number[]>([]);
-  const [dowChart, setDowChart] = useState<number[]>([]);
-  const [wtiChart, setWTIChart] = useState<number[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -57,36 +81,33 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
       const n = await fetchNasdaq100();
       const d = await fetchDowJones();
       const w = await fetchWTI();
-      
 
       if (s) {
         setSP500(s);
-        setSP500Chart((prev) => [...prev.slice(-19), s.current]);
       }
 
       if (n) {
         setNasdaq(n);
-        setNasdaqChart((prev) => [...prev.slice(-19), n.current]);
       }
 
       if (d) {
         setDow(d);
-        setDowChart((prev) => [...prev.slice(-19), d.current]);
       }
 
       if (w) {
         setWTI(w);
-        setWTIChart((prev) => [...prev.slice(-19), w.current]);
       }
     };
 
     load();
-    const interval = setInterval(load, 60000); // 1분마다
+    const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // ---------------- Ticker -------------------
-  const tickerData = [];
+  /* ----------------------------------------------------
+      🔹 Ticker 구성
+  ---------------------------------------------------- */
+  const tickerData: any[] = [];
 
   if (kospi)
     tickerData.push({
@@ -138,12 +159,11 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
 
   return (
     <div>
-      {/* 상단 Ticker */}
       <MarketIndexTicker indices={tickerData} />
 
       {!showTickerOnly && (
         <>
-          {/* 국내 지수 카드 */}
+          {/* 국내 지수 */}
           <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
             {kospi && (
               <MarketIndexCard
@@ -166,17 +186,6 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
                 miniChartData={kosdaqChart}
               />
             )}
-          </div>
-
-          {/* 해외 지수 카드 */}
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              marginTop: "16px",
-              flexWrap: "wrap",
-            }}
-          >
             {sp500 && (
               <MarketIndexCard
                 name="S&P500"
@@ -184,7 +193,6 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
                 change={sp500.change.toFixed(2)}
                 percent={`${sp500.rate.toFixed(2)}%`}
                 isUp={sp500.rate >= 0}
-                miniChartData={sp500Chart}
               />
             )}
 
@@ -195,7 +203,6 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
                 change={nasdaq.change.toFixed(2)}
                 percent={`${nasdaq.rate.toFixed(2)}%`}
                 isUp={nasdaq.rate >= 0}
-                miniChartData={nasdaqChart}
               />
             )}
 
@@ -206,7 +213,6 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
                 change={dow.change.toFixed(2)}
                 percent={`${dow.rate.toFixed(2)}%`}
                 isUp={dow.rate >= 0}
-                miniChartData={dowChart}
               />
             )}
 
@@ -217,7 +223,6 @@ export default function MarketIndexContainer({ showTickerOnly = false }: Props) 
                 change={wti.change.toFixed(2)}
                 percent={`${wti.rate.toFixed(2)}%`}
                 isUp={wti.rate >= 0}
-                miniChartData={wtiChart}
               />
             )}
           </div>

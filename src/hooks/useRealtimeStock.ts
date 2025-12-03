@@ -1,26 +1,32 @@
 // src/hooks/useRealtimeStock.ts
 import { useState, useEffect, useRef } from "react";
-import { WS_URL, TR_ID1, TR_ID2 } from "../config/api";
+import { WS_URL, TR_ID_STOCK, TR_ID_INDEX } from "../config/api";
 
 /* -------------------------------------------------------
-   공통 Approval Key 발급
+   🔐 Approval Key 분리 (종목 / 지수)
 ------------------------------------------------------- */
-async function getApprovalKey(): Promise<string> {
+async function getApprovalKeyStock(): Promise<string> {
   try {
     const proxyBase = import.meta.env.VITE_PROXY_URL ?? "http://localhost:3001";
-    const url = `${proxyBase}/api/approval`;
+    const url = `${proxyBase}/api/approval?type=stock`;  // stock 전용
+    const res = await fetch(url, { method: "POST" });
+    if (!res.ok) return "";
+    const json = await res.json();
+    return json.approval_key || "";
+  } catch {
+    return "";
+  }
+}
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) return "";
-
-    const data = await response.json();
-    return data.approval_key || "";
-  } catch (e) {
-    console.error("ApprovalKey 발급 실패:", e);
+async function getApprovalKeyIndex(): Promise<string> {
+  try {
+    const proxyBase = import.meta.env.VITE_PROXY_URL ?? "http://localhost:3001";
+    const url = `${proxyBase}/api/approval?type=index`; // index 전용
+    const res = await fetch(url, { method: "POST" });
+    if (!res.ok) return "";
+    const json = await res.json();
+    return json.approval_key || "";
+  } catch {
     return "";
   }
 }
@@ -35,7 +41,7 @@ export interface UseRealtimeResult<T> {
 }
 
 /* =======================================================
-   🔵 1) 종목 실시간 체결 훅 (H0STCNT0)
+   🔵 1) 종목 실시간 체결 (H0STCNT0)
 ======================================================= */
 interface RealtimePriceData {
   currentPrice: number;
@@ -75,11 +81,11 @@ const H0STCNT0_FIELD_MAP: Record<string, number> = {
   total_bidp_rsqn: 39,
 };
 
-function parseStockMessage(message: string): Partial<RealtimePriceData> | null {
-  if (!message.startsWith("0") && !message.startsWith("1")) return null;
+function parseStockMessage(msg: string): Partial<RealtimePriceData> | null {
+  if (!msg.includes("H0STCNT0")) return null;
 
-  const parts = message.split("|");
-  const fields = parts[3].split("^");
+  const parts = msg.split("|");
+  const fields = parts[3]?.split("^") ?? [];
 
   const g = (i: number) => (i < fields.length ? fields[i] : "");
   const n = (v: string) => Number(v.replace(/,/g, "")) || 0;
@@ -116,23 +122,21 @@ function parseStockMessage(message: string): Partial<RealtimePriceData> | null {
   return data;
 }
 
-/* -------------------------------------------------------
-   STOCK 훅
-------------------------------------------------------- */
 export function useRealtimeStock(
   stockCode: string
 ): UseRealtimeResult<RealtimePriceData> {
   const [data, setData] = useState<RealtimePriceData | null>(null);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    if (!stockCode) return;
     let closed = false;
 
     const connect = async () => {
-      const approval = await getApprovalKey();
+      const approval = await getApprovalKeyStock(); // ⬅ 종목 전용 키
+
       if (!approval) return;
 
       const ws = new WebSocket(WS_URL);
@@ -140,7 +144,6 @@ export function useRealtimeStock(
 
       ws.onopen = () => {
         if (closed) return;
-
         setConnected(true);
         setLoading(false);
 
@@ -152,7 +155,7 @@ export function useRealtimeStock(
               tr_type: "1",
               "content-type": "utf-8",
             },
-            body: { input: { tr_id: TR_ID1, tr_key: stockCode } },
+            body: { input: { tr_id: TR_ID_STOCK, tr_key: stockCode } },
           })
         );
       };
@@ -180,7 +183,7 @@ export function useRealtimeStock(
 }
 
 /* =======================================================
-   🔵 2) 국내 지수 실시간 체결 훅 (H0UPCNT0)
+   🔵 2) 지수 실시간 체결 (H0UPCNT0)
 ======================================================= */
 export interface IndexRealtimeData {
   indexName: "KOSPI" | "KOSDAQ";
@@ -191,15 +194,22 @@ export interface IndexRealtimeData {
   volume: number;
 }
 
-function parseIndexMessage(raw: string): IndexRealtimeData | null {
-  if (!raw.startsWith("0|H0UPCNT0")) return null;
+function parseIndexMessage(
+  msg: string,
+  indexCode: string
+): IndexRealtimeData | null {
+  if (!msg.includes("H0UPCNT0")) return null;
 
-  const parts = raw.split("|");
-  const f = parts[3].split("^");
-  const g = (i: number) => (i < f.length ? f[i] : "0");
+  const parts = msg.split("|");
+  const row = parts[3]?.split("^") ?? [];
 
-  const trKey = parts[2]; // "001" or "201"
-  const indexName = trKey === "001" ? "KOSPI" : "KOSDAQ";
+  const g = (i: number) => (i < row.length ? row[i] : "0");
+
+  // ----------- 🎯 요청한 방식: indexCode → indexName 바로 매핑 ----------
+  const indexName =
+    indexCode === "0001"
+      ? "KOSPI"
+      : "KOSDAQ"; // 1001은 무조건 KOSDAQ
 
   return {
     indexName,
@@ -211,11 +221,8 @@ function parseIndexMessage(raw: string): IndexRealtimeData | null {
   };
 }
 
-/* -------------------------------------------------------
-   INDEX 훅
-------------------------------------------------------- */
 export function useRealtimeIndex(
-  indexCode: "001" | "201"
+  indexCode: "0001" | "1001"
 ): UseRealtimeResult<IndexRealtimeData> {
   const [data, setData] = useState<IndexRealtimeData | null>(null);
   const [connected, setConnected] = useState(false);
@@ -227,7 +234,8 @@ export function useRealtimeIndex(
     let closed = false;
 
     const connect = async () => {
-      const approval = await getApprovalKey();
+      const approval = await getApprovalKeyIndex();
+
       if (!approval) return;
 
       const ws = new WebSocket(WS_URL);
@@ -247,13 +255,13 @@ export function useRealtimeIndex(
               tr_type: "1",
               "content-type": "utf-8",
             },
-            body: { input: { tr_id: TR_ID2, tr_key: indexCode } },
+            body: { input: { tr_id: TR_ID_INDEX, tr_key: indexCode } },
           })
         );
       };
 
       ws.onmessage = (event) => {
-        const parsed = parseIndexMessage(event.data);
+        const parsed = parseIndexMessage(event.data, indexCode);
         if (parsed) setData(parsed);
       };
 

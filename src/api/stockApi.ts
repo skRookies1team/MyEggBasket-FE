@@ -430,10 +430,9 @@ export async function fetchCurrentPrice(
     }
 }
 
-/* ============================================================
-    🔵 6) 국내 업종 지수 초단위 조회 (KOSPI / KOSDAQ)
-       TR_ID: FHPUP02110100
-       URL: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
+// 🔵 6) 국내 업종 지수 초단위 조회 (KOSPI / KOSDAQ)
+//    TR_ID: FHPUP02110100
+//    URL: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
 
 export interface IndexTickData {
     time: string;     // HHMMSS
@@ -516,10 +515,9 @@ export async function fetchIndexTickPrice(
 }
 
 
-/* ============================================================
-    🔵 7) 거래량 순위 Top 10 조회 (실전투자 전용)
-       TR_ID: FHPST01710000
-       URL: /uapi/domestic-stock/v1/quotations/volume-rank
+// 🔵 7) 거래량 순위 Top 10 조회 (실전투자 전용)
+//    TR_ID: FHPST01710000
+//    URL: /uapi/domestic-stock/v1/quotations/volume-rank
 
 export interface VolumeRankItem {
     name: string;       // 종목명

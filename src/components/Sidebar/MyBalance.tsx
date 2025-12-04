@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchAccountBalance, getAccessToken } from "../api/stockApi";
-import type { AccountBalanceData } from "../types/stock";
-import "../assets/MyBalance.css";
+import { fetchAccountBalance, getAccessToken } from "../../api/stockApi";
+import type { AccountBalanceData } from "../../types/stock";
+import "../../assets/Sidebar/MyBalance.css";
 
 export default function MyBalance() {
   const [balance, setBalance] = useState<AccountBalanceData | null>(null);

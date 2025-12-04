@@ -1,4 +1,5 @@
-import type { StockItem } from "../../types/stock.ts";
+import { useFavoriteStore } from "../../store/favoriteStore";
+import type { StockItem } from "../../types/stock";
 import "../../assets/LiveStock/LiveStockTable.css";
 
 interface Props {
@@ -6,37 +7,59 @@ interface Props {
 }
 
 export default function LiveStockTable({ stocks }: Props) {
+  const { favorites, toggleFavorite } = useFavoriteStore();
+
   return (
-    <div className="stock-table">
-      <div className="table-header">
-        <span>종목명</span>
-        <span>현재가</span>
-        <span>등락률</span>
-        <span>거래대금</span>
-        <span>거래량</span>
-      </div>
+    <table className="live-stock-table">
+      <thead>
+        <tr>
+          <th></th> 
+          <th>종목명</th>
+          <th>현재가</th>
+          <th>등락률</th>
+          <th>거래량</th>
+        </tr>
+      </thead>
 
-      <div className="table-body">
-        {stocks.map((s) => (
-          <div className="table-row" key={s.code}>
-            <span className="name">
-              {s.name}
-              <div className="code">{s.code}</div>
-            </span>
+      <tbody>
+        {stocks.map((s) => {
+          const isFav = favorites.includes(s.code);
 
-            <span>{s.price.toLocaleString()}</span>
+          return (
+            <tr key={s.code}>
+              <td className="fav-col">
+                <button
+                  className={`fav-btn ${isFav ? "active" : ""}`}
+                  onClick={() => toggleFavorite(s.code)}
+                >
+                  {isFav ? "⭐" : "☆"}
+                </button>
+              </td>
 
-            <span className={s.percent > 0 ? "up" : s.percent < 0 ? "down" : ""}>
-              {s.percent > 0 ? "+" : ""}
-              {s.percent.toFixed(2)}%
-            </span>
+              {/* 종목명 + 코드 */}
+              <td>
+                <div className="name">
+                  {s.name}
+                  <span className="code">{s.code}</span>
+                </div>
+              </td>
 
-            <span>{s.amount.toLocaleString()}</span>
+              {/* 현재가 */}
+              <td className={s.change >= 0 ? "up" : "down"}>
+                {s.price.toLocaleString()}
+              </td>
 
-            <span>{s.volume.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+              {/* 등락률 */}
+              <td className={s.change >= 0 ? "up" : "down"}>
+                {s.percent}%
+              </td>
+
+              {/* 거래량 */}
+              <td>{s.volume.toLocaleString()}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

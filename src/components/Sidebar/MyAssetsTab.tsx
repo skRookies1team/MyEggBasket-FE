@@ -1,4 +1,4 @@
-import MyBalance from "../MyBalance";
+import MyBalance from "../Sidebar/MyBalance";
 
 export default function MyAssetsTab() {
   return (

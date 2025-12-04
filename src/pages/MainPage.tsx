@@ -9,11 +9,8 @@ import InvestorTrend from "../components/Investor/InvestorTrend";
 import { fetchVolumeRankTop10 } from "../api/stockApi";   // 🔥 거래량순위 API 불러오기
 import type { VolumeRankItem } from "../components/Top10Rolling";  // 🔥 타입 가져오기
 
-interface MainPageProps {
-  isLoggedIn?: boolean;
-}
 
-export default function MainPage({ isLoggedIn = true }: MainPageProps) {
+export default function MainPage() {
   const [activeTab, setActiveTab] = useState<
     "main" | "watchlist" | "news" | "investor"
   >("main");

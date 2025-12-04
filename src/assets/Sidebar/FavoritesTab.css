@@ -1,0 +1,43 @@
+.fav-container {
+  padding: 10px;
+}
+
+.fav-title {
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.fav-empty {
+  color: #777;
+  font-size: 14px;
+}
+
+.fav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fav-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.fav-code {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.fav-remove-btn {
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 0;
+}

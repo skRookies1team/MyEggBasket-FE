@@ -75,7 +75,7 @@ const H0STCNT0_FIELD_MAP: Record<string, number> = {
   total_bidp_rsqn: 39,
 };
 
-function parseStockMessage(message: string): Partial<RealtimePriceData> | null {
+export function parseStockMessage(message: string): Partial<RealtimePriceData> | null {
   if (!message.startsWith("0") && !message.startsWith("1")) return null;
 
   const parts = message.split("|");

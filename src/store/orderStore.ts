@@ -2,91 +2,37 @@ import { create } from "zustand";
 import api from "../store/axiosStore";
 import { useAuthStore } from "./authStore";
 
-interface ApiOrder {
+// 1. API 응답 데이터에 맞는 타입 정의
+export interface TradeHistoryItem {
   transactionId: number;
-  stockCode: string | null;
-  stockName: string | null;
+  stockCode: string;
+  stockName: string;
   type: "BUY" | "SELL";
   typeDescription: string;
-  status: "COMPLETED" | "PENDING" | "CANCELED";
+  status: "COMPLETED";
   statusDescription: string;
   quantity: number;
   price: number;
   totalPrice: number;
-  triggerSource: string | null;
-  triggerSourceName: string | null;
   executedAt: string;
 }
 
-interface Order {
-  id: string;
-  symbol: string;
-  price: number;
-  quantity: number;
-  side: "buy" | "sell";
-  status: "completed" | "pending" | "canceled";
-  createdAt: string;
-}
-
 interface OrderState {
-  tradeHistory: Order[];
-  pendingOrders: Order[];
-  fetchTradeHistory: () => Promise<void>;
-  fetchPendingOrders: () => Promise<void>;
+  tradeHistory: TradeHistoryItem[];
+  fetchTradeHistory: (userId: number) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set) => ({
   tradeHistory: [],
-  pendingOrders: [],
 
-  fetchTradeHistory: async () => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
+  // 2. 새로운 API 엔드포인트로 체결 내역을 가져오는 함수
+  fetchTradeHistory: async (userId: number) => {
     try {
-      const res = await api.get<ApiOrder[]>(`users/${user.id}/orders`, {
-        params: { status: "completed" },
-      });
-      const tradeHistory = res.data.map(
-        (order: ApiOrder): Order => ({
-          id: order.transactionId.toString(),
-          symbol: order.stockName || "Unknown",
-          price: order.price,
-          quantity: order.quantity,
-          side: order.type.toLowerCase() as "buy" | "sell",
-          status: order.status.toLowerCase() as "completed",
-          createdAt: order.executedAt,
-        })
-      );
-
-      set({ tradeHistory });
+      const response = await api.get<TradeHistoryItem[]>(`/users/${userId}/orders?status=completed`);
+      set({ tradeHistory: response.data });
     } catch (error) {
-      console.error("Failed to fetch trade history:", error);
-    }
-  },
-
-  fetchPendingOrders: async () => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
-    try {
-      const res = await api.get<ApiOrder[]>(`users/${user.id}/orders`, {
-        params: { status: "pending" },
-      });
-      const pendingOrders = res.data.map(
-        (order: ApiOrder): Order => ({
-          id: order.transactionId.toString(),
-          symbol: order.stockName || "Unknown",
-          price: order.price,
-          quantity: order.quantity,
-          side: order.type.toLowerCase() as "buy" | "sell",
-          status: order.status.toLowerCase() as "pending",
-          createdAt: order.executedAt,
-        })
-      );
-      set({ pendingOrders });
-    } catch (error) {
-      console.error("Failed to fetch pending orders:", error);
+      console.error("체결 내역을 불러오는 중 오류가 발생했습니다.", error);
+      set({ tradeHistory: [] }); // 오류 발생 시 빈 배열로 초기화
     }
   },
 }));

@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { useOrderStore } from "../../store/orderStore";
+import { useOrderStore, type TradeHistoryItem } from "../../store/orderStore";
+import { useAuthStore } from "../../store/authStore";
 
 export default function TradeHistorySection() {
   const tradeHistory = useOrderStore((state) => state.tradeHistory);
   const fetchTradeHistory = useOrderStore((state) => state.fetchTradeHistory);
+  const user = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadTradeHistory = async () => {
+      if (!user) {
+        return;
+      }
       setLoading(true);
-      await fetchTradeHistory();
+      await fetchTradeHistory(user.id);
       setLoading(false);
     };
     loadTradeHistory();
-  }, [fetchTradeHistory]);
+  }, [user, fetchTradeHistory]);
 
   if (loading) {
     return (
@@ -60,22 +65,22 @@ export default function TradeHistorySection() {
         </thead>
         <tbody>
           {tradeHistory.length > 0 ? (
-            tradeHistory.map((order) => {
-              const { formattedDate, formattedTime } = formatDateTime(order.createdAt);
+            tradeHistory.map((order: TradeHistoryItem) => {
+              const { formattedDate, formattedTime } = formatDateTime(order.executedAt);
               return (
-                <tr key={order.id}>
+                <tr key={order.transactionId}>
                   <td>
                     {/* 날짜와 시간을 두 줄로 표시하여 가독성 개선 */}
                     {formattedDate}
                     <br />
                     {formattedTime}
                   </td>
-                  <td>{order.symbol}</td>
-                  <td style={{ color: order.side === "buy" ? "red" : "blue" }}>
-                    {order.side === "buy" ? "매수" : "매도"}
+                  <td>{order.stockName}</td>
+                  <td style={{ color: order.type === "BUY" ? "red" : "blue" }}>
+                    {order.typeDescription}
                   </td>
                   <td>{order.price.toLocaleString()}</td>
-                  <td>{order.quantity}</td>
+                  <td>{order.quantity.toLocaleString()}</td>
                 </tr>
               );
             })

@@ -56,7 +56,6 @@ export default function MyBalance() {
 
   const { summary, holdings } = balance;
 
-  // 🔥 수량이 0보다 큰 종목만 필터링
   const filteredHoldings = holdings.filter((stock) => stock.hldg_qty > 0);
 
   return (

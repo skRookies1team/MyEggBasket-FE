@@ -1,4 +1,5 @@
 import { useFavoriteStore } from "../../store/favoriteStore";
+import { useNavigate } from "react-router-dom";   
 import type { StockItem } from "../../types/stock";
 import "../../assets/LiveStock/LiveStockTable.css";
 
@@ -8,12 +9,13 @@ interface Props {
 
 export default function LiveStockTable({ stocks }: Props) {
   const { favorites, toggleFavorite } = useFavoriteStore();
+  const navigate = useNavigate();                 
 
   return (
     <table className="live-stock-table">
       <thead>
         <tr>
-          <th></th> 
+          <th></th>
           <th>종목명</th>
           <th>현재가</th>
           <th>등락률</th>
@@ -26,11 +28,19 @@ export default function LiveStockTable({ stocks }: Props) {
           const isFav = favorites.includes(s.code);
 
           return (
-            <tr key={s.code}>
+            <tr
+              key={s.code}
+              className="clickable-row"
+              onClick={() => navigate(`/stock/${s.code}`)}    
+            >
+              {/* 즐겨찾기 버튼 */}
               <td className="fav-col">
                 <button
                   className={`fav-btn ${isFav ? "active" : ""}`}
-                  onClick={() => toggleFavorite(s.code)}
+                  onClick={(e) => {
+                    e.stopPropagation();         
+                    toggleFavorite(s.code);
+                  }}
                 >
                   {isFav ? "⭐" : "☆"}
                 </button>

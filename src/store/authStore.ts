@@ -30,6 +30,7 @@ interface AuthState {
   isAuthenticated: boolean;
   accessToken: string | null;
   user: User | null;
+  
 
   setToken: (access: string) => void;
   setUser: (user: User) => void;
@@ -37,6 +38,7 @@ interface AuthState {
 
   login: (loginData: LoginRequest) => Promise<void>;
   signup: (signupData: SignupRequest) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   fetchUser: () => Promise<void>;
 }
 
@@ -72,6 +74,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (signupData: SignupRequest) => {
     await api.post("/auth/signup", signupData);
   },
+
+  deleteAccount: async () => {
+  const user = get().user;
+  if (!user) return;
+
+  try {
+    await api.delete(`/users/${user.id}`);
+
+    get().logout();
+  } catch (err) {
+    console.error("회원 탈퇴 실패:", err);
+    throw err;
+  }
+},
 
   fetchUser: async () => {
     if (!get().accessToken) return;

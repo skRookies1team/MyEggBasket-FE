@@ -261,6 +261,22 @@ function StockDetailView({
     }, [stockCode]);
 
 
+    // 최근 본 종목 처리 작업
+        useEffect(() => {
+    if (!stockCode) return;
+
+    const key = "recent_stocks";
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+
+    // 이미 존재하면 삭제 후 맨 앞으로 이동
+    const filtered = stored.filter((c: string) => c !== stockCode);
+
+    const updated = [stockCode, ...filtered].slice(0, 20); // 최대 20개 저장
+
+    localStorage.setItem(key, JSON.stringify(updated));
+    }, [stockCode]);
+
+
     // --------------------------------------------------------------------------
     // 차트 데이터 선택 (분봉 vs API 데이터)
     // --------------------------------------------------------------------------

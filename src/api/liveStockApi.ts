@@ -1,9 +1,13 @@
+// src/api/liveStockService.ts
 import { fetchHistoricalData, getStockInfoFromDB, getAccessToken } from "./stockApi";
-import { TICKERS_50 } from "../constants/tickers";
 import type { StockItem } from "../types/stock";
 
 /** 1개 종목 + 1기간 snapshot 생성 */
-async function getSnapshotFromHistory(stockCode: string, period: "day" | "week" | "month" | "year", token: string): Promise<StockItem | null> {
+async function getSnapshotFromHistory(
+  stockCode: string,
+  period: "day" | "week" | "month" | "year",
+  token: string
+): Promise<StockItem | null> {
   const history = await fetchHistoricalData(stockCode, period, token);
   if (!history || history.length < 2) return null;
 
@@ -27,17 +31,28 @@ async function getSnapshotFromHistory(stockCode: string, period: "day" | "week" 
   };
 }
 
-/** 50개 종목 snapshot 한 번에 생성 */
-async function getSnapshots(period: "day" | "week" | "month" | "year", token: string): Promise<StockItem[]> {
-  const tasks = TICKERS_50.map((code) => getSnapshotFromHistory(code, period, token));
+/** 지정된 종목 리스트 snapshot 생성 */
+async function getSnapshots(
+  tickers: string[],
+  period: "day" | "week" | "month" | "year",
+  token: string
+): Promise<StockItem[]> {
+  const tasks = tickers.map((code) =>
+    getSnapshotFromHistory(code, period, token)
+  );
+
   const results = await Promise.all(tasks);
+
   return results.filter((x): x is StockItem => x !== null);
 }
 
-/** 50종목 × 1기간 → 정렬별 리스트 4개 생성 */
-export async function fetch50StocksByPeriod(period: "day" | "week" | "month" | "year") {
+/** tickers × 1기간 → 정렬별 리스트 4개 생성 */
+export async function fetch50StocksByPeriod(
+  period: "day" | "week" | "month" | "year",
+  tickers: string[]
+) {
   const token = await getAccessToken();
-  const snapshots = await getSnapshots(period, token);
+  const snapshots = await getSnapshots(tickers, period, token);
 
   return {
     volume: [...snapshots].sort((a, b) => b.volume - a.volume),

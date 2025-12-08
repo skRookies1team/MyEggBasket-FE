@@ -25,7 +25,6 @@ export default function MainPage() {
   // --------------------------- 데이터 상태 ----------------------------
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
 
-  // ⭐ LiveStockPanel에 전달할 실제 데이터 (50개 종목)
   const [liveData, setLiveData] = useState<{
     volume: StockItem[];
     amount: StockItem[];
@@ -37,6 +36,18 @@ export default function MainPage() {
     rise: [],
     fall: [],
   });
+
+  const TICKERS = [
+  "005930","000660","207940","005380","000270","055550","105560","068270","015760","028260",
+  "032830","012330","035420","006400","086790","006405","000810","010140","064350","138040",
+  "051910","010130","009540","267260","066570","066575","033780","003550","003555","310200",
+  "034020","012450","009830","011070","071050","081660","046890","323410","017670","010620",
+  "047050","009155","275630","009835","001440","138930","175330","051900","092740","034220"
+  ];
+
+
+
+
   // --------------------------- 거래량 순위 Top10 ----------------------------
   useEffect(() => {
     async function loadRank() {
@@ -52,7 +63,7 @@ export default function MainPage() {
   // --------------------------- period 변경 시 50개 종목 로드 ----------------------------
   useEffect(() => {
     async function load() {
-      const data = await fetch50StocksByPeriod(period);
+      const data = await fetch50StocksByPeriod(period, TICKERS);
       setLiveData(data);
     }
     load();

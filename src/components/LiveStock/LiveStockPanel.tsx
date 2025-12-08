@@ -30,7 +30,7 @@ export default function LiveStockPanel({ data, period, onPeriodChange }: Props) 
       <LiveStockPeriodTabs selected={period} onChange={onPeriodChange} />
 
       {/* 3) 테이블 */}
-      <LiveStockTable stocks={data[category]} />
+      <LiveStockTable stocks={data[category]} category={category} />
     </div>
   );
 }

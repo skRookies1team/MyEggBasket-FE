@@ -613,17 +613,19 @@ export async function fetchInvestorTrade(
 ): Promise<InvestorTradeData[] | null> {
     try {
         const token = await getAccessToken();
-        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily`;
 
+        // 1. 올바른 엔드포인트 설정
+        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-investor`;
+
+        // 2. 조회 날짜 계산 (기존 함수 활용)
         const inputDate = getInvestorTradeDate();
 
-        // API 요구사항: 종목코드, 매매구분(0:전체), 기간구분(D:일), 기간(시작일, 종료일), 시간외구분(0:전체), 투자자구분(전체), 매도/매수구분(전체)
+        // 3. FHKST01010900 명세에 맞는 파라미터 구성
         const queryParams = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: "J",      // J: 전체 (코스피+코스닥)
             FID_INPUT_ISCD: stockCode,        // 종목코드
-            FID_INPUT_DATE: inputDate,               // 장 종료 전 전날 조회
-            FID_ORG_ADJ_PRC: "",
-            FID_ETC_CLS_CODE: ""
+            FID_INPUT_DATE_1: inputDate,      // 조회 시작일 (YYYYMMDD)
+            FID_INPUT_DATE_2: inputDate,      // 조회 종료일 (당일 1건만 조회)
         });
 
         const response = await fetch(`${url}?${queryParams.toString()}`, {
@@ -633,7 +635,7 @@ export async function fetchInvestorTrade(
                 authorization: `Bearer ${token}`,
                 appkey: APP_KEY,
                 appsecret: APP_SECRET,
-                tr_id: "FHPTJ04160001",
+                tr_id: "FHKST01010900",      
                 custtype: "P",
             },
         });
@@ -642,8 +644,8 @@ export async function fetchInvestorTrade(
             console.error("❌ 투자자 동향 API HTTP 오류:", await response.text());
             return null;
         }
+
         const json = await response.json();
-        console.log(json)
 
         if (json.rt_cd !== "0") {
             console.error(`❌ 투자자 동향 조회 실패: ${json.msg1} (${json.msg_cd})`);
@@ -652,27 +654,37 @@ export async function fetchInvestorTrade(
 
         const list = json.output || [];
 
-        // 데이터 파싱 및 변환
-        // API 결과에는 개인, 외국인, 기관의 순매수 대금(amt) 및 수량(qty)이 포함되어 있음
-        return list.map((item: any) => {
-            let investorName = "기타";
+        // 데이터가 없으면 빈 배열 반환
+        if (list.length === 0) return [];
 
-            // 투자자 코드를 한국투자증권 API 문서 기준으로 매핑 (예: 1000:개인, 2000:외국인, 3000:기관, 4000:기타 등)
-            switch (item.invr_cls_code) {
-                case '1000': investorName = '개인'; break;
-                case '2000': investorName = '외국인'; break;
-                case '300-0': investorName = '기관'; break;
-                // 기타 투자 주체는 필요에 따라 추가
-                default: investorName = '기타';
-            }
+        // 4. 응답 데이터 매핑
+        // inquire-investor API는 일자별 리스트를 반환하므로, 첫 번째 항목(가장 최근 날짜)을 사용합니다.
+        const todayData = list[0];
 
-            // API에서 제공되는 순매수 대금/수량 필드를 사용
-            return {
-                investor: investorName,
-                netBuyQty: Number(item.tday_순매수수량 || item.tday_stck_순매수수량), // 필드명은 API 응답 구조에 따라 달라질 수 있음
-                netBuyAmount: Number(item.tday_순매수대금 || item.tday_stck_순매수대금), // 단위는 API 문서 확인 필요 (보통 원 또는 억 원)
-            };
-        }).filter((item: InvestorTradeData) => item.investor !== '기타'); // 기타는 제외하고 주요 3주체만 반환
+        // API 필드명 -> UI 데이터 구조 변환
+        // prsn_ntby_qty: 개인순매수수량 / prsn_ntby_tr_pbmn: 개인순매수거래대금
+        // frgn_ntby_qty: 외국인순매수수량 / frgn_ntby_tr_pbmn: 외국인순매수거래대금
+        // orgn_ntby_qty: 기관계순매수수량 / orgn_ntby_tr_pbmn: 기관계순매수거래대금
+
+        const result: InvestorTradeData[] = [
+            {
+                investor: "개인",
+                netBuyQty: Number(todayData.prsn_ntby_qty || 0),
+                netBuyAmount: Number(todayData.prsn_ntby_tr_pbmn || 0),
+            },
+            {
+                investor: "외국인",
+                netBuyQty: Number(todayData.frgn_ntby_qty || 0),
+                netBuyAmount: Number(todayData.frgn_ntby_tr_pbmn || 0),
+            },
+            {
+                investor: "기관",
+                netBuyQty: Number(todayData.orgn_ntby_qty || 0),
+                netBuyAmount: Number(todayData.orgn_ntby_tr_pbmn || 0),
+            },
+        ];
+
+        return result;
 
     } catch (err) {
         console.error("❌ 투자자 동향 조회 오류:", err);

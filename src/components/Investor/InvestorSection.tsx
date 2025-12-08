@@ -3,18 +3,20 @@ interface Item {
   price: number;   // 현재가
   rate: number;    // 등락률
   amount: number;  // 거래대금 
+  volume: number;  // 거래수량
 }
 
 interface Props {
   title: string;
   data: Item[];
+  tab: "buy" | "sell";
 }
 
-export default function InvestorSection({ title, data }: Props) {
+export default function InvestorSection({ title, data, tab }: Props) {
   // 거래대금(amount) 기준 내림차순 정렬
   const sortedData = [...data].sort((a, b) => b.amount - a.amount);
 
-  // 원 → 억 단위 변환
+  // 숫자 포맷팅 함수
   const toEok = (value: number) => {
     return Math.floor(value / 100_000_000).toLocaleString() + "억";
   };
@@ -23,7 +25,7 @@ export default function InvestorSection({ title, data }: Props) {
     <div className="investor-section">
       <h3 className="investor-title">{title}</h3>
 
-      <div className="investor-list">
+      <div className="investor-list" data-testid={`${title}-${tab}-list`}>
         {sortedData.map((item, idx) => (
           <div key={idx} className="investor-item">
             {/* 왼쪽: 종목명 + 현재가 + 등락률 */}
@@ -41,9 +43,12 @@ export default function InvestorSection({ title, data }: Props) {
               </div>
             </div>
 
-            {/* 오른쪽: 거래대금(억원 단위) */}
-            <div className="item-amount">
-              {toEok(item.amount)}
+            {/* 오른쪽: 거래대금 + 거래수량 */}
+            <div className="item-trade-details">
+              <div className="item-amount">{toEok(item.amount)}</div>
+              <div className="item-volume">
+                {item.volume.toLocaleString()}주
+              </div>
             </div>
           </div>
         ))}

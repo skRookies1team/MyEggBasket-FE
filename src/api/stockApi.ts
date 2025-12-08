@@ -243,12 +243,12 @@ export async function getAccessToken(): Promise<string> {
     🔵 4) 해외 지수 조회 API (추가된 부분)
 ============================================================ */
 export interface IndexData {
-  indexName: string;
-  time: string;
-  current: number;
-  change: number;
-  rate: number;
-  volume: number;
+    indexName: string;
+    time: string;
+    current: number;
+    change: number;
+    rate: number;
+    volume: number;
 }
 
 export async function fetchOverseasIndex(
@@ -314,12 +314,12 @@ function formatApiDate(dateStr: string) {
 }
 
 export interface IndexData {
-  indexName: string;
-  time: string;
-  current: number;
-  change: number;
-  rate: number;
-  volume: number;
+    indexName: string;
+    time: string;
+    current: number;
+    change: number;
+    rate: number;
+    volume: number;
 }
 
 
@@ -595,6 +595,89 @@ export async function fetchVolumeRankTop10(): Promise<VolumeRankItem[] | null> {
 
     } catch (err) {
         console.error("❌ 거래량순위 조회 오류:", err);
+        return null;
+    }
+}
+
+// 8) 투자자 동향 (개인/외국인/기관 순매수/순매도) 조회
+//    TR_ID: FHKST01060100
+//    URL: /uapi/domestic-stock/v1/quotations/inquire-investor-trade
+
+export interface InvestorTradeData {
+    investor: string; // 투자자 구분 (개인, 외국인, 기관)
+    netBuyQty: number; // 순매수 수량
+    netBuyAmount: number; // 순매수 대금 (단위: 억)
+}
+
+export async function fetchInvestorTrade(
+    stockCode: string,
+    accessToken: string
+): Promise<InvestorTradeData[] | null> {
+    try {
+        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-investor-trade`;
+
+        // API 요구사항: 종목코드, 매매구분(0:전체), 기간구분(D:일), 기간(시작일, 종료일), 시간외구분(0:전체), 투자자구분(전체), 매도/매수구분(전체)
+        const queryParams = new URLSearchParams({
+            FID_COND_MRKT_DIV_CODE: "J",      // J: 전체 (코스피+코스닥)
+            FID_INPUT_ISCD: stockCode,        // 종목코드
+            FID_DIV_CLS_CODE: "0",            // 전체
+            FID_TERM_CLS_CODE: "D",           // 기간구분 (D:일)
+            FID_ETC_CLS_CODE: "0",            // 시간외구분 (0:전체)
+            FID_INVR_CLS_CODE: "9000",        // 투자자구분코드 (9000: 전체 투자자)
+            FID_ORG_PRBL_CLS_CODE: "0",       // 매도/매수 구분 (0:전체)
+            FID_INPUT_DATE: "",               // 조회 날짜 (미입력 시 당일)
+        });
+
+        const response = await fetch(`${url}?${queryParams.toString()}`, {
+            method: "GET",
+            headers: {
+                "content-type": "application/json; charset=utf-8",
+                authorization: `Bearer ${accessToken}`,
+                appkey: APP_KEY,
+                appsecret: APP_SECRET,
+                tr_id: "FHKST01060100",
+                custtype: "P",
+            },
+        });
+
+        if (!response.ok) {
+            console.error("❌ 투자자 동향 API HTTP 오류:", await response.text());
+            return null;
+        }
+
+        const json = await response.json();
+
+        if (json.rt_cd !== "0") {
+            console.error(`❌ 투자자 동향 조회 실패: ${json.msg1} (${json.msg_cd})`);
+            return null;
+        }
+
+        const list = json.output || [];
+
+        // 데이터 파싱 및 변환
+        // API 결과에는 개인, 외국인, 기관의 순매수 대금(amt) 및 수량(qty)이 포함되어 있음
+        return list.map((item: any) => {
+            let investorName = "기타";
+
+            // 투자자 코드를 한국투자증권 API 문서 기준으로 매핑 (예: 1000:개인, 2000:외국인, 3000:기관, 4000:기타 등)
+            switch (item.invr_cls_code) {
+                case '1000': investorName = '개인'; break;
+                case '2000': investorName = '외국인'; break;
+                case '3000': investorName = '기관'; break;
+                // 기타 투자 주체는 필요에 따라 추가
+                default: investorName = '기타';
+            }
+
+            // API에서 제공되는 순매수 대금/수량 필드를 사용
+            return {
+                investor: investorName,
+                netBuyQty: Number(item.tday_순매수수량 || item.tday_stck_순매수수량), // 필드명은 API 응답 구조에 따라 달라질 수 있음
+                netBuyAmount: Number(item.tday_순매수대금 || item.tday_stck_순매수대금), // 단위는 API 문서 확인 필요 (보통 원 또는 억 원)
+            };
+        }).filter((item: InvestorTradeData) => item.investor !== '기타'); // 기타는 제외하고 주요 3주체만 반환
+
+    } catch (err) {
+        console.error("❌ 투자자 동향 조회 오류:", err);
         return null;
     }
 }

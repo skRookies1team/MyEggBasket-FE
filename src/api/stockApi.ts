@@ -600,8 +600,6 @@ export async function fetchVolumeRankTop10(): Promise<VolumeRankItem[] | null> {
 }
 
 // 8) 투자자 동향 (개인/외국인/기관 순매수/순매도) 조회
-//    TR_ID: FHKST01060100
-//    URL: /uapi/domestic-stock/v1/quotations/inquire-investor-trade
 
 export interface InvestorTradeData {
     investor: string; // 투자자 구분 (개인, 외국인, 기관)
@@ -609,33 +607,33 @@ export interface InvestorTradeData {
     netBuyAmount: number; // 순매수 대금 (단위: 억)
 }
 
+
 export async function fetchInvestorTrade(
     stockCode: string,
-    accessToken: string
 ): Promise<InvestorTradeData[] | null> {
     try {
-        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-investor-trade`;
+        const token = await getAccessToken();
+        const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily`;
+
+        const inputDate = getInvestorTradeDate();
 
         // API 요구사항: 종목코드, 매매구분(0:전체), 기간구분(D:일), 기간(시작일, 종료일), 시간외구분(0:전체), 투자자구분(전체), 매도/매수구분(전체)
         const queryParams = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: "J",      // J: 전체 (코스피+코스닥)
             FID_INPUT_ISCD: stockCode,        // 종목코드
-            FID_DIV_CLS_CODE: "0",            // 전체
-            FID_TERM_CLS_CODE: "D",           // 기간구분 (D:일)
-            FID_ETC_CLS_CODE: "0",            // 시간외구분 (0:전체)
-            FID_INVR_CLS_CODE: "9000",        // 투자자구분코드 (9000: 전체 투자자)
-            FID_ORG_PRBL_CLS_CODE: "0",       // 매도/매수 구분 (0:전체)
-            FID_INPUT_DATE: "",               // 조회 날짜 (미입력 시 당일)
+            FID_INPUT_DATE: inputDate,               // 장 종료 전 전날 조회
+            FID_ORG_ADJ_PRC: "",
+            FID_ETC_CLS_CODE: ""
         });
 
         const response = await fetch(`${url}?${queryParams.toString()}`, {
             method: "GET",
             headers: {
                 "content-type": "application/json; charset=utf-8",
-                authorization: `Bearer ${accessToken}`,
+                authorization: `Bearer ${token}`,
                 appkey: APP_KEY,
                 appsecret: APP_SECRET,
-                tr_id: "FHKST01060100",
+                tr_id: "FHPTJ04160001",
                 custtype: "P",
             },
         });
@@ -644,8 +642,8 @@ export async function fetchInvestorTrade(
             console.error("❌ 투자자 동향 API HTTP 오류:", await response.text());
             return null;
         }
-
         const json = await response.json();
+        console.log(json)
 
         if (json.rt_cd !== "0") {
             console.error(`❌ 투자자 동향 조회 실패: ${json.msg1} (${json.msg_cd})`);
@@ -663,7 +661,7 @@ export async function fetchInvestorTrade(
             switch (item.invr_cls_code) {
                 case '1000': investorName = '개인'; break;
                 case '2000': investorName = '외국인'; break;
-                case '3000': investorName = '기관'; break;
+                case '300-0': investorName = '기관'; break;
                 // 기타 투자 주체는 필요에 따라 추가
                 default: investorName = '기타';
             }
@@ -680,4 +678,41 @@ export async function fetchInvestorTrade(
         console.error("❌ 투자자 동향 조회 오류:", err);
         return null;
     }
+}
+
+function getInvestorTradeDate(): string {
+    const now = new Date();
+    // 현재 시각의 시(hour)와 분(minute)을 계산
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const targetDate= now
+
+    // 장 마감 시간 (오후 3시 30분)
+    const marketCloseHour = 15; // 15시
+    const marketCloseMinute = 30;
+
+    // 1. 현재 시각이 장 마감 시간 (15:30) 이전이라면, 전날을 조회
+    if (currentHour < marketCloseHour || (currentHour === marketCloseHour && currentMinute <= marketCloseMinute)) {
+        // 어제 날짜로 설정
+        targetDate.setDate(targetDate.getDate() - 1);
+    }
+    // 2. 현재 시각이 장 마감 시간 (15:30) 이후라면, 오늘 날짜를 조회
+
+    // 주말(토요일: 6, 일요일: 0)은 피하고 금요일 또는 금요일 이전으로 설정
+    // targetDate가 일요일(0)이면 금요일(5)로 (2일 전)
+    if (targetDate.getDay() === 0) {
+        targetDate.setDate(targetDate.getDate() - 2); 
+    }
+    // targetDate가 토요일(6)이면 금요일(5)로 (1일 전)
+    else if (targetDate.getDay() === 6) {
+        targetDate.setDate(targetDate.getDate() - 1); 
+    }
+
+
+    // YYYYMMDD 형식으로 포맷
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
+
+    return `${year}${month}${day}`;
 }

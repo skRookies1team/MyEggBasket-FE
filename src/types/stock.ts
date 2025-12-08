@@ -10,14 +10,15 @@ export interface StockPriceData {
 }
 
 export interface StockItem {
-    code: string;
-    name: string;
-    price: number;
-    change: number;     // 등락액
-    percent: number;    // 등락률
-    amount: number;     // 거래대금
-    volume: number;     // 거래량
+  code: string;
+  name: string;
+  price: number;
+  change: number;
+  percent: number;
+  volume: number;
+  amount: number; // 거래대금 추가
 }
+
 
 export interface OrderItem {
     price: number;

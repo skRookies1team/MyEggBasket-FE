@@ -85,7 +85,7 @@ export async function fetchAccountBalance(accessToken: string): Promise<AccountB
                 'appkey': APP_KEY,
                 'appsecret': APP_SECRET,
                 'tr_id': trId,
-                'custtype': 'P', // 개인
+                'custtype': 'P', 
             },
         });
 
@@ -209,7 +209,7 @@ export async function getAccessToken(): Promise<string> {
         return cachedToken;
     }
 
-    console.log('🔄 KIS 토큰 새로 발급');
+    console.log('KIS 토큰 새로 발급');
 
     try {
         const response = await fetch(`${REST_BASE_URL}/oauth2/tokenP`, {
@@ -229,7 +229,7 @@ export async function getAccessToken(): Promise<string> {
         localStorage.setItem('kis_access_token', token);
         localStorage.setItem('kis_token_expire', String(Date.now() + expiresIn));
 
-        console.log("✅ 토큰 발급 완료");
+        console.log("토큰 발급 완료");
         return token;
 
     } catch (err) {
@@ -256,7 +256,7 @@ export async function fetchOverseasIndex(
     name: string
 ): Promise<IndexData | null> {
     try {
-        const token = await getAccessToken();  // 🔥 공통 토큰 사용
+        const token = await getAccessToken();
 
         const params = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: "N",
@@ -472,14 +472,14 @@ export async function fetchIndexTickPrice(
         // HTTP 오류 확인
         if (!response.ok) {
             const text = await response.text();
-            console.error("❌ 업종 지수 API HTTP Error:", response.status, text);
+            console.error("업종 지수 API HTTP Error:", response.status, text);
             return null;
         }
 
         const raw = await response.text();
 
         if (!raw || raw.trim() === "") {
-            console.error("❌ 업종 지수 API: 응답 body 없음");
+            console.error("업종 지수 API: 응답 body 없음");
             return null;
         }
 
@@ -487,13 +487,13 @@ export async function fetchIndexTickPrice(
         try {
             json = JSON.parse(raw);
         } catch (err) {
-            console.error("❌ JSON 파싱 실패, 응답 원본:", raw);
+            console.error("JSON 파싱 실패, 응답 원본:", raw);
             return null;
         }
 
         if (json.rt_cd !== "0") {
             console.error(
-                `❌ 업종 지수 조회 실패: ${json.msg1} (${json.msg_cd})`
+                `업종 지수 조회 실패: ${json.msg1} (${json.msg_cd})`
             );
             return null;
         }
@@ -509,7 +509,7 @@ export async function fetchIndexTickPrice(
             volume: Number(item.acml_vol),
         }));
     } catch (err) {
-        console.error("❌ 업종 지수 API 오류:", err);
+        console.error("업종 지수 API 오류:", err);
         return null;
     }
 }
@@ -564,20 +564,20 @@ export async function fetchVolumeRankTop10(): Promise<VolumeRankItem[] | null> {
         });
 
         if (!response.ok) {
-            console.error("❌ 거래량순위 API HTTP 오류:", await response.text());
+            console.error("거래량순위 API HTTP 오류:", await response.text());
             return null;
         }
 
         const json = await response.json();
 
         if (json.rt_cd !== "0") {
-            console.error(`❌ 거래량순위 실패: ${json.msg1} (${json.msg_cd})`);
+            console.error(`거래량순위 실패: ${json.msg1} (${json.msg_cd})`);
             return null;
         }
 
         const list = json.output || [];
 
-        // 30개 중 5개만
+        // 30개 중 10개만
         const top10 = list.slice(0, 10);
 
         // 변환
@@ -594,7 +594,7 @@ export async function fetchVolumeRankTop10(): Promise<VolumeRankItem[] | null> {
         }));
 
     } catch (err) {
-        console.error("❌ 거래량순위 조회 오류:", err);
+        console.error("거래량순위 조회 오류:", err);
         return null;
     }
 }

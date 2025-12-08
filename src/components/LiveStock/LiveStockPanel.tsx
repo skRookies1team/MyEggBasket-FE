@@ -11,12 +11,14 @@ interface Props {
     rise: StockItem[];
     fall: StockItem[];
   };
+  period: "day" | "week" | "month" | "year";
+  onPeriodChange: (v: any) => void;
 }
 
-export default function LiveStockPanel({ data }: Props) {
-  const [category, setCategory] = useState<"volume" | "amount" | "rise" | "fall">("volume");
-  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
-
+export default function LiveStockPanel({ data, period, onPeriodChange }: Props) {
+  const [category, setCategory] = useState<"volume" | "amount" | "rise" | "fall">("volume"); 
+ 
+ 
   return (
     <div style={{ marginTop: "28px" }}>
       <h2 style={{ marginBottom: "12px" }}> 실시간 종목 주가</h2>
@@ -25,10 +27,10 @@ export default function LiveStockPanel({ data }: Props) {
       <LiveStockTabs selected={category} onChange={setCategory} />
 
       {/* 2) 기간 탭 */}
-      <LiveStockPeriodTabs selected={period} onChange={setPeriod} />
+      <LiveStockPeriodTabs selected={period} onChange={onPeriodChange} />
 
       {/* 3) 테이블 */}
-      <LiveStockTable stocks={data[category]} />
+      <LiveStockTable stocks={data[category]} category={category} />
     </div>
   );
 }

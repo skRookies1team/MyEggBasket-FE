@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer.tsx";
-import Top10Rolling from "../components/Top10Rolling.tsx";
+import { fetch50StocksByPeriod } from "../api/liveStockApi";
+import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
+import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import "../assets/MaingPage.css";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
-import { fetchVolumeRankTop10 } from "../api/stockApi";   // 🔥 거래량순위 API 불러오기
-import type { VolumeRankItem } from "../components/Top10Rolling";  // 🔥 타입 가져오기
-
+import { fetchVolumeRankTop10 } from "../api/stockApi";
+import type { VolumeRankItem } from "../components/Top10Rolling";
+import type { StockItem } from "../types/stock.ts";
 
 export default function MainPage() {
+  // --------------------------- UI 상태 ----------------------------
   const [activeTab, setActiveTab] = useState<
     "main" | "watchlist" | "news" | "investor"
   >("main");
@@ -18,8 +20,24 @@ export default function MainPage() {
   const [showTicker, setShowTicker] = useState(false);
   const indexSectionRef = useRef<HTMLDivElement | null>(null);
 
+  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
+
+  // --------------------------- 데이터 상태 ----------------------------
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
 
+  // ⭐ LiveStockPanel에 전달할 실제 데이터 (50개 종목)
+  const [liveData, setLiveData] = useState<{
+    volume: StockItem[];
+    amount: StockItem[];
+    rise: StockItem[];
+    fall: StockItem[];
+  }>({
+    volume: [],
+    amount: [],
+    rise: [],
+    fall: [],
+  });
+  // --------------------------- 거래량 순위 Top10 ----------------------------
   useEffect(() => {
     async function loadRank() {
       const list = await fetchVolumeRankTop10();
@@ -27,15 +45,20 @@ export default function MainPage() {
     }
 
     loadRank();
-
-    // 20초마다 자동 업데이트
     const timer = setInterval(loadRank, 20000);
     return () => clearInterval(timer);
   }, []);
 
-  // =====================================================
-  // 주요 지수 보임 감지 → Ticker Sticky 처리
-  // =====================================================
+  // --------------------------- period 변경 시 50개 종목 로드 ----------------------------
+  useEffect(() => {
+    async function load() {
+      const data = await fetch50StocksByPeriod(period);
+      setLiveData(data);
+    }
+    load();
+  }, [period]);
+
+  // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
   useEffect(() => {
     if (!indexSectionRef.current) return;
 
@@ -50,63 +73,46 @@ export default function MainPage() {
     return () => observer.disconnect();
   }, []);
 
+  // --------------------------- AI Issue Dummy ----------------------------
   const issueBubbles = [
     { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#FF5A4E" },
-    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#FF5A4E"  },
-    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#FF5A4E"  },
-    { name: "K-POP", size: 75, mentions: 1850, change: 4.1, color: "#FF5A4E"  },
+    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#FF5A4E" },
+    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#FF5A4E" },
+    { name: "K-POP", size: 75, mentions: 1850, change: 4.1, color: "#FF5A4E" },
     { name: "바이오", size: 120, mentions: 7940, change: -2.8, color: "#4169E1" },
     { name: "메타버스", size: 65, mentions: 1200, change: 3.2, color: "#4169E1" },
     { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#4169E1" }
   ];
 
-  const dummyLiveStockData = {
-    volume: [
-      { code: "005930", name: "삼성전자", price: 72500, change: 1650, percent: 2.3, amount: 239000000000, volume: 32100000 },
-      { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
-      { code: "035420", name: "NAVER", price: 208000, change: -2530, percent: -1.2, amount: 181000000000, volume: 8700000 },
-    ],
-
-    amount: [
-      { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
-      { code: "005930", name: "삼성전자", price: 72500, change: 1650, percent: 2.3, amount: 239000000000, volume: 32100000 },
-    ],
-
-    rise: [
-      { code: "000660", name: "SK하이닉스", price: 135000, change: 5130, percent: 4.1, amount: 256000000000, volume: 18400000 },
-      { code: "005380", name: "현대차", price: 195000, change: 3450, percent: 1.8, amount: 136000000000, volume: 6100000 },
-    ],
-
-    fall: [
-      { code: "035420", name: "NAVER", price: 208000, change: -2530, percent: -1.2, amount: 181000000000, volume: 8700000 },
-      { code: "051910", name: "LG화학", price: 520000, change: -6500, percent: -1.1, amount: 89000000000, volume: 210000 },
-    ],
-  };
-
+  // --------------------------- 렌더링 ----------------------------
   return (
     <div className="main-container">
 
+      {/* 스크롤 Sticky Ticker */}
       {showTicker && (
         <div className="ticker-sticky">
           <MarketIndexContainer showTickerOnly />
         </div>
       )}
 
+      {/* 주요 지수 카드 */}
       <div className="market-index-section" ref={indexSectionRef}>
         <h2 className="market-index-title"> 주요 지수 </h2>
         <MarketIndexContainer />
       </div>
 
+      {/* 거래량 Top10 롤링 */}
       {top10Rank.length > 0 && (
         <Top10Rolling data={top10Rank} interval={2500} />
       )}
 
+      {/* 탭 메뉴 */}
       <div className="tab-menu">
         {[
           { id: "main", label: "메인" },
           { id: "watchlist", label: "실시간 관심 종목 주가" },
           { id: "news", label: "뉴스" },
-          { id: "investor", label: "투자자 동향" }
+          { id: "investor", label: "투자자 동향" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -127,16 +133,19 @@ export default function MainPage() {
 
             <AIIssueLayout bubbles={issueBubbles} />
 
+            {/* ⭐ 실제 50개 종목 데이터 표시 */}
             <div style={{ marginTop: "32px" }}>
-              <LiveStockPanel data={dummyLiveStockData} />
+              <LiveStockPanel
+                data={liveData}
+                period={period}
+                onPeriodChange={setPeriod}
+              />
             </div>
           </>
         )}
 
         {activeTab === "watchlist" && "관심종목 콘텐츠"}
-
         {activeTab === "news" && <NewsTabs />}
-
         {activeTab === "investor" && <InvestorTrend />}
       </div>
     </div>

@@ -41,7 +41,12 @@ export default function InvestorSection({ title, data, tab }: Props) {
 
             {/* 오른쪽: 거래대금 + 거래수량 */}
             <div className="item-trade-details">
-              <div className="item-amount">{(item.amount.toLocaleString())}원</div>
+              {/* 거래대금이 1억원 미만이면 만원 단위, 이상이면 억원 단위로 표시 */}
+              {item.amount < 1 ? (
+                <div className="item-amount">{(item.amount * 10000).toLocaleString()}만원</div>
+              ) : (
+                <div className="item-amount">{item.amount.toFixed(2)}억원</div>
+              )}
               <div className="item-volume">
                 {item.volume.toLocaleString()}주
               </div>

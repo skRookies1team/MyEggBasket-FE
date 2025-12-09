@@ -654,7 +654,7 @@ export async function fetchInvestorTrade(
         const currentHour = now.getHours();
         let todayData;
 
-        if (currentHour < 11 && list.length > 1) {
+        if (currentHour < 15 && list.length > 1) {
             todayData = list[1];
         } else {
             todayData = list[0];

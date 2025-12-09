@@ -1,52 +1,70 @@
 import { useFavoriteStore } from "../../store/favoriteStore";
-import { useNavigate } from "react-router-dom";   
+import { useNavigate } from "react-router-dom";
 import type { StockItem } from "../../types/stock";
 import "../../assets/LiveStock/LiveStockTable.css";
+import Egg1 from "../../assets/icons/egg1.png";
+import Egg2 from "../../assets/icons/egg2.png";
 
 interface Props {
   stocks: StockItem[];
+  category: "volume" | "amount" | "rise" | "fall";
 }
 
-export default function LiveStockTable({ stocks }: Props) {
-  const { favorites, toggleFavorite } = useFavoriteStore();
-  const navigate = useNavigate();                 
+export default function LiveStockTable({ stocks, category }: Props) {
+  const favorites = useFavoriteStore((s) => s.favorites);
+  const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
+  const navigate = useNavigate();
+
+  function formatToEok(amount: number) {
+    return (amount / 100_000_000).toFixed(1);
+  }
 
   return (
     <table className="live-stock-table">
       <thead>
         <tr>
           <th></th>
+          <th>순위</th>
           <th>종목명</th>
           <th>현재가</th>
           <th>등락률</th>
-          <th>거래량</th>
+
+          {category === "volume" && <th>거래량</th>}
+          {category === "amount" && <th>거래대금</th>}
         </tr>
       </thead>
 
       <tbody>
-        {stocks.map((s) => {
-          const isFav = favorites.includes(s.code);
+        {stocks.map((s, idx) => {
+          const isFav = favorites.some((item) => item.stockCode === s.code);
 
           return (
             <tr
               key={s.code}
               className="clickable-row"
-              onClick={() => navigate(`/stock/${s.code}`)}    
+              onClick={() => navigate(`/stock/${s.code}`)}
             >
-              {/* 즐겨찾기 버튼 */}
+              {/* 관심종목 */}
               <td className="fav-col">
                 <button
                   className={`fav-btn ${isFav ? "active" : ""}`}
                   onClick={(e) => {
-                    e.stopPropagation();         
+                    e.stopPropagation();
                     toggleFavorite(s.code);
                   }}
                 >
-                  {isFav ? "⭐" : "☆"}
+                  <img
+                    src={isFav ? Egg1 : Egg2}
+                    alt="fav-egg"
+                    className="fav-egg-icon"
+                  />
                 </button>
               </td>
 
-              {/* 종목명 + 코드 */}
+              {/* 순번 */}
+              <td>{idx + 1}</td>
+
+              {/* 종목명 */}
               <td>
                 <div className="name">
                   {s.name}
@@ -56,7 +74,7 @@ export default function LiveStockTable({ stocks }: Props) {
 
               {/* 현재가 */}
               <td className={s.change >= 0 ? "up" : "down"}>
-                {s.price.toLocaleString()}
+                {s.price.toLocaleString()} 원
               </td>
 
               {/* 등락률 */}
@@ -64,8 +82,13 @@ export default function LiveStockTable({ stocks }: Props) {
                 {s.percent}%
               </td>
 
-              {/* 거래량 */}
-              <td>{s.volume.toLocaleString()}</td>
+              {category === "volume" && (
+                <td>{s.volume.toLocaleString()} 주</td>
+              )}
+
+              {category === "amount" && (
+                <td>{formatToEok(s.amount)} 억</td>
+              )}
             </tr>
           );
         })}

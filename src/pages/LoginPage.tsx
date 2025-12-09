@@ -7,7 +7,7 @@ import { useAuthStore } from "../store/authStore";
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  // ⭐ Zustand login 함수 가져오기
+  // Zustand login 함수 가져오기
   const login = useAuthStore((state) => state.login);
 
   const [showFindPassword, setShowFindPassword] = useState(false);

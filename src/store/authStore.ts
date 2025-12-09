@@ -56,6 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => set({ user }),
 
   logout: () => {
+    localStorage.removeItem("recent_stocks");
     localStorage.removeItem("accessToken");
     delete api.defaults.headers.common["Authorization"]; // prettier-ignore
     set({ isAuthenticated: false, accessToken: null, user: null });

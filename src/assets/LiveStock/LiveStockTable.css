@@ -148,3 +148,8 @@
     text-align: right;
   }
 }
+.fav-egg-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}

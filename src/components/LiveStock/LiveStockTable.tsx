@@ -4,6 +4,7 @@ import type { StockItem } from "../../types/stock";
 import "../../assets/LiveStock/LiveStockTable.css";
 import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
+import Egg3 from "../../assets/icons/egg3.png";
 
 interface Props {
   stocks: StockItem[];
@@ -54,7 +55,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   }}
                 >
                   <img
-                    src={isFav ? Egg1 : Egg2}
+                    src={isFav ? Egg3 : Egg2}
                     alt="fav-egg"
                     className="fav-egg-icon"
                   />

@@ -610,22 +610,22 @@ export interface InvestorTradeData {
 
 export async function fetchInvestorTrade(
     stockCode: string,
+    token: string
 ): Promise<InvestorTradeData[] | null> {
     try {
-        const token = await getAccessToken();
-
+    
         // 1. 올바른 엔드포인트 설정
         const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-investor`;
 
         // 2. 조회 날짜 계산 (기존 함수 활용)
-        const inputDate = getInvestorTradeDate();
+        // const inputDate = getInvestorTradeDate();
 
         // 3. FHKST01010900 명세에 맞는 파라미터 구성
         const queryParams = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: "J",      // J: 전체 (코스피+코스닥)
             FID_INPUT_ISCD: stockCode,        // 종목코드
-            FID_INPUT_DATE_1: inputDate,      // 조회 시작일 (YYYYMMDD)
-            FID_INPUT_DATE_2: inputDate,      // 조회 종료일 (당일 1건만 조회)
+            // FID_INPUT_DATE_1: "20251208",      // 조회 시작일 (YYYYMMDD)
+            // FID_INPUT_DATE_2: "20251208",      // 조회 종료일 (당일 1건만 조회)
         });
 
         const response = await fetch(`${url}?${queryParams.toString()}`, {
@@ -653,13 +653,22 @@ export async function fetchInvestorTrade(
         }
 
         const list = json.output || [];
-
         // 데이터가 없으면 빈 배열 반환
         if (list.length === 0) return [];
 
         // 4. 응답 데이터 매핑
-        // inquire-investor API는 일자별 리스트를 반환하므로, 첫 번째 항목(가장 최근 날짜)을 사용합니다.
-        const todayData = list[0];
+        const now = new Date();
+        const currentHour = now.getHours();
+        let todayData;
+
+        // 시간이 11시 이전이고, 데이터가 2개 이상 있으면 전일 데이터(list[1])를 사용합니다.
+        if (currentHour < 11 && list.length > 1) {
+            todayData = list[1];
+        } else {
+            // 11시 이후이거나 데이터가 1개만 있으면 최신 데이터(list[0])를 사용합니다.
+            todayData = list[0];
+        }
+
 
         // API 필드명 -> UI 데이터 구조 변환
         // prsn_ntby_qty: 개인순매수수량 / prsn_ntby_tr_pbmn: 개인순매수거래대금
@@ -692,39 +701,39 @@ export async function fetchInvestorTrade(
     }
 }
 
-function getInvestorTradeDate(): string {
-    const now = new Date();
-    // 현재 시각의 시(hour)와 분(minute)을 계산
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const targetDate= now
+// function getInvestorTradeDate(): string {
+//     const now = new Date();
+//     // 현재 시각의 시(hour)와 분(minute)을 계산
+//     const currentHour = now.getHours();
+//     const currentMinute = now.getMinutes();
+//     const targetDate= now
 
-    // 장 마감 시간 (오후 3시 30분)
-    const marketCloseHour = 15; // 15시
-    const marketCloseMinute = 30;
+//     // 장 마감 시간 (오후 3시 30분)
+//     const marketCloseHour = 15; // 15시
+//     const marketCloseMinute = 30;
 
-    // 1. 현재 시각이 장 마감 시간 (15:30) 이전이라면, 전날을 조회
-    if (currentHour < marketCloseHour || (currentHour === marketCloseHour && currentMinute <= marketCloseMinute)) {
-        // 어제 날짜로 설정
-        targetDate.setDate(targetDate.getDate() - 1);
-    }
-    // 2. 현재 시각이 장 마감 시간 (15:30) 이후라면, 오늘 날짜를 조회
+//     // 1. 현재 시각이 장 마감 시간 (15:30) 이전이라면, 전날을 조회
+//     if (currentHour < marketCloseHour || (currentHour === marketCloseHour && currentMinute <= marketCloseMinute)) {
+//         // 어제 날짜로 설정
+//         targetDate.setDate(targetDate.getDate() - 1);
+//     }
+//     // 2. 현재 시각이 장 마감 시간 (15:30) 이후라면, 오늘 날짜를 조회
 
-    // 주말(토요일: 6, 일요일: 0)은 피하고 금요일 또는 금요일 이전으로 설정
-    // targetDate가 일요일(0)이면 금요일(5)로 (2일 전)
-    if (targetDate.getDay() === 0) {
-        targetDate.setDate(targetDate.getDate() - 2); 
-    }
-    // targetDate가 토요일(6)이면 금요일(5)로 (1일 전)
-    else if (targetDate.getDay() === 6) {
-        targetDate.setDate(targetDate.getDate() - 1); 
-    }
+//     // 주말(토요일: 6, 일요일: 0)은 피하고 금요일 또는 금요일 이전으로 설정
+//     // targetDate가 일요일(0)이면 금요일(5)로 (2일 전)
+//     if (targetDate.getDay() === 0) {
+//         targetDate.setDate(targetDate.getDate() - 2); 
+//     }
+//     // targetDate가 토요일(6)이면 금요일(5)로 (1일 전)
+//     else if (targetDate.getDay() === 6) {
+//         targetDate.setDate(targetDate.getDate() - 1); 
+//     }
 
 
-    // YYYYMMDD 형식으로 포맷
-    const year = targetDate.getFullYear();
-    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const day = String(targetDate.getDate()).padStart(2, '0');
+//     // YYYYMMDD 형식으로 포맷
+//     const year = targetDate.getFullYear();
+//     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+//     const day = String(targetDate.getDate()).padStart(2, '0');
 
-    return `${year}${month}${day}`;
-}
+//     return `${year}${month}${day}`;
+// }

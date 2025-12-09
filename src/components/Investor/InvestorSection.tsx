@@ -16,10 +16,6 @@ export default function InvestorSection({ title, data, tab }: Props) {
   // 거래대금(amount) 기준 내림차순 정렬
   const sortedData = [...data].sort((a, b) => b.amount - a.amount);
 
-  // 숫자 포맷팅 함수
-  const toEok = (value: number) => {
-    return Math.floor(value / 100_000_000).toLocaleString() + "억";
-  };
 
   return (
     <div className="investor-section">
@@ -45,7 +41,7 @@ export default function InvestorSection({ title, data, tab }: Props) {
 
             {/* 오른쪽: 거래대금 + 거래수량 */}
             <div className="item-trade-details">
-              <div className="item-amount">{toEok(item.amount)}</div>
+              <div className="item-amount">{(item.amount.toLocaleString())}원</div>
               <div className="item-volume">
                 {item.volume.toLocaleString()}주
               </div>

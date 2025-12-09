@@ -74,6 +74,7 @@ export default function InvestorTrend() {
               volume: data.netBuyQty,
             };
 
+
             // 순매수/순매도에 따라 데이터 분리
             // fetchInvestorTrade API는 순매수/매도를 합산한 순매매량을 반환하므로, 양수/음수로 구분합니다.
             if (data.netBuyAmount > 0) {

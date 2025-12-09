@@ -614,18 +614,11 @@ export async function fetchInvestorTrade(
 ): Promise<InvestorTradeData[] | null> {
     try {
     
-        // 1. 올바른 엔드포인트 설정
         const url = `${REST_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-investor`;
 
-        // 2. 조회 날짜 계산 (기존 함수 활용)
-        // const inputDate = getInvestorTradeDate();
-
-        // 3. FHKST01010900 명세에 맞는 파라미터 구성
         const queryParams = new URLSearchParams({
             FID_COND_MRKT_DIV_CODE: "J",      // J: 전체 (코스피+코스닥)
             FID_INPUT_ISCD: stockCode,        // 종목코드
-            // FID_INPUT_DATE_1: "20251208",      // 조회 시작일 (YYYYMMDD)
-            // FID_INPUT_DATE_2: "20251208",      // 조회 종료일 (당일 1건만 조회)
         });
 
         const response = await fetch(`${url}?${queryParams.toString()}`, {
@@ -661,11 +654,9 @@ export async function fetchInvestorTrade(
         const currentHour = now.getHours();
         let todayData;
 
-        // 시간이 11시 이전이고, 데이터가 2개 이상 있으면 전일 데이터(list[1])를 사용합니다.
         if (currentHour < 11 && list.length > 1) {
             todayData = list[1];
         } else {
-            // 11시 이후이거나 데이터가 1개만 있으면 최신 데이터(list[0])를 사용합니다.
             todayData = list[0];
         }
 

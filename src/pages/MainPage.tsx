@@ -3,16 +3,16 @@ import { fetch50StocksByPeriod } from "../api/liveStockApi";
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
-import "../assets/MaingPage.css";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
 import { fetchVolumeRankTop10 } from "../api/stockApi";
+import { useSnapshotStore } from "../store/snapshotStore";
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock.ts";
+import "../assets/MaingPage.css";
 
 export default function MainPage() {
-  // --------------------------- UI 상태 ----------------------------
   const [activeTab, setActiveTab] = useState<
     "main" | "watchlist" | "news" | "investor"
   >("main");
@@ -22,7 +22,6 @@ export default function MainPage() {
 
   const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
 
-  // --------------------------- 데이터 상태 ----------------------------
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
 
   const [liveData, setLiveData] = useState<{
@@ -38,13 +37,10 @@ export default function MainPage() {
   });
 
   const TICKERS = [
-  "005930","000660","207940","005380","000270","055550","105560","068270","015760","028260",
-  "032830","012330","035420","006400","086790","006405","000810","010140","064350","138040",
-  "051910","010130","009540","267260","066570","066575","033780","003550","003555","310200"
+    "005930", "000660", "207940", "005380", "000270", "055550", "105560", "068270", "015760", "028260",
+    "032830", "012330", "035420", "006400", "086790", "006405", "000810", "010140", "064350", "138040",
+    "051910", "010130", "009540", "267260", "066570", "066575", "033780", "003550", "003555", "310200"
   ];
-
-
-
 
   // --------------------------- 거래량 순위 Top10 ----------------------------
   useEffect(() => {
@@ -58,23 +54,33 @@ export default function MainPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // --------------------------- period 변경 시 50개 종목 로드 ----------------------------
+  // --------------------------- Snapshot + 기간별 데이터 로드 ----------------------------
   useEffect(() => {
     async function load() {
+      const snapshot = useSnapshotStore.getState().cache[period];
+
+      // 스냅샷에 데이터 있다면 사용
+      if (snapshot.volume.length > 0) {
+        setLiveData(snapshot);
+        return;
+      }
+
+      // 없으면 API 호출
       const data = await fetch50StocksByPeriod(period, TICKERS);
       setLiveData(data);
+
+      // 스냅샷 저장
+      useSnapshotStore.getState().setSnapshot(period, data);
     }
+
     load();
   }, [period]);
-
   // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
   useEffect(() => {
     if (!indexSectionRef.current) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowTicker(!entry.isIntersecting);
-      },
+      ([entry]) => setShowTicker(!entry.isIntersecting),
       { threshold: 0 }
     );
 
@@ -93,29 +99,24 @@ export default function MainPage() {
     { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#4169E1" }
   ];
 
-  // --------------------------- 렌더링 ----------------------------
   return (
     <div className="main-container">
 
-      {/* 스크롤 Sticky Ticker */}
       {showTicker && (
         <div className="ticker-sticky">
           <MarketIndexContainer showTickerOnly />
         </div>
       )}
 
-      {/* 주요 지수 카드 */}
       <div className="market-index-section" ref={indexSectionRef}>
         <h2 className="market-index-title"> 주요 지수 </h2>
         <MarketIndexContainer />
       </div>
 
-      {/* 거래량 Top10 롤링 */}
       {top10Rank.length > 0 && (
         <Top10Rolling data={top10Rank} interval={2500} />
       )}
 
-      {/* 탭 메뉴 */}
       <div className="tab-menu">
         {[
           { id: "main", label: "메인" },
@@ -142,7 +143,6 @@ export default function MainPage() {
 
             <AIIssueLayout bubbles={issueBubbles} />
 
-            {/* ⭐ 실제 50개 종목 데이터 표시 */}
             <div style={{ marginTop: "32px" }}>
               <LiveStockPanel
                 data={liveData}

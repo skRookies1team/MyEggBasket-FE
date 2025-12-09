@@ -2,6 +2,8 @@ import { useFavoriteStore } from "../../store/favoriteStore";
 import { useNavigate } from "react-router-dom";
 import type { StockItem } from "../../types/stock";
 import "../../assets/LiveStock/LiveStockTable.css";
+import Egg1 from "../../assets/icons/egg1.png";
+import Egg2 from "../../assets/icons/egg2.png";
 
 interface Props {
   stocks: StockItem[];
@@ -9,12 +11,14 @@ interface Props {
 }
 
 export default function LiveStockTable({ stocks, category }: Props) {
-  const { favorites, toggleFavorite } = useFavoriteStore();
+  const favorites = useFavoriteStore((s) => s.favorites);
+  const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
   const navigate = useNavigate();
 
   function formatToEok(amount: number) {
     return (amount / 100_000_000).toFixed(1);
   }
+
   return (
     <table className="live-stock-table">
       <thead>
@@ -32,7 +36,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
 
       <tbody>
         {stocks.map((s, idx) => {
-          const isFav = favorites.includes(s.code);
+          const isFav = favorites.some((item) => item.stockCode === s.code);
 
           return (
             <tr
@@ -49,7 +53,11 @@ export default function LiveStockTable({ stocks, category }: Props) {
                     toggleFavorite(s.code);
                   }}
                 >
-                  {isFav ? "⭐" : "☆"}
+                  <img
+                    src={isFav ? Egg1 : Egg2}
+                    alt="fav-egg"
+                    className="fav-egg-icon"
+                  />
                 </button>
               </td>
 
@@ -81,7 +89,6 @@ export default function LiveStockTable({ stocks, category }: Props) {
               {category === "amount" && (
                 <td>{formatToEok(s.amount)} 억</td>
               )}
-
             </tr>
           );
         })}

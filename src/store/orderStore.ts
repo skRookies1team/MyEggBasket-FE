@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import api from "../store/axiosStore";
-import { useAuthStore } from "./authStore";
 
 // 1. API 응답 데이터에 맞는 타입 정의
 export interface TradeHistoryItem {

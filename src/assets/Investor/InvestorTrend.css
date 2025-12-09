@@ -46,12 +46,28 @@
 .investor-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #f1f1f1;
 }
 
 .investor-item:last-child {
   border-bottom: none;
+}
+
+/* 왼쪽 (순위 + 종목정보) */
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-rank {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  width: 20px;
+  text-align: center;
 }
 /* 왼쪽 (종목명 + 증감비율) */
 .item-left .item-name {

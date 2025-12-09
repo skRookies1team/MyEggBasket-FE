@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import InvestorSection from "../Investor/InvestorSection";
 import "../../assets/Investor/InvestorTrend.css";
 import { fetchInvestorTrade, getAccessToken, fetchCurrentPrice } from "../../api/stockApi";
+import { TICKERS, getStockName } from "../../data/stockInfo";
 
 interface InvestorData {
   name: string;
@@ -23,16 +24,6 @@ export default function InvestorTrend() {
   const [error, setError] = useState<string | null>(null);
   const [trendData, setTrendData] = useState<{ buy: TrendData; sell: TrendData } | null>(null);
 
-  const stockList = [
-    { name: "삼성전자", code: "005930" },
-    { name: "NAVER", code: "035420" },
-    { name: "SK하이닉스", code: "000660" },
-    { name: "두산로보틱스", code: "454910" },
-    { name: "삼성제약", code: "001360" },
-    { name: "에코프로", code: "086520" },
-    { name: "신성델타테크", code: "065350" },
-  ];
-
   useEffect(() => {
     const fetchTrendData = async () => {
       setLoading(true);
@@ -47,48 +38,56 @@ export default function InvestorTrend() {
           throw new Error("Access Token을 발급받지 못했습니다.");
         }
 
-        // 모든 종목에 대한 API 호출을 병렬로 처리
-        await Promise.all(stockList.map(async (stock) => {
-          const [tradeData, priceData] = await Promise.all([
-            fetchInvestorTrade(stock.code, accessToken),
-            fetchCurrentPrice(accessToken, stock.code)
-          ]);
+        // API 요청 속도 제한을 피하기 위해 10개씩 끊어서 요청하고 1초 대기
+        const chunkSize = 10;
+        for (let i = 0; i < TICKERS.length; i += chunkSize) {
+          const chunk = TICKERS.slice(i, i + chunkSize);
 
-          if (!tradeData || !priceData) return;
+          await Promise.all(chunk.map(async (stockCode) => {
+            const [tradeData, priceData] = await Promise.all([
+              fetchInvestorTrade(stockCode, accessToken),
+              fetchCurrentPrice(accessToken, stockCode)
+            ]);
 
-          const investorMap = {
-            "외국인": "foreign",
-            "기관": "institute",
-            "개인": "retail",
-          } as const;
+            if (!tradeData || !priceData) return;
 
-          tradeData.forEach(data => {
-            const investorKey = investorMap[data.investor as keyof typeof investorMap];
-            if (!investorKey) return;
+            const investorMap = {
+              "외국인": "foreign",
+              "기관": "institute",
+              "개인": "retail",
+            } as const;
 
-            const itemData: InvestorData = {
-              name: stock.name,
-              price: priceData.stck_prpr,
-              rate: priceData.prdy_ctrt,
-              amount: data.netBuyAmount,
-              volume: data.netBuyQty,
-            };
+            tradeData.forEach(data => {
+              const investorKey = investorMap[data.investor as keyof typeof investorMap];
+              if (!investorKey) return;
 
+              const itemData: InvestorData = {
+                name: getStockName(stockCode),
+                price: priceData.stck_prpr,
+                rate: priceData.prdy_ctrt,
+                amount: data.netBuyAmount / 10000, // 만원 단위를 억원 단위로 변경
+                volume: data.netBuyQty,
+              };
 
-            // 순매수/순매도에 따라 데이터 분리
-            // fetchInvestorTrade API는 순매수/매도를 합산한 순매매량을 반환하므로, 양수/음수로 구분합니다.
-            if (data.netBuyAmount > 0) {
-              buyData[investorKey].push(itemData);
-            } else if (data.netBuyAmount < 0) {
-              // 순매도 데이터는 양수로 변환하여 저장
-              sellData[investorKey].push({
-                ...itemData,
-                amount: Math.abs(itemData.amount),
-                volume: Math.abs(itemData.volume),
-              });
-            }
-          });
-        }));
+              // 순매수/순매도에 따라 데이터 분리
+              if (data.netBuyAmount > 0) {
+                buyData[investorKey].push(itemData);
+              } else if (data.netBuyAmount < 0) {
+                // 순매도 데이터는 양수로 변환하여 저장
+                sellData[investorKey].push({
+                  ...itemData,
+                  amount: Math.abs(itemData.amount),
+                  volume: Math.abs(itemData.volume),
+                });
+              }
+            });
+          }));
+
+          // 마지막 chunk가 아니면 1초 대기
+          if (i + chunkSize < TICKERS.length) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
 
         setTrendData({ buy: buyData, sell: sellData });
 

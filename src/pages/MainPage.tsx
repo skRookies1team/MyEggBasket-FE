@@ -8,6 +8,7 @@ import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
 import { fetchVolumeRankTop10 } from "../api/stockApi";
 import { useSnapshotStore } from "../store/snapshotStore";
+import { TICKERS } from "../data/stockInfo";
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock.ts";
 import "../assets/MaingPage.css";
@@ -35,12 +36,6 @@ export default function MainPage() {
     rise: [],
     fall: [],
   });
-
-  const TICKERS = [
-    "005930", "000660", "207940", "005380", "000270", "055550", "105560", "068270", "015760", "028260",
-    "032830", "012330", "035420", "006400", "086790", "006405", "000810", "010140", "064350", "138040",
-    "051910", "010130", "009540", "267260", "066570", "066575", "033780", "003550", "003555", "310200"
-  ];
 
   // --------------------------- 거래량 순위 Top10 ----------------------------
   useEffect(() => {

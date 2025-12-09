@@ -1,9 +1,13 @@
 // vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    tailwindcss()
+  ],
   server: {
     proxy: {
       // 1. 한국투자증권 API용 (uapi 또는 oauth2로 시작하는 요청)

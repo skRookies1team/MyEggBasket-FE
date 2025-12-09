@@ -1,11 +1,13 @@
 import { useFavoriteStore } from "../../store/favoriteStore";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../assets/Sidebar/FavoritesTab.css";
 
 export default function FavoritesTab() {
   const favorites = useFavoriteStore((s) => s.favorites);
   const loadFavorites = useFavoriteStore((s) => s.loadFavorites);
   const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadFavorites();
@@ -19,13 +21,23 @@ export default function FavoritesTab() {
         <p className="fav-empty">등록된 관심 종목이 없습니다.</p>
       ) : (
         <ul className="fav-list">
-          {favorites.map((code) => (
-            <li key={code} className="fav-item">
-              <span className="fav-code">{code}</span>
+          {favorites.map((item) => (
+            <li
+              key={item.interestId}
+              className="fav-item"
+              onClick={() => navigate(`/stock/${item.stockCode}`)}
+            >
+              <div className="fav-info">
+                <span className="fav-code">{item.stockCode}</span>
+                <span className="fav-name">{item.name}</span>
+              </div>
 
               <button
                 className="fav-remove-btn"
-                onClick={() => toggleFavorite(code)}
+                onClick={(e) => {
+                  e.stopPropagation(); // 상세 페이지 이동 막기
+                  toggleFavorite(item.stockCode);
+                }}
               >
                 ✕
               </button>

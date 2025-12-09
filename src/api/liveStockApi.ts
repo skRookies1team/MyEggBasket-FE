@@ -8,6 +8,7 @@ async function getSnapshotFromHistory(
   period: "day" | "week" | "month" | "year",
   token: string
 ): Promise<StockItem | null> {
+
   const history = await fetchHistoricalData(stockCode, period, token);
   if (!history || history.length < 2) return null;
 
@@ -31,27 +32,39 @@ async function getSnapshotFromHistory(
   };
 }
 
-/** 지정된 종목 리스트 snapshot 생성 */
+/** 50개 종목 snapshot (chunk + rate-limit 포함) */
 async function getSnapshots(
   tickers: string[],
   period: "day" | "week" | "month" | "year",
   token: string
 ): Promise<StockItem[]> {
-  const tasks = tickers.map((code) =>
-    getSnapshotFromHistory(code, period, token)
-  );
 
-  const results = await Promise.all(tasks);
+  const results: StockItem[] = [];
+  const chunkSize = 10; // 한국투자 안전 최대치
 
-  return results.filter((x): x is StockItem => x !== null);
+  for (let i = 0; i < tickers.length; i += chunkSize) {
+    const batch = tickers.slice(i, i + chunkSize);
+
+    const batchResults = await Promise.all(
+      batch.map((code) => getSnapshotFromHistory(code, period, token))
+    );
+
+    results.push(...batchResults.filter((x): x is StockItem => x !== null));
+
+    // API 차단 방지를 위한 딜레이 (필수)
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  return results;
 }
 
-/** tickers × 1기간 → 정렬별 리스트 4개 생성 */
+/** tickers × 1기간 → 정렬된 리스트 4개 생성 */
 export async function fetch50StocksByPeriod(
   period: "day" | "week" | "month" | "year",
   tickers: string[]
 ) {
   const token = await getAccessToken();
+
   const snapshots = await getSnapshots(tickers, period, token);
 
   return {

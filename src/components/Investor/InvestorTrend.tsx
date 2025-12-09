@@ -1,39 +1,107 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InvestorSection from "../Investor/InvestorSection";
 import "../../assets/Investor/InvestorTrend.css";
+import { fetchInvestorTrade, getAccessToken, fetchCurrentPrice } from "../../api/stockApi";
+
+interface InvestorData {
+  name: string;
+  price: number;
+  rate: number;
+  amount: number;
+  volume: number;
+}
+
+interface TrendData {
+  foreign: InvestorData[];
+  institute: InvestorData[];
+  retail: InvestorData[];
+}
 
 export default function InvestorTrend() {
   const [tab, setTab] = useState<"buy" | "sell">("buy");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trendData, setTrendData] = useState<{ buy: TrendData; sell: TrendData } | null>(null);
 
-  // 샘플 데이터 구조
-  const dummyData = {
-    buy: {
-      foreign: [
-        { name: "삼성전자", price: 78500, rate: 2.14, amount: 201_000_000_000 },
-        { name: "SK하이닉스", price: 121000, rate: 1.02, amount: 123_000_000_000 },
-        { name: "NAVER", price: 205000, rate: -0.22, amount: 87_000_000_000 }
-      ],
-      institute: [
-        { name: "현대차", price: 189000, rate: 0.61, amount: 92_000_000_000 },
-        { name: "셀트리온", price: 154000, rate: -0.41, amount: 71_000_000_000 }
-      ],
-      retail: [
-        { name: "LG에너지솔루션", price: 388000, rate: -0.11, amount: 55_000_000_000 }
-      ]
-    },
-    sell: {
-      foreign: [
-        { name: "카카오", price: 51000, rate: -0.52, amount: 98_000_000_000 },
-        { name: "포스코홀딩스", price: 512000, rate: 1.11, amount: 88_000_000_000 }
-      ],
-      institute: [
-        { name: "한화솔루션", price: 44800, rate: -0.24, amount: 42_000_000_000 }
-      ],
-      retail: [
-        { name: "삼성바이오로직스", price: 755000, rate: 0.84, amount: 132_000_000_000 }
-      ]
-    }
-  };
+  const stockList = [
+    { name: "삼성전자", code: "005930" },
+    { name: "NAVER", code: "035420" },
+    { name: "SK하이닉스", code: "000660" },
+    { name: "두산로보틱스", code: "454910" },
+    { name: "삼성제약", code: "001360" },
+    { name: "에코프로", code: "086520" },
+    { name: "신성델타테크", code: "065350" },
+  ];
+
+  useEffect(() => {
+    const fetchTrendData = async () => {
+      setLoading(true);
+      setError(null);
+
+      const buyData: TrendData = { foreign: [], institute: [], retail: [] };
+      const sellData: TrendData = { foreign: [], institute: [], retail: [] };
+
+      try {
+        const accessToken = await getAccessToken();
+        if (!accessToken) {
+          throw new Error("Access Token을 발급받지 못했습니다.");
+        }
+
+        // 모든 종목에 대한 API 호출을 병렬로 처리
+        await Promise.all(stockList.map(async (stock) => {
+          const [tradeData, priceData] = await Promise.all([
+            fetchInvestorTrade(stock.code, accessToken),
+            fetchCurrentPrice(accessToken, stock.code)
+          ]);
+
+          if (!tradeData || !priceData) return;
+
+          const investorMap = {
+            "외국인": "foreign",
+            "기관": "institute",
+            "개인": "retail",
+          } as const;
+
+          tradeData.forEach(data => {
+            const investorKey = investorMap[data.investor as keyof typeof investorMap];
+            if (!investorKey) return;
+
+            const itemData: InvestorData = {
+              name: stock.name,
+              price: priceData.stck_prpr,
+              rate: priceData.prdy_ctrt,
+              amount: data.netBuyAmount,
+              volume: data.netBuyQty,
+            };
+
+
+            // 순매수/순매도에 따라 데이터 분리
+            // fetchInvestorTrade API는 순매수/매도를 합산한 순매매량을 반환하므로, 양수/음수로 구분합니다.
+            if (data.netBuyAmount > 0) {
+              buyData[investorKey].push(itemData);
+            } else if (data.netBuyAmount < 0) {
+              // 순매도 데이터는 양수로 변환하여 저장
+              sellData[investorKey].push({
+                ...itemData,
+                amount: Math.abs(itemData.amount),
+                volume: Math.abs(itemData.volume),
+              });
+            }
+          });
+        }));
+
+        setTrendData({ buy: buyData, sell: sellData });
+
+      } catch (err) {
+        setError("데이터를 불러오는 데 실패했습니다.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrendData();
+  }, []); // 컴포넌트 마운트 시 1회만 실행 (tab이 바뀔 때 다시 호출하지 않음)
 
   return (
     <div>
@@ -53,12 +121,15 @@ export default function InvestorTrend() {
         </button>
       </div>
 
-      {/* 3개 컬럼 */}
-      <div className="investor-trend-container">
-        <InvestorSection title="외국인" data={dummyData[tab].foreign} />
-        <InvestorSection title="기관" data={dummyData[tab].institute} />
-        <InvestorSection title="개인" data={dummyData[tab].retail} />
-      </div>
+      {loading && <div>로딩 중...</div>}
+      {error && <div>{error}</div>}
+      {!loading && !error && trendData && (
+        <div className="investor-trend-container">
+          <InvestorSection title="외국인" data={trendData[tab].foreign} tab={tab} />
+          <InvestorSection title="기관" data={trendData[tab].institute} tab={tab} />
+          <InvestorSection title="개인" data={trendData[tab].retail} tab={tab} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,14 +1,14 @@
 import { create } from 'zustand';
-import api from '../store/axiosStore'; // api 임포트는 그대로 둡니다.
+import api from '../store/axiosStore';
 
-// --- Portfolio 관련 타입 및 상태 ---
+// --- Portfolio 타입 ---
 export interface Portfolio {
-    portfolioId: number
-    userId: number
-    name: string
-    totalAsset: number
-    cashBalance: number
-    riskLevel: string
+    portfolioId: number;
+    userId: number;
+    name: string;
+    totalAsset: number;
+    cashBalance: number;
+    riskLevel: string;
 }
 
 interface PortfolioState {
@@ -16,58 +16,63 @@ interface PortfolioState {
     fetchPortfolios: () => Promise<void>;
 }
 
-// --- History 관련 타입 및 상태 ---
+// --- History 타입 ---
 export interface HistoryReport {
-    portfolioId: number
+    portfolioId: number;
     totalReturnRate: number;
     successRate: number;
 }
 
-// History의 초기 상태를 위한 기본값
 const initialHistoryReport: HistoryReport = {
     portfolioId: 0,
     totalReturnRate: 0,
     successRate: 0,
 };
 
-// **[수정]** HistoryState의 상태 속성명을 historyReport로 통일
 interface HistoryState {
-    historyReport: HistoryReport 
+    historyReport: HistoryReport;
     fetchHistory: (portfolioId: number) => Promise<void>;
 }
 
-
-// --- Zustand Stores ---
-
+// --- Portfolio Store ---
 export const usePortfolioStore = create<PortfolioState>((set) => ({
     portfolioList: [],
 
     fetchPortfolios: async () => {
         try {
-            const response = await api.get<Portfolio[]>(`/portfolios`); 
-
+            const response = await api.get<Portfolio[]>(`/portfolios`);
             set({ portfolioList: response.data });
         } catch (error) {
-            console.error('포트폴리오를 불러오는 중 오류가 발생했습니다.', error);
-            set({ portfolioList: [] }); 
+            console.error('포트폴리오를 불러오는 중 오류:', error);
+            set({ portfolioList: [] });
         }
     },
 }));
 
-
+// --- History Store ---
 export const useHistoryStore = create<HistoryState>((set) => ({
-
-    historyReport: initialHistoryReport, 
+    historyReport: initialHistoryReport,
 
     fetchHistory: async (portfolioId: number) => {
         try {
-            const response = await api.get<HistoryReport>(`/portfolio/history/${portfolioId}`);
-            
-            set({ historyReport: response.data }); 
+            const response = await api.get(`/portfolio/history/${portfolioId}`);
+
+            const data = response.data;
+
+            // 🔥 배열로 넘어오는 경우 처리
+            const normalized =
+                Array.isArray(data) && data.length > 0
+                    ? data[0]                         // 첫 번째 요소 사용
+                    : !Array.isArray(data) && data      // 객체면 그대로 사용
+                    ? data
+                    : initialHistoryReport;             // 그 외에는 초기값
+
+            set({ historyReport: normalized });
+
+            console.log("✔ 결과 historyReport:", normalized);
         } catch (error) {
-            console.error('히스토리 리포트를 불러오는 중 오류가 발생했습니다.', error);
-            // **[수정]** 초기 상태를 initialHistoryReport로 변경 (오타 수정)
-            set({ historyReport: initialHistoryReport }); 
+            console.error('히스토리 리포트를 불러오는 중 오류:', error);
+            set({ historyReport: initialHistoryReport });
         }
     },
 }));

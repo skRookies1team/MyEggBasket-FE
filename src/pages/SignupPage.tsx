@@ -7,7 +7,7 @@ import axios from "axios";
 export default function SignupPage() {
   const navigate = useNavigate();
 
-  // ⭐ Zustand에서 signup 함수 가져오기
+  // Zustand에서 signup 함수 가져오기
   const signup = useAuthStore((state) => state.signup);
 
   const [formData, setFormData] = useState({

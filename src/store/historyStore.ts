@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import api from '../store/axiosStore';
+import { fetchPortfolios } from '../api/portfolioApi';
+import { fetchHoldings } from '../api/holdingApi';
+import { fetchStockCurrentPrice } from '../api/liveStockApi';
 
 // --- Portfolio 타입 ---
 export interface Portfolio {
@@ -57,8 +60,8 @@ interface HodingState{
     holdingList: Holding[];
     fetchHoldings: (portfolioId: number) => Promise<void>;
 }
-//StockPrice State
-export interface StockPrice {
+//StockCurrentPrice State
+export interface StockCurrentPrice {
     stockCode: string;
     stockname: string;
     currentPrice: number;
@@ -71,11 +74,11 @@ export interface StockPrice {
     lowPrice: number;
     closePrice:number;
 }
-interface StockPriceState{
-    stockPrice:StockPrice;
-    fetchStockPrice: (stockCode: string) => Promise<void>;
+interface StockCurrentPriceState{
+    stockCurrentPrice:StockCurrentPrice;
+    fetchStockCurrentPrice: (stockCode: string) => Promise<void>;
 }
-const initialStockPrice: StockPrice = {
+const initialStockCurrentPrice: StockCurrentPrice = {
     stockCode: '',
     stockname: '',
     currentPrice: 0,
@@ -96,8 +99,10 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 
     fetchPortfolios: async () => {
         try {
-            const response = await api.get<Portfolio[]>(`/portfolios`);
-            set({ portfolioList: response.data });
+            const response = await fetchPortfolios()
+            if (response) {
+                set({ portfolioList: response.data });
+            }
         } catch (error) {
             console.error('포트폴리오를 불러오는 중 오류:', error);
             set({ portfolioList: [] });
@@ -139,10 +144,10 @@ export const useHoldingStore = create<HodingState>((set) => ({
 
     fetchHoldings: async (portfolioId: number) => {
         try {
-            const responseHolding = await api.get<Holding[]>(`/portfolios/${portfolioId}/holdings`);
-            set({ holdingList: responseHolding.data });
-    
-            
+            const response = await fetchHoldings(portfolioId);
+            if (response){
+                set({ holdingList: response.data });
+            }
         } catch (error) {
             console.error('포트폴리오 내 보유 종목을 불러오는 중 오류:', error);
             set({ holdingList: [] });
@@ -150,13 +155,15 @@ export const useHoldingStore = create<HodingState>((set) => ({
     },
 }));
 
-export const useStockPriceStore = create<StockPriceState>((set) => ({
-    stockPrice: initialStockPrice,
+export const useStockCurrentPriceStore = create<StockCurrentPriceState>((set) => ({
+    stockCurrentPrice: initialStockCurrentPrice,
 
-    fetchStockPrice: async (stockCode: string) => {
+    fetchStockCurrentPrice: async (stockCode: string) => {
         try {
-            const response = await api.get<StockPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
-            set({ stockPrice: response.data });
+            const response = await fetchStockCurrentPrice(stockCode);
+            if (response){
+                set({ stockCurrentPrice: response.data });
+            } 
         } catch (error) {
             console.error('주식 정보를 불러오는 중 오류:', error);
         }

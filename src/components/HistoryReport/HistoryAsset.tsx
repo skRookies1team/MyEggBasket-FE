@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useHistoryStore, usePortfolioStore } from '../../store/historyStore';
+import { useHistoryStore, useHoldingStore, usePortfolioStore, useStockPriceStore } from '../../store/historyStore';
 import type { Portfolio } from '../../store/historyStore';
 
 import Egg1 from "../../assets/icons/egg1.png";
@@ -21,11 +21,24 @@ export default function HistoryAsset({ portfolioId }: Props) {
   const history = useHistoryStore((state) => state.historyReport);
   const fetchHistory = useHistoryStore((state) => state.fetchHistory);
 
+  const holdings = useHoldingStore((state) => state.holdingList);
+  const fetchHoldings = useHoldingStore((state) => state.fetchHoldings)
+
+  const stockPrice = useStockPriceStore((state) => state.stockPrice);
+  const fetchStockPrice = useStockPriceStore((state) => state.fetchStockPrice);
+
+
+
+
   useEffect(() => {
     if (portfolioId !== null) {
       fetchHistory(portfolioId);
     }
-  }, [portfolioId, fetchHistory]);
+
+    if (portfolioId !== null) {
+      fetchHoldings(portfolioId);
+    }
+  }, [portfolioId, fetchHistory,fetchHistory]);
 
   if (!portfolio) {
     return (
@@ -47,17 +60,6 @@ export default function HistoryAsset({ portfolioId }: Props) {
       );
   }
 
-  //더미 데이터
-  // RQ-45: 주식 건당 수익
-  const stockProfit = [
-    { stock: '삼성전자', buy: 68000, current: 72500, profit: 112500, rate: 6.6, qty: 25 },
-    { stock: 'SK하이닉스', buy: 125000, current: 135000, profit: 150000, rate: 8.0, qty: 15 },
-    { stock: 'NAVER', buy: 215000, current: 208000, profit: -70000, rate: -3.3, qty: 10 },
-    { stock: '카카오', buy: 52000, current: 55000, profit: 90000, rate: 5.8, qty: 30 },
-    { stock: '현대차', buy: 185000, current: 195000, profit: 100000, rate: 5.4, qty: 10 },
-  ];
-
-  
 
   return (
     <div className="flex space-x-4">
@@ -91,7 +93,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
               </p>
             </div>
           </div>
-          <hr className="h-px my-8 bg-gray-300 border-0"/>
+          <hr className="h-px my-8 bg-gray-300 border-0" />
           <div className="mt-6">
             <HistoryReport history={history} />
           </div>
@@ -117,30 +119,33 @@ export default function HistoryAsset({ portfolioId }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {stockProfit.map((stock, index) => (
-                  <tr key={index} className="border-b border-[#f3edf7] hover:bg-[#f3edf7]/50 transition-colors">
-                    <td className="py-3 px-4 text-[#1e1e1e]">{stock.stock}</td>
-                    <td className="py-3 px-4 text-right text-[#49454f]">{stock.qty}</td>
-                    <td className="py-3 px-4 text-right text-[#49454f]">
-                      ₩{stock.buy.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-right text-[#1e1e1e]">
-                      ₩{stock.current.toLocaleString()}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right ${stock.profit >= 0 ? 'text-[#ff383c]' : 'text-[#0066ff]'
-                        }`}
-                    >
-                      {stock.profit >= 0 ? '+' : ''}₩{stock.profit.toLocaleString()}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right ${stock.rate >= 0 ? 'text-[#ff383c]' : 'text-[#0066ff]'
-                        }`}
-                    >
-                      {stock.rate >= 0 ? '+' : ''}{stock.rate}%
-                    </td>
-                  </tr>
-                ))}
+                {holdings.map((holdingStock) => {
+
+                  fetchStockPrice(holdingStock.stock.stockCode);
+
+                  const currentPrice = stockPrice.currentPrice;
+                  const profit = (currentPrice - holdingStock.avgPrice) * holdingStock.quantity;
+                  const rate = holdingStock.avgPrice > 0 ? ((currentPrice - holdingStock.avgPrice) / holdingStock.avgPrice) * 100 : 0;
+
+                  return (
+                    <tr key={holdingStock.stock.stockCode} className="border-b border-[#f3edf7] hover:bg-[#f3edf7]/50 transition-colors">
+                      <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
+                      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.quantity}</td>
+                      <td className="py-3 px-4 text-right text-[#49454f]">
+                        {holdingStock.avgPrice.toLocaleString()}원
+                      </td>
+                      <td className="py-3 px-4 text-right text-[#1e1e1e]">
+                        {currentPrice.toLocaleString()}원
+                      </td>
+                      <td className={`py-3 px-4 text-right font-medium ${profit > 0 ? 'text-red-500' : profit < 0 ? 'text-blue-600' : 'text-gray-800'}`}>
+                        {profit > 0 ? '+' : ''}{profit.toLocaleString()}원
+                      </td>
+                      <td className={`py-3 px-4 text-right font-medium ${rate > 0 ? 'text-red-500' : rate < 0 ? 'text-blue-600' : 'text-gray-800'}`}>
+                        {rate > 0 ? '+' : ''}{rate.toFixed(2)}%
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

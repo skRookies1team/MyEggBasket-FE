@@ -35,18 +35,10 @@ interface HistoryState {
 }
 
 //--- Holding state---
-interface Stock{
-    stockCode: string;
-    name: string;
-    marketType: string;
-    sector: string;
-    industryCode: string;
-}
-
 export interface Holding {
     holdingId: number,
     portfolioId: number,
-    stock: Stock,
+    stockPrice: StockPrice,
     name:string
     quantity: number,
     avgPrice: number,
@@ -60,34 +52,16 @@ interface HodingState{
 //StockPrice State
 export interface StockPrice {
     stockCode: string;
-    stockname: string;
-    currentPrice: number;
-    changeAmount: number;
-    changeRate: number;
-    volume: number;
-    tradingValue:number;
-    openPrice: number;
-    highPrice: number;
-    lowPrice: number;
-    closePrice:number;
+    name: string;
+    marketType: string;
+    sector: string | null; 
+    industryCode: string | null;
 }
 interface StockPriceState{
-    stockPrice:StockPrice;
-    fetchStockPrice: (stockCode: string) => Promise<void>;
+    stock:StockPrice;
+    fetchStock: (stockCode: string) => Promise<void>;
+
 }
-const initialStockPrice: StockPrice = {
-    stockCode: '',
-    stockname: '',
-    currentPrice: 0,
-    changeAmount: 0,
-    changeRate: 0,
-    volume: 0,
-    tradingValue: 0,
-    openPrice: 0,
-    highPrice: 0,
-    lowPrice: 0,
-    closePrice: 0
-};
 
 
 // --- Portfolio Store ---
@@ -150,13 +124,18 @@ export const useHoldingStore = create<HodingState>((set) => ({
     },
 }));
 
-export const useStockPriceStore = create<StockPriceState>((set) => ({
-    stockPrice: initialStockPrice,
-
-    fetchStockPrice: async (stockCode: string) => {
+export const useStockStore = create<StockPriceState>((set) => ({
+    stock: {
+        stockCode: '',
+        name: '',
+        marketType: '',
+        sector: '',
+        industryCode: '',
+    },
+    fetchStock: async (stockCode: string) => {
         try {
-            const response = await api.get<StockPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
-            set({ stockPrice: response.data });
+            const response = await api.get<StockPrice>(`kis/stocks/current-price/${stockCode}`);
+            set({ stock: response.data });
         } catch (error) {
             console.error('주식 정보를 불러오는 중 오류:', error);
         }

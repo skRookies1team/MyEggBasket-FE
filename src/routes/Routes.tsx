@@ -8,6 +8,7 @@ import {PortfolioPage} from "../pages/PortfolioPage.tsx";
 import MyPage from "../pages/MyPage";
 import PrivateRoute from "../routes/PrivateRoute";
 import Layout from "../components/Layout.tsx";
+import HistoryPage from "../pages/HistoryPage.tsx";
 
 export default function Router() {
   const navigate = useNavigate(); // 네비게이션 함수 생성
@@ -19,6 +20,7 @@ export default function Router() {
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/history" element={<HistoryPage />} />
         
         <Route element={<PrivateRoute />}>
           <Route

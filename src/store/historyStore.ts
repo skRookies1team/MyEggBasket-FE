@@ -34,6 +34,29 @@ interface HistoryState {
     fetchHistory: (portfolioId: number) => Promise<void>;
 }
 
+// //--- Holding state---
+// export interface Holding {
+//     holdingId: number,
+//     portfolioId: number,
+//     stockCode: string,
+//     quantity: number,
+//     avgPrice: number,
+//     currentWeight: number,
+//     targetWeight: number
+// }
+// const initialHolding: Holding = {
+//     holdingId: 0,
+//     portfolioId: 0,
+//     stockCode: '',
+//     quantity: 0,
+//     avgPrice: 0,
+// }
+// interface HodingState{
+//     holdingList: Holding[];
+//     fetchHoldings: (portfolioId: number) => Promise<void>;
+// }
+
+
 // --- Portfolio Store ---
 export const usePortfolioStore = create<PortfolioState>((set) => ({
     portfolioList: [],
@@ -64,15 +87,17 @@ export const useHistoryStore = create<HistoryState>((set) => ({
                 Array.isArray(data) && data.length > 0
                     ? data[0]                         // 첫 번째 요소 사용
                     : !Array.isArray(data) && data      // 객체면 그대로 사용
-                    ? data
-                    : initialHistoryReport;             // 그 외에는 초기값
+                        ? data
+                        : initialHistoryReport;             // 그 외에는 초기값
 
             set({ historyReport: normalized });
 
-            console.log("✔ 결과 historyReport:", normalized);
         } catch (error) {
             console.error('히스토리 리포트를 불러오는 중 오류:', error);
             set({ historyReport: initialHistoryReport });
         }
     },
 }));
+
+//------holdingStore-------
+

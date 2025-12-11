@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
 import { usePortfolioStore } from '../store/historyStore';
 import HistoryAsset from '../components/HistoryReport/HistoryAsset';
+import HistoryGraph from '../components/HistoryReport/HistoryGraph';
 
 export default function HistoryPage() {
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number|null>(
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(
     null,
   );
-  
+
   const portfolios = usePortfolioStore((state) => state.portfolioList);
   const fetchPortfolio = usePortfolioStore((state) => state.fetchPortfolios);
 
   useEffect(() => {
     fetchPortfolio();
-  }, [fetchPortfolio]); 
+  }, [fetchPortfolio]);
 
   const handleClick = (portfolioId: number) => {
     setSelectedPortfolioId(portfolioId);
@@ -27,13 +28,10 @@ export default function HistoryPage() {
             <button
               key={p.portfolioId}
               onClick={() => handleClick(p.portfolioId)}
-              // className={`btn-tab ${...}`} 대신 Tailwind CSS 클래스를 직접 사용하거나 정의된 btn-tab 클래스를 유지합니다.
-              // 여기서는 원본에 맞추어 `btn-tab`을 유지하되, Tailwind CSS를 사용하는 경우 다음과 같이 클래스를 수정할 수 있습니다.
-              className={`px-4 py-2 mr-2 mb-2 rounded-lg transition-colors duration-200 ${
-                selectedPortfolioId === p.portfolioId 
-                  ? 'bg-blue-600 text-white font-semibold shadow-md' 
+              className={`px-4 py-2 mr-2 mb-2 rounded-lg transition-colors duration-200 ${selectedPortfolioId === p.portfolioId
+                  ? 'bg-blue-600 text-white font-semibold shadow-md'
                   : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
-              }`}
+                }`}
             >
               {p.name}
             </button>
@@ -43,9 +41,11 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* selectedPortfolioId가 null이 아닐 때만 HistoryReportSection 렌더링 */}
       {selectedPortfolioId !== null && (
-        <HistoryAsset portfolioId={selectedPortfolioId} />
+        <div className="space-y-8">
+          <HistoryAsset portfolioId={selectedPortfolioId} />
+          <HistoryGraph portfolioId={selectedPortfolioId} />
+        </div>
       )}
     </div>
   );

@@ -15,7 +15,7 @@ import "../assets/MaingPage.css";
 
 export default function MainPage() {
   const [activeTab, setActiveTab] = useState<
-    "main" | "watchlist" | "news" | "investor"
+    "main" | "news" | "investor"
   >("main");
 
   const [showTicker, setShowTicker] = useState(false);
@@ -97,25 +97,34 @@ export default function MainPage() {
   return (
     <div className="main-container">
 
+      {/* 스크롤 내려서 주요 지수 섹션이 사라질 때 → 티커만 표시 */}
       {showTicker && (
         <div className="ticker-sticky">
           <MarketIndexContainer showTickerOnly />
         </div>
       )}
 
+      {/* 메인 상단 → 카드만 표시 */}
       <div className="market-index-section" ref={indexSectionRef}>
         <h2 className="market-index-title"> 주요 지수 </h2>
-        <MarketIndexContainer />
+        <MarketIndexContainer showCardsOnly />
       </div>
 
       {top10Rank.length > 0 && (
         <Top10Rolling data={top10Rank} interval={2500} />
       )}
 
+
+      <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
+        AI 이슈포착
+      </h2>
+
+      <AIIssueLayout bubbles={issueBubbles} />
+
+
       <div className="tab-menu">
         {[
           { id: "main", label: "메인" },
-          { id: "watchlist", label: "실시간 관심 종목 주가" },
           { id: "news", label: "뉴스" },
           { id: "investor", label: "투자자 동향" },
         ].map((tab) => (
@@ -132,12 +141,6 @@ export default function MainPage() {
       <div className="tab-content">
         {activeTab === "main" && (
           <>
-            <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
-              AI 이슈포착
-            </h2>
-
-            <AIIssueLayout bubbles={issueBubbles} />
-
             <div style={{ marginTop: "32px" }}>
               <LiveStockPanel
                 data={liveData}
@@ -148,7 +151,6 @@ export default function MainPage() {
           </>
         )}
 
-        {activeTab === "watchlist" && "관심종목 콘텐츠"}
         {activeTab === "news" && <NewsTabs />}
         {activeTab === "investor" && <InvestorTrend />}
       </div>

@@ -1,4 +1,4 @@
-import type { Stock } from "../pages/historyStore";
+import type { Stock } from "../types/stock";
 
 export interface Portfolio {
     portfolioId: number;

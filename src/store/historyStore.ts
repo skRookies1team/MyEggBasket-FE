@@ -23,7 +23,7 @@ interface HistoryState {
     fetchHistory: (portfolioId: number) => Promise<void>;
 }
 
-interface HodingState{
+interface HoldingState{
     holdingList: Holding[];
     fetchHoldings: (portfolioId: number) => Promise<void>;
 }
@@ -92,7 +92,7 @@ export const useHistoryStore = create<HistoryState>((set) => ({
 
 //------holdingStore-------
 
-export const useHoldingStore = create<HodingState>((set) => ({
+export const useHoldingStore = create<HoldingState>((set) => ({
     holdingList: [],
 
     fetchHoldings: async (portfolioId: number) => {

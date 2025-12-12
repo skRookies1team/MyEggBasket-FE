@@ -124,7 +124,7 @@
     padding: 6px 0;
   }
 
-  /* ⭐ 첫 번째 컬럼 모바일에서는 전체 너비 사용 */
+  /* 첫 번째 컬럼 모바일에서는 전체 너비 사용 */
   .fav-col {
     grid-column: span 2;
     text-align: right;
@@ -149,7 +149,7 @@
   }
 }
 .fav-egg-icon {
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   object-fit: contain;
 }

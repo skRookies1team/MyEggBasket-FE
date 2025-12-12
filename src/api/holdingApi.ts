@@ -1,5 +1,5 @@
 import api from "../store/axiosStore";
-import type { Holding } from "../store/historyStore";
+import type { Holding } from "../types/portfolios";
 
 export async function fetchHoldings(portfolioId: number){
     try{

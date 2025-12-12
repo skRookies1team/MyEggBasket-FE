@@ -99,11 +99,10 @@ export interface AccountSummary {
 }
 
 export interface AccountBalanceData {
-    holdings: AccountHolding[];
     summary: AccountSummary;
 }
 
-interface Stock{
+export interface Stock{
     stockCode: string;
     name: string;
     marketType: string;

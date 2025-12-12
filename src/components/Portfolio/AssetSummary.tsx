@@ -1,48 +1,22 @@
 import { DollarSign } from 'lucide-react';
-import { fetchUserBalance } from '../../api/accountApi';
-import { useEffect, useState} from 'react';
-import type { Holding } from '../../store/historyStore';
+import type { AccountBalanceData } from '../../types/stock'; 
 
-interface Balance {
-    totalEvaluationAmount: number
-    totalProfitLoss: number
-    cashAmount: number
-    netAssetAmount: number
-    profitRate: number
-    holdings: Holding
-
+interface AssetSummaryProps {
+    balanceData: AccountBalanceData | null;
+    loading: boolean;
 }
 
-export function AssetSummary() {
+export function AssetSummary({ balanceData, loading }: AssetSummaryProps) { // ✅ Prop 사용
     const positiveColor = '#ff383c';
     const negativeColor = '#0066ff';
+    
+    // Prop으로 받은 데이터의 summary 부분 사용
+    const summary = balanceData?.summary;
 
-    const [balance, setBalance] = useState<Balance | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const getBalance = async () => {
-            try {
-                const res = await fetchUserBalance();
-                if (res.ok) {
-                    setBalance(res.data);
-                }
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        getBalance();
-    }, []);
-
-    // balance 상태가 변경될 때마다 실행
-    useEffect(() => {
-        if (balance) {
-            console.log('✨ balance 상태 업데이트 확인:', balance);
-        }
-    }, [balance]);
+    const stockEvaluationAmount = (summary?.totalEvaluationAmount ?? 0) - (summary?.cashAmount ?? 0);
+    // AccountSummary 타입(stock.ts)에 맞춰 totalProfitLossAmount 사용
+    const totalProfitLoss = summary?.totalProfitLossAmount ?? 0; 
+    const profitRate = summary?.profitRate ?? 0;
 
     return (
         <div className="section-card">
@@ -56,19 +30,19 @@ export function AssetSummary() {
                 <div className="summary-item bg-purple-light">
                     <p className="summary-label">총 자산</p>
                     <p className="summary-value">
-                        {loading ? '-' : `₩${balance?.totalEvaluationAmount.toLocaleString() ?? 0}`}
+                        {loading ? '-' : `₩${(summary?.totalEvaluationAmount ?? 0).toLocaleString()}`}
                     </p>
                 </div>
 
                 {/* 2. 총 수익 / 수익률 */}
                 <div className="summary-item bg-green-light">
                     <p className="summary-label">총 수익 / 수익률</p>
-                    <div className="summary-value" style={{ color: (balance?.totalProfitLoss ?? 0) >= 0 ? positiveColor : negativeColor }}>
+                    <div className="summary-value" style={{ color: totalProfitLoss >= 0 ? positiveColor : negativeColor }}>
                         {loading ? '-' : (
                             <>
-                                {(balance?.totalProfitLoss ?? 0) > 0 ? '+' : ''}{(balance?.totalProfitLoss ?? 0).toLocaleString()}
+                                {totalProfitLoss > 0 ? '+' : ''}{totalProfitLoss.toLocaleString()}
                                 <span style={{ fontSize: '16px', marginLeft: '6px', fontWeight: 500 }}>
-                                    ({(balance?.profitRate ?? 0) >= 0 ? '+' : ''}{(balance?.profitRate ?? 0).toFixed(2)}%)
+                                    ({profitRate >= 0 ? '+' : ''}{profitRate.toFixed(2)}%)
                                 </span>
                             </>
                         )}
@@ -79,7 +53,7 @@ export function AssetSummary() {
                 <div className="summary-item bg-gray-light">
                     <p className="summary-label">주식 평가금액</p>
                     <p className="summary-value">
-                        {loading ? '-' : `₩${((balance?.totalEvaluationAmount ?? 0) - (balance?.cashAmount ?? 0)).toLocaleString()}`}
+                        {loading ? '-' : `₩${stockEvaluationAmount.toLocaleString()}`}
                     </p>
                 </div>
 
@@ -87,15 +61,16 @@ export function AssetSummary() {
                 <div className="summary-item bg-gray-light">
                     <p className="summary-label">예수금 (주문가능)</p>
                     <p className="summary-value">
-                        {loading ? '-' : `₩${balance?.cashAmount.toLocaleString() ?? 0}`}
+                        {loading ? '-' : `₩${summary?.cashAmount.toLocaleString() ?? 0}`}
                     </p>
+                    {/* D+1, D+2 예수금은 현재 타입 정의에 없으므로 임시로 cashAmount를 사용하거나, summary에 필드가 추가될 경우 그 값을 사용하도록 준비 */}
                     <p className="summary-label">D+1 예수금</p>
                     <p className="summary-value">
-                        {loading ? '-' : `₩${balance?.cashAmount.toLocaleString() ?? 0}`}
+                        {loading ? '-' : `₩${summary?.cashAmount.toLocaleString() ?? 0}`}
                     </p>
                     <p className="summary-label">D+2 예수금</p>
                     <p className="summary-value">
-                        {loading ? '-' : `₩${balance?.cashAmount.toLocaleString() ?? 0}`}
+                        {loading ? '-' : `₩${summary?.cashAmount.toLocaleString() ?? 0}`}
                     </p>
                 </div>
             </div>

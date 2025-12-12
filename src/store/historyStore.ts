@@ -162,7 +162,7 @@ export const useStockCurrentPriceStore = create<StockCurrentPriceState>((set) =>
         try {
             const response = await fetchStockCurrentPrice(stockCode);
             if (response){
-                set({ stockCurrentPrice: response.data });
+                set({ stockCurrentPrice: response });
             } 
         } catch (error) {
             console.error('주식 정보를 불러오는 중 오류:', error);

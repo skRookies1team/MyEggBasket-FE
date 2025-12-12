@@ -80,7 +80,7 @@ export async function fetch50StocksByPeriod(
 export async function fetchStockCurrentPrice(stockCode: string) {
   try {
     const response = await api.get<StockCurrentPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
-    return response;
+    return response.data;
   } catch (err) {
     console.error("주식 정보를 불러오는 중 오류:", err);
     return null;

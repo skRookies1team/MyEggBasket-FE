@@ -9,6 +9,7 @@ export interface Portfolio {
     totalAsset: number;
     cashBalance: number;
     riskLevel: string;
+    holdings: Holding[];
 }
 
 interface PortfolioState {
@@ -38,7 +39,7 @@ interface HistoryState {
 export interface Holding {
     holdingId: number,
     portfolioId: number,
-    stockPrice: StockPrice,
+    stockPrice: Stock,
     name:string
     quantity: number,
     avgPrice: number,
@@ -50,15 +51,15 @@ interface HodingState{
     fetchHoldings: (portfolioId: number) => Promise<void>;
 }
 //StockPrice State
-export interface StockPrice {
+export interface Stock {
     stockCode: string;
     name: string;
     marketType: string;
     sector: string | null; 
     industryCode: string | null;
 }
-interface StockPriceState{
-    stock:StockPrice;
+interface StockState{
+    stock:Stock;
     fetchStock: (stockCode: string) => Promise<void>;
 
 }
@@ -124,7 +125,7 @@ export const useHoldingStore = create<HodingState>((set) => ({
     },
 }));
 
-export const useStockStore = create<StockPriceState>((set) => ({
+export const useStockStore = create<StockState>((set) => ({
     stock: {
         stockCode: '',
         name: '',
@@ -134,7 +135,7 @@ export const useStockStore = create<StockPriceState>((set) => ({
     },
     fetchStock: async (stockCode: string) => {
         try {
-            const response = await api.get<StockPrice>(`kis/stocks/current-price/${stockCode}`);
+            const response = await api.get<Stock>(`kis/stocks/current-price/${stockCode}`);
             set({ stock: response.data });
         } catch (error) {
             console.error('주식 정보를 불러오는 중 오류:', error);

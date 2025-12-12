@@ -1,7 +1,7 @@
 // src/api/liveStockService.ts
 import { fetchHistoricalData, getStockInfoFromDB, getAccessToken } from "./stockApi";
 import type { StockItem } from "../types/stock";
-import type { StockPrice } from "../store/historyStore";
+import type { StockCurrentPrice } from "../store/historyStore";
 import api from "../store/axiosStore";
 
 /** 1개 종목 + 1기간 snapshot 생성 */
@@ -79,7 +79,7 @@ export async function fetch50StocksByPeriod(
 
 export async function fetchStockCurrentPrice(stockCode: string) {
   try {
-    const response = await api.get<StockPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
+    const response = await api.get<StockCurrentPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
     return response;
   } catch (err) {
     console.error("주식 정보를 불러오는 중 오류:", err);

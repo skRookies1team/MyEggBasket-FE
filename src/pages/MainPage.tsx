@@ -6,7 +6,7 @@ import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
-import { fetchVolumeRankTop10 } from "../api/stockApi";
+import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
 import { useSnapshotStore } from "../store/snapshotStore";
 import { TICKERS } from "../data/stockInfo";
 import type { VolumeRankItem } from "../components/Top10Rolling";
@@ -49,27 +49,24 @@ export default function MainPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // --------------------------- Snapshot + 기간별 데이터 로드 ----------------------------
+  // --------------------------- Snapshot + 기간별 데이터 ----------------------------
   useEffect(() => {
     async function load() {
       const snapshot = useSnapshotStore.getState().cache[period];
 
-      // 스냅샷에 데이터 있다면 사용
       if (snapshot.volume.length > 0) {
         setLiveData(snapshot);
         return;
       }
 
-      // 없으면 API 호출
       const data = await fetch50StocksByPeriod(period, TICKERS);
       setLiveData(data);
-
-      // 스냅샷 저장
       useSnapshotStore.getState().setSnapshot(period, data);
     }
 
     load();
   }, [period]);
+
   // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
   useEffect(() => {
     if (!indexSectionRef.current) return;
@@ -96,31 +93,28 @@ export default function MainPage() {
 
   return (
     <div className="main-container">
-
-      {/* 스크롤 내려서 주요 지수 섹션이 사라질 때 → 티커만 표시 */}
+      {/* 🔹 카드 영역 사라지면 → 상단 sticky 티커 */}
       {showTicker && (
         <div className="ticker-sticky">
           <MarketIndexContainer showTickerOnly />
         </div>
       )}
 
-      {/* 메인 상단 → 카드만 표시 */}
+      {/* 🔹 메인 상단 → 카드만 표시 */}
       <div className="market-index-section" ref={indexSectionRef}>
         <h2 className="market-index-title"> 주요 지수 </h2>
-        <MarketIndexContainer showCardsOnly />
+        <MarketIndexContainer showCardsOnly /> {/* ✅ 변경 */}
       </div>
 
       {top10Rank.length > 0 && (
         <Top10Rolling data={top10Rank} interval={2500} />
       )}
 
-
       <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
         AI 이슈포착
       </h2>
 
       <AIIssueLayout bubbles={issueBubbles} />
-
 
       <div className="tab-menu">
         {[
@@ -140,15 +134,13 @@ export default function MainPage() {
 
       <div className="tab-content">
         {activeTab === "main" && (
-          <>
-            <div style={{ marginTop: "32px" }}>
-              <LiveStockPanel
-                data={liveData}
-                period={period}
-                onPeriodChange={setPeriod}
-              />
-            </div>
-          </>
+          <div style={{ marginTop: "32px" }}>
+            <LiveStockPanel
+              data={liveData}
+              period={period}
+              onPeriodChange={setPeriod}
+            />
+          </div>
         )}
 
         {activeTab === "news" && <NewsTabs />}

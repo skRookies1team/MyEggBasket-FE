@@ -164,10 +164,23 @@ export function PortfolioPage() {
             setShowAddPortfolio(false); // 모달 닫기
         }
     };
-    // 포트폴리오 삭제
-    const removePortfolio = async (id: number) => {
-        await deletePortfolio(id);
-    };
+// 포트폴리오 삭제
+const removePortfolio = async (id: number) => {
+    const isConfirmed = confirm("정말 포트폴리오를 삭제하시겠습니까?");
+
+    if (isConfirmed) {
+        try {
+            await deletePortfolio(id); // API 호출로 삭제
+            await fetchPortfolios(); // 목록 새로고침
+            // 선택적으로 사용자에게 성공 메시지 표시            console.log("포트폴리오가 삭제되었습니다."); 
+        } catch (error) {
+            console.error("삭제 중 오류 발생:", error);
+            alert("삭제에 실패했습니다. 다시 시도해 주세요.");
+        }
+    } else {
+        console.log("삭제가 취소되었습니다.");
+    }
+};
 
     const activePortfolio = portfolios.find((portfolio) => portfolio.portfolioId === activePortfolioId);
 

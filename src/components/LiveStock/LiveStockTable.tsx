@@ -55,7 +55,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   }}
                 >
                   <img
-                    src={isFav ? Egg3 : Egg2}
+                    src={isFav ? Egg1 : Egg2}
                     alt="fav-egg"
                     className="fav-egg-icon"
                   />

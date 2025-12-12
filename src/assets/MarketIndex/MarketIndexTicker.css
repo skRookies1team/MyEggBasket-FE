@@ -5,10 +5,8 @@
   background: #ffffff;
   border-bottom: 1px solid #ececec;
   padding: 8px 0;
-
-  position: sticky;
-  top: 0;
-  z-index: 9999;   
+  position: relative;
+  z-index: 9999;
 }
 
 .ticker-track {
@@ -17,7 +15,6 @@
   animation: tickerScroll 18s linear infinite;
 }
 
-/* 호버하면 멈춤 */
 .ticker-container:hover .ticker-track {
   animation-play-state: paused;
 }
@@ -45,12 +42,11 @@
   color: #0066ff;
 }
 
-/* 무한 흘러가기 keyframes */
 @keyframes tickerScroll {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%); /* 복제한 리스트 길이 때문 */
+    transform: translateX(-50%);
   }
 }

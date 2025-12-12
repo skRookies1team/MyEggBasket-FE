@@ -95,7 +95,10 @@ export function PortfolioPage() {
 
     useEffect(() => {
         const calculateSectorComposition = async () => {
-            if (holdings) return;
+            if (!holdings || holdings.length === 0) {
+                setSectorCompositionData([]);
+                return;
+            }
 
             // 1. 보유 수량이 0보다 큰 종목만 필터링
             const validHoldings = holdings.filter(item => item.quantity > 0);
@@ -119,7 +122,7 @@ export function PortfolioPage() {
 
             // 3. 섹터별 금액 합산 (Grouping)
             const sectorMap: Record<string, number> = {};
-            results.forEach(({ sector, value }) => {
+            results.forEach(({ sector, value }: { sector: string; value: number }) => {
                 sectorMap[sector] = (sectorMap[sector] || 0) + value;
             });
 
@@ -187,82 +190,86 @@ export function PortfolioPage() {
                     {portfolios.map((portfolio) => (
                         <div key={portfolio.portfolioId} className="tab-item">
                             <button
-                                onClick={async() => {
+                                onClick={async () => {
                                     setActivePortfolioId(portfolio.portfolioId);
                                     await fetchHoldings(portfolio.portfolioId);
                                 }}
-                            className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
+                                className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
                             >
-                            <span>{portfolio.name}</span>
-                            <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
-                                ({getTypeLabel(portfolio.riskLevel)})
-                            </span>
-                        </button>
+                                <span>{portfolio.name}</span>
+                                <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
+                                    ({getTypeLabel(portfolio.riskLevel)})
+                                </span>
+                            </button>
                             {
-                            portfolios.length > 1 && (
-                                <button onClick={() => removePortfolio(portfolio.portfolioId)} className="btn-remove-tab">
-                                    <X size={12} color="#ff383c" />
-                                </button>
-                            )
-                        }
+                                portfolios.length > 1 && (
+                                    <button onClick={async () => {
+                                        removePortfolio(portfolio.portfolioId)
+                                        await fetchPortfolios();
+                                    }
+                                    } className="btn-remove-tab">
+                                        <X size={12} color="#ff383c" />
+                                    </button>
+                                )
+                            }
                         </div>
                     ))}
-            </div>
-
-            {/* Main Content */}
-            {activePortfolio && (
-                <div className="animate-in">
-                    {/* 1. 자산 요약 */}
-                    <AssetSummary balanceData={balanceData} loading={loading} />
-
-                    {/* 2. 차트 영역 */}
-                    <PortfolioCharts
-                        assetData={assetCompositionData}
-                        stockData={stockCompositionData}
-                        sectorData={sectorCompositionData}
-                    />
-
-                    {/* 3. 내 보유 주식 추이 */}
-                    {holdings && holdings.length > 0 && (
-                        <div className="section-card">
-                            <div className="section-header" style={{ marginBottom: '20px' }}>
-                                <TrendingUp className="size-5 text-purple" style={{ marginRight: '8px' }} />
-                                <h3 className="section-title">내 보유 주식 추이</h3>
-                            </div>
-                            {/* Grid Layout with Inline Style */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                                gap: '24px'
-                            }}>
-                                {holdings
-                                    .filter(holdingStock => holdingStock.quantity > 0) // 필터 추가
-                                    .map((stock) => (
-                                        <StockTrendCard
-                                            key={stock.stock.stockCode}
-                                            stockCode={stock.stock.stockCode}
-                                            name={stock.stock.name}
-                                            quantity={stock.quantity}
-                                            avgPrice={stock.avgPrice}
-                                        />
-                                    ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 4. AI 추천 종목 리스트
-                        <PortfolioStockList stocks={activePortfolio.holdings} /> */}
                 </div>
-            )}
 
-            {/* Modal */}
-            {showAddPortfolio && (
-                <AddPortfolioModal
-                    onClose={() => setShowAddPortfolio(false)}
-                    onAdd={addNewPortfolio}
-                />
-            )}
-        </div>
+                {/* Main Content */}
+                {activePortfolio && (
+                    <div className="animate-in">
+                        {/* 1. 자산 요약 */}
+                        <AssetSummary balanceData={balanceData} loading={loading} />
+
+                        {/* 2. 차트 영역 */}
+                        <PortfolioCharts
+                            assetData={assetCompositionData}
+                            stockData={stockCompositionData}
+                            sectorData={sectorCompositionData}
+                        />
+
+                        {/* 3. 내 보유 주식 추이 */}
+                        {holdings && holdings.length > 0 && (
+                            <div className="section-card">
+                                <div className="section-header" style={{ marginBottom: '20px' }}>
+                                    <TrendingUp className="size-5 text-purple" style={{ marginRight: '8px' }} />
+                                    <h3 className="section-title">내 보유 주식 추이</h3>
+                                </div>
+                                {/* Grid Layout with Inline Style */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                    gap: '24px'
+                                }}>
+                                    {holdings
+                                        .filter(holdingStock => holdingStock.quantity > 0) // 필터 추가
+                                        .map((stock) => (
+                                            <StockTrendCard
+                                                key={stock.stock.stockCode}
+                                                stockCode={stock.stock.stockCode}
+                                                name={stock.stock.name}
+                                                quantity={stock.quantity}
+                                                avgPrice={stock.avgPrice}
+                                            />
+                                        ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. AI 추천 종목 리스트
+                        <PortfolioStockList stocks={activePortfolio.holdings} /> */}
+                    </div>
+                )}
+
+                {/* Modal */}
+                {showAddPortfolio && (
+                    <AddPortfolioModal
+                        onClose={() => setShowAddPortfolio(false)}
+                        onAdd={addNewPortfolio}
+                    />
+                )}
+            </div>
         </div >
     );
 }

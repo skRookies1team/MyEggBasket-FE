@@ -1,7 +1,6 @@
 // src/api/liveStockService.ts
 import { fetchHistoricalData, getStockInfoFromDB, getAccessToken } from "./stockApi";
-import type { StockItem } from "../types/stock";
-import type { StockCurrentPrice } from "../store/historyStore";
+import type { StockCurrentPrice, StockItem } from "../types/stock";
 import api from "../store/axiosStore";
 
 /** 1개 종목 + 1기간 snapshot 생성 */

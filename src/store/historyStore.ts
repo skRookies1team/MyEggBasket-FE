@@ -2,29 +2,15 @@ import { create } from 'zustand';
 import api from '../store/axiosStore';
 import { fetchPortfolios } from '../api/portfolioApi';
 import { fetchHoldings } from '../api/holdingApi';
+import type { StockCurrentPrice } from '../types/stock';
 import { fetchStockCurrentPrice } from '../api/liveStockApi';
-
-// --- Portfolio 타입 ---
-export interface Portfolio {
-    portfolioId: number;
-    userId: number;
-    name: string;
-    totalAsset: number;
-    cashBalance: number;
-    riskLevel: string;
-}
+import type { HistoryReport, Holding, Portfolio } from '../types/portfolios';
 
 interface PortfolioState {
     portfolioList: Portfolio[];
     fetchPortfolios: () => Promise<void>;
 }
 
-// --- History 타입 ---
-export interface HistoryReport {
-    portfolioId: number;
-    totalReturnRate: number;
-    successRate: number;
-}
 
 const initialHistoryReport: HistoryReport = {
     portfolioId: 0,
@@ -37,43 +23,11 @@ interface HistoryState {
     fetchHistory: (portfolioId: number) => Promise<void>;
 }
 
-//--- Holding state---
-interface Stock{
-    stockCode: string;
-    name: string;
-    marketType: string;
-    sector: string;
-    industryCode: string;
-}
-
-export interface Holding {
-    holdingId: number,
-    portfolioId: number,
-    stock: Stock,
-    name:string
-    quantity: number,
-    avgPrice: number,
-    currentWeight: number,
-    targetWeight: number
-}
 interface HodingState{
     holdingList: Holding[];
     fetchHoldings: (portfolioId: number) => Promise<void>;
 }
-//StockCurrentPrice State
-export interface StockCurrentPrice {
-    stockCode: string;
-    stockname: string;
-    currentPrice: number;
-    changeAmount: number;
-    changeRate: number;
-    volume: number;
-    tradingValue:number;
-    openPrice: number;
-    highPrice: number;
-    lowPrice: number;
-    closePrice:number;
-}
+
 interface StockCurrentPriceState{
     stockCurrentPrice:StockCurrentPrice;
     fetchStockCurrentPrice: (stockCode: string) => Promise<void>;
@@ -91,7 +45,6 @@ const initialStockCurrentPrice: StockCurrentPrice = {
     lowPrice: 0,
     closePrice: 0
 };
-
 
 // --- Portfolio Store ---
 export const usePortfolioStore = create<PortfolioState>((set) => ({

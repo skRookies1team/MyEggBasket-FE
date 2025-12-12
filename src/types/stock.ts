@@ -87,19 +87,6 @@ export interface AccountHolding {
     profitLossAmount: number;  // 평가손익금액
     profitLossRate: number;   // 평가손익율
 }
-export interface StockCurrentPrice {
-    stockCode: string;
-    stockname: string;
-    currentPrice: number;
-    changeAmount: number;
-    changeRate: number;
-    volume: number;
-    tradingValue:number;
-    openPrice: number;
-    highPrice: number;
-    lowPrice: number;
-    closePrice:number;
-}
 
 // 주식 잔고 - 계좌 요약 (output2)
 export interface AccountSummary {
@@ -114,4 +101,26 @@ export interface AccountSummary {
 export interface AccountBalanceData {
     holdings: AccountHolding[];
     summary: AccountSummary;
+}
+
+interface Stock{
+    stockCode: string;
+    name: string;
+    marketType: string;
+    sector: string;
+    industryCode: string;
+}
+
+export interface StockCurrentPrice {
+    stockCode: string;
+    stockname: string;
+    currentPrice: number;
+    changeAmount: number;
+    changeRate: number;
+    volume: number;
+    tradingValue:number;
+    openPrice: number;
+    highPrice: number;
+    lowPrice: number;
+    closePrice:number;
 }

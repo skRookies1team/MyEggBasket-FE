@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useHistoryStore, useHoldingStore, usePortfolioStore, useStockCurrentPriceStore, } from '../../store/historyStore';
-import type { Portfolio } from '../../store/historyStore';
 
 import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
 
 import HistoryReport from './HistoryReport';
 import { DollarSign } from 'lucide-react';
+import type { Portfolio } from '../../types/portfolios';
 
 interface Props {
   portfolioId: number | null;

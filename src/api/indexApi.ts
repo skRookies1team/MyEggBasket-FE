@@ -30,7 +30,7 @@ function mapForeignIndex(res: any) {
 }
 
 // 🇰🇷 국내 지수 조회
-export async function fetchKoreaIndex(indexCode: "KOSPI" | "KOSDAQ") {
+export async function fetchKoreaIndex(indexCode: "0001" | "1001") {
   const res = await api.get("/kis/index/domestic", {
     params: { indexCode },
   });

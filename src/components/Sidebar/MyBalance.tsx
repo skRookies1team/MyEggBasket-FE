@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../store/axiosStore";
+import { fetchUserBalance } from "../../api/accountApi";
 import "../../assets/Sidebar/MyBalance.css";
 
 export default function MyBalance() {
@@ -7,25 +7,29 @@ export default function MyBalance() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 🔹 실전 / 모의 (필요 시 토글 확장 가능)
+  const [virtual] = useState(false);
+
   const loadBalance = async () => {
     setLoading(true);
     setError(null);
 
-    try {
-      const res = await api.get("/kis/trade/balance");
-      setBalance(res.data);
-    } catch (err) {
-      console.error(err);
+    const data = await fetchUserBalance(virtual);
+
+    if (!data) {
       setError("잔고 조회 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
+    } else {
+      setBalance(data);
     }
+
+    setLoading(false);
   };
 
   useEffect(() => {
     loadBalance();
-  }, []);
+  }, [virtual]);
 
+  // -------------------- 상태 처리 --------------------
   if (loading)
     return <div className="mybal-loading">자산 정보를 불러오는 중...</div>;
 
@@ -38,17 +42,20 @@ export default function MyBalance() {
 
   if (!balance) return null;
 
-  const summary = balance.summary;
+  // -------------------- 데이터 매핑 --------------------
+  const summary = balance.summary ?? {};
   const holdings = balance.holdings ?? [];
 
-  // 💡 백엔드 DTO 기반 매핑
   const totalAsset = Number(summary.totalEvaluationAmount ?? 0);
   const totalProfitLoss = Number(summary.totalProfitLossAmount ?? 0);
   const cashAmount = Number(summary.cashAmount ?? 0);
   const netAsset = Number(summary.netAssetAmount ?? 0);
 
-  const filteredHoldings = holdings.filter((h: any) => h.quantity > 0);
+  const filteredHoldings = holdings.filter(
+    (h: any) => Number(h.quantity) > 0
+  );
 
+  // -------------------- UI --------------------
   return (
     <div className="mybal-container">
       <div className="mybal-header">
@@ -57,7 +64,9 @@ export default function MyBalance() {
 
       <div className="mybal-card">
         <div className="mybal-card-title">총 자산</div>
-        <div className="mybal-big-value">{totalAsset.toLocaleString()}원</div>
+        <div className="mybal-big-value">
+          {totalAsset.toLocaleString()}원
+        </div>
         <div className="mybal-sub-info">
           {totalProfitLoss >= 0 ? "+" : ""}
           {totalProfitLoss.toLocaleString()}원
@@ -66,12 +75,16 @@ export default function MyBalance() {
 
       <div className="mybal-card">
         <div className="mybal-card-title">현금(주문가능)</div>
-        <div className="mybal-big-value">{cashAmount.toLocaleString()}원</div>
+        <div className="mybal-big-value">
+          {cashAmount.toLocaleString()}원
+        </div>
       </div>
 
       <div className="mybal-card">
         <div className="mybal-card-title">순자산</div>
-        <div className="mybal-big-value">{netAsset.toLocaleString()}원</div>
+        <div className="mybal-big-value">
+          {netAsset.toLocaleString()}원
+        </div>
       </div>
 
       <div className="mybal-card-full">
@@ -87,7 +100,7 @@ export default function MyBalance() {
 
               <div className="mybal-stock-row">
                 <span>보유수량</span>
-                <span>{stock.quantity.toLocaleString()}주</span>
+                <span>{Number(stock.quantity).toLocaleString()}주</span>
               </div>
 
               <div className="mybal-stock-row">
@@ -102,7 +115,9 @@ export default function MyBalance() {
 
               <div className="mybal-stock-row">
                 <span>평가금액</span>
-                <span>{Number(stock.evaluationAmount).toLocaleString()}원</span>
+                <span>
+                  {Number(stock.evaluationAmount).toLocaleString()}원
+                </span>
               </div>
 
               <div className="mybal-stock-row">

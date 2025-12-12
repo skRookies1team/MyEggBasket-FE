@@ -102,6 +102,17 @@ export interface AccountBalanceData {
     summary: AccountSummary;
 }
 
+export interface InvestorInfo {
+  type: "개인" | "외국인" | "기관";
+  netBuyQty: number;
+  netBuyAmount: number; // 원 단위
+}
+
+export interface InvestorTrendResponse {
+  stockCode: string;
+  stockName: string;
+  investors: InvestorInfo[];
+}
 export interface Stock{
     stockCode: string;
     name: string;

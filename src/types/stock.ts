@@ -10,13 +10,13 @@ export interface StockPriceData {
 }
 
 export interface StockItem {
-  code: string;
-  name: string;
-  price: number;
-  change: number;
-  percent: number;
-  volume: number;
-  amount: number; // 거래대금 추가
+    code: string;
+    name: string;
+    price: number;
+    change: number;
+    percent: number;
+    volume: number;
+    amount: number; // 거래대금 추가
 }
 
 
@@ -77,37 +77,28 @@ export interface StockDetailData {
     reports: ReportItem[];
 }
 export interface AccountHolding {
-    pdno: string;           // 종목번호 (005930)
-    prdt_name: string;      // 종목명 (삼성전자)
-    hldg_qty: number;       // 보유수량
-    ord_psbl_qty: number;   // 주문가능수량
-    pchs_avg_pric: number;  // 매입평균가격
-    prpr: number;           // 현재가
-    evlu_amt: number;       // 평가금액
-    evlu_pfls_amt: number;  // 평가손익금액
-    evlu_pfls_rt: number;   // 평가손익율
+    stockCode: string;           // 종목번호 (005930)
+    stockName: string;      // 종목명 (삼성전자)
+    quantity: number;       // 보유수량
+    orderableQuantity: number;   // 주문가능수량
+    avgPrice: number;  // 매입평균가격
+    currentPrice: number;           // 현재가
+    evaluationAmount: number;       // 평가금액
+    profitLossAmount: number;  // 평가손익금액
+    profitLossRate: number;   // 평가손익율
 }
-export interface CurrentPriceResult {
-    stck_prpr: number; // 현재가
-    prdy_vrss: number; // 전일대비
-    prdy_ctrt: number; // 등락률
-    acml_vol: number;  // 누적 거래량
-}
+
 // 주식 잔고 - 계좌 요약 (output2)
 export interface AccountSummary {
-    dnca_tot_amt: number;   // 예수금총금액
-    nxdy_excc_amt: number;  // 익일정산금액 (D+1)
-    prvs_rcdl_excc_amt: number; // 가수도정산금액 (D+2)
-    scts_evlu_amt: number;  // 유가평가금액 (주식 총액)
-    tot_evlu_amt: number;   // 총평가금액 (주식 + 예수금)
-    nass_amt: number;       // 순자산금액
-    asst_icdc_amt: number;  // 자산증감액
-    tot_loan_amt: number;   // 총대출금액
-    evlu_pfls_smtl_amt: number; // 총손익
+    totalEvaluationAmount: number
+    totalProfitLossAmount: number
+    totalPurchaseAmount: number
+    cashAmount: number
+    netAssetAmount: number
+    profitRate: number
 }
 
 export interface AccountBalanceData {
-    holdings: AccountHolding[];
     summary: AccountSummary;
 }
 
@@ -121,4 +112,25 @@ export interface InvestorTrendResponse {
   stockCode: string;
   stockName: string;
   investors: InvestorInfo[];
+}
+export interface Stock{
+    stockCode: string;
+    name: string;
+    marketType: string;
+    sector: string;
+    industryCode: string;
+}
+
+export interface StockCurrentPrice {
+    stockCode: string;
+    stockname: string;
+    currentPrice: number;
+    changeAmount: number;
+    changeRate: number;
+    volume: number;
+    tradingValue:number;
+    openPrice: number;
+    highPrice: number;
+    lowPrice: number;
+    closePrice:number;
 }

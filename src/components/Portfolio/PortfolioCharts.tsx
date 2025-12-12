@@ -5,6 +5,8 @@ interface CompositionData {
     name: string;
     value: number;
     color: string;
+    // ✅ 이 한 줄을 추가하여 인덱스 시그니처 오류를 해결합니다.
+    [key: string]: any; 
 }
 
 interface PortfolioChartsProps {

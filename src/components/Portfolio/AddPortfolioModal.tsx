@@ -1,52 +1,78 @@
 import { useState } from 'react';
+import type { RiskLevel } from '../../types/portfolios';
 
 interface AddPortfolioModalProps {
     onClose: () => void;
-    onAdd: (type: 'risk' | 'neutral' | 'safe') => void;
+    onAdd: (data: { name: string, riskLevel: RiskLevel, totalAsset: 0, cashBalance: 0 }) => void;
 }
 
 export function AddPortfolioModal({ onClose, onAdd }: AddPortfolioModalProps) {
-    const [selectedType, setSelectedType] = useState<'risk' | 'neutral' | 'safe'>('neutral');
+    const [name, setName] = useState('');
+    const [riskLevel, setRiskLevel] = useState<RiskLevel>('MODERATE');
+
+    const handleAdd = () => {
+        if (!name.trim()) {
+            alert('포트폴리오 이름을 입력해주세요.');
+            return;
+        }
+        onAdd({ name, riskLevel,totalAsset: 0, cashBalance: 0});
+    };
 
     return (
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '24px' }}>새 포트폴리오 추가</h2>
 
-                <div style={{ marginBottom: '24px' }}>
-                    <p style={{ fontSize: '14px', color: '#49454f', marginBottom: '12px' }}>투자 성향을 선택하세요</p>
+                {/* 포트폴리오 이름 입력 */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="portfolio-name" style={{ display: 'block', fontSize: '14px', color: '#49454f', marginBottom: '8px' }}>
+                        포트폴리오 이름
+                    </label>
+                    <input
+                        id="portfolio-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="예: 나의 첫 번째 포트폴리오"
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid #d9d9d9',
+                            fontSize: '14px'
+                        }}
+                    />
+                </div>
 
-                    {(['risk', 'neutral', 'safe'] as const).map(type => (
-                        <button
-                            key={type}
-                            onClick={() => setSelectedType(type)}
-                            className={`type-btn ${selectedType === type ? 'selected' : ''}`}
-                            style={{ borderColor: selectedType === type ? (type === 'risk' ? '#ff383c' : type === 'neutral' ? '#4f378a' : '#00b050') : '#e8e8e8' }}
-                        >
-                            <div style={{ textAlign: 'left' }}>
-                                <p style={{ fontWeight: 600, color: '#1e1e1e' }}>
-                                    {type === 'risk' ? '고수익 위험형' : type === 'neutral' ? '중립형' : '저수익 안전형'}
-                                </p>
-                                <p style={{ fontSize: '13px', color: '#49454f', marginTop: '4px' }}>
-                                    {type === 'risk' ? '높은 수익률, 높은 변동성' : type === 'neutral' ? '균형잡힌 수익과 안정성' : '안정적인 배당, 낮은 변동성'}
-                                </p>
-                            </div>
-                            <div style={{
-                                width: '20px', height: '20px', borderRadius: '50%', border: '2px solid',
-                                borderColor: selectedType === type ? (type === 'risk' ? '#ff383c' : type === 'neutral' ? '#4f378a' : '#00b050') : '#d9d9d9',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                {selectedType === type && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'currentColor', color: 'inherit' }} />}
-                            </div>
-                        </button>
-                    ))}
+                {/* 투자 성향 선택 */}
+                <div style={{ marginBottom: '24px' }}>
+                    <label htmlFor="risk-level" style={{ display: 'block', fontSize: '14px', color: '#49454f', marginBottom: '8px' }}>
+                        투자 성향
+                    </label>
+                    <select
+                        id="risk-level"
+                        value={riskLevel}
+                        onChange={(e) => setRiskLevel(e.target.value as RiskLevel)}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid #d9d9d9',
+                            fontSize: '14px',
+                            backgroundColor: 'white'
+                        }}
+                    >
+                        <option value="AGGRESSIVE">위험형 (고수익 추구)</option>
+                        <option value="MODERATE">중립형 (균형 투자)</option>
+                        <option value="CONSERVATIVE">안전형 (안정성 중시)</option>
+                    </select>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#f3edf7', color: '#49454f', cursor: 'pointer' }}>
                         취소
                     </button>
-                    <button onClick={() => onAdd(selectedType)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4f378a', color: 'white', cursor: 'pointer' }}>
+                    <button onClick={handleAdd} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4f378a', color: 'white', cursor: 'pointer' }}>
                         추가
                     </button>
                 </div>

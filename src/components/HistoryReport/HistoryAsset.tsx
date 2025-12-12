@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
-import { useHistoryStore, useHoldingStore, usePortfolioStore, useStockPriceStore } from '../../store/historyStore';
-import type { Portfolio } from '../../store/historyStore';
+import { useHistoryStore, useHoldingStore, usePortfolioStore, useStockCurrentPriceStore, } from '../../store/historyStore';
 
 import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
 
 import HistoryReport from './HistoryReport';
 import { DollarSign } from 'lucide-react';
+import type { Portfolio } from '../../types/portfolios';
 
 interface Props {
   portfolioId: number | null;
 }
+
 
 export default function HistoryAsset({ portfolioId }: Props) {
   const portfolios = usePortfolioStore((state) => state.portfolioList);
@@ -24,11 +25,8 @@ export default function HistoryAsset({ portfolioId }: Props) {
   const holdings = useHoldingStore((state) => state.holdingList);
   const fetchHoldings = useHoldingStore((state) => state.fetchHoldings)
 
-  const stockPrice = useStockPriceStore((state) => state.stockPrice);
-  const fetchStockPrice = useStockPriceStore((state) => state.fetchStockPrice);
-
-
-
+  const stockPrice = useStockCurrentPriceStore((state) => state.stockCurrentPrice);
+  const fetchStockPrice = useStockCurrentPriceStore((state) => state.fetchStockCurrentPrice);
 
   useEffect(() => {
     if (portfolioId !== null) {

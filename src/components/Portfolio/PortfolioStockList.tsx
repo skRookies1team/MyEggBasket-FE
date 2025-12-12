@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Newspaper, FileText } from 'lucide-react';
+import type { Holding } from '../../store/historyStore';
 
 interface StockReason {
     news: string[];
@@ -14,7 +15,7 @@ interface StockItem {
 }
 
 interface PortfolioStockListProps {
-    stocks: StockItem[];
+    stocks: Holding[];
 }
 
 export function PortfolioStockList({ stocks }: PortfolioStockListProps) {

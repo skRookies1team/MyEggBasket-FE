@@ -1,49 +1,53 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchAccountBalance, getAccessToken, fetchHistoricalData, fetchCurrentPrice, getStockInfoFromDB } from '../api/stockApi';
+import { getStockInfoFromDB } from '../api/stockApi';
 import type { AccountBalanceData, StockPriceData } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
 import '../assets/PortfolioPage.css';
 import { AssetSummary } from '../components/Portfolio/AssetSummary';
-import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
 import { PortfolioStockList } from '../components/Portfolio/PortfolioStockList';
-import { AddPortfolioModal } from '../components/Portfolio/AddPortfolioModal';
+import { fetchStockCurrentPrice } from '../api/liveStockApi';
+import { fetchUserBalance } from '../api/accountApi';
 
+import { addPortfolio, deletePortfolio } from '../api/portfolioApi';
+import { usePortfolioStore } from '../store/historyStore';
+import type { Portfolio } from '../types/portfolios';
 // ----------------------------------------------------------------------
 // [수정] 개별 종목 트렌드 카드 (CSS 클래스 + 인라인 스타일 적용)
 // ----------------------------------------------------------------------
-function StockTrendCard({ code, name, quantity, avgPrice }: { code: string, name: string, quantity: number, avgPrice: number }) {
+function StockTrendCard({ stockCode, name, quantity, avgPrice }: { stockCode: string, name: string, quantity: number, avgPrice: number }) {
     const [chartData, setChartData] = useState<StockPriceData[]>([]);
     const [currentPrice, setCurrentPrice] = useState<number>(0);
     const [changeRate, setChangeRate] = useState<number>(0);
 
+
     useEffect(() => {
         let isMounted = true;
         const loadData = async () => {
-            const token = await getAccessToken();
-            if (!token) return;
+
+            //수정사항1 : 주식 일, 주, 월, 년 API 연결
 
             // 1. 차트 데이터 (일봉, 최근 30일)
-            const history = await fetchHistoricalData(code, 'day', token);
+            // const history = await fetchHistoricalData(code, 'day', token);
 
             // 2. 현재가 정보
-            const current = await fetchCurrentPrice(token, code);
+            const current = await fetchStockCurrentPrice(stockCode);
 
             if (isMounted) {
-                if (history && history.length > 0) {
-                    setChartData(history.slice(-30));
-                }
+                // if (history && history.length > 0) {
+                //     setChartData(history.slice(-30));
+                // }
                 if (current) {
-                    setCurrentPrice(current.stck_prpr);
-                    setChangeRate(current.prdy_ctrt);
+                    setCurrentPrice(current.currentPrice);
+                    setChangeRate(current.changeRate);
                 }
             }
         };
         loadData();
         return () => { isMounted = false; };
-    }, [code]);
+    }, [stockCode]);
 
     // 수익금/수익률 계산
     const profit = (currentPrice - avgPrice) * quantity;
@@ -144,16 +148,22 @@ function StockTrendCard({ code, name, quantity, avgPrice }: { code: string, name
 export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
     const [loading, setLoading] = useState(true);
-
     const [sectorCompositionData, setSectorCompositionData] = useState<{ name: string, value: number, color: string }[]>([]);
+    const [activePortfolioId, setActivePortfolioId] = useState<number>();
+
+    const portfolios = usePortfolioStore((state) => state.portfolioList);
+    const fetchPortfolios = usePortfolioStore((state) => state.fetchPortfolios);
+
+    useEffect(() => {
+        fetchPortfolios();
+    }, [fetchPortfolios])
+
     useEffect(() => {
         const loadData = async () => {
             try {
-                const token = await getAccessToken();
-                if (token) {
-                    const data = await fetchAccountBalance(token);
-                    if (data) setBalanceData(data);
-                }
+                const data = await fetchUserBalance();
+                if (data)
+                    setBalanceData(data);
             } catch (error) {
                 console.error("잔고 로딩 실패", error);
             } finally {
@@ -167,42 +177,42 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
         if (!balanceData) return { total: 0, cash: 0, d1Cash: 0, d2Cash: 0, investment: 0, profit: 0, profitRate: 0, stockEval: 0 };
         const { summary } = balanceData;
 
-        const total = summary.tot_evlu_amt;
-        const stockEval = summary.scts_evlu_amt;
-        const cash = summary.dnca_tot_amt;
-        const d1Cash = summary.nxdy_excc_amt;
-        const d2Cash = summary.prvs_rcdl_excc_amt;
-        const profit = summary.evlu_pfls_smtl_amt;
+        const total = summary.totalEvaluationAmount;
+        // const stockEval = summary.scts_evlu_amt;
+        const cash = summary.cashAmount;
+        // const d1Cash = summary.nxdy_excc_amt;
+        // const d2Cash = summary.prvs_rcdl_excc_amt;
+        const profit = summary.totalProfitLossAmount;
         const investment = total - profit;
         const profitRate = investment !== 0 ? (profit / investment) * 100 : 0;
 
-        return { total, cash, d1Cash, d2Cash, investment, profit, profitRate, stockEval };
+        return { total, cash, investment, profit, profitRate };
     }, [balanceData]);
 
-    const assetCompositionData = useMemo(() => {
-        if (myAssets.total === 0) return [];
-        return [
-            { name: '주식', value: myAssets.stockEval, color: '#4f378a' },
-            { name: '현금', value: myAssets.d2Cash, color: '#00b050' },
-        ];
-    }, [myAssets]);
+    // const assetCompositionData = useMemo(() => {
+    //     if (myAssets.total === 0) return [];
+    //     return [
+    //         { name: '주식', value: myAssets.stockEval, color: '#4f378a' },
+    //         { name: '현금', value: myAssets.d2Cash, color: '#00b050' },
+    //     ];
+    // }, [myAssets]);
 
     const stockCompositionData = useMemo(() => {
         if (!balanceData?.holdings) return [];
 
         // 1. 보유 수량이 0보다 큰 종목만 필터링
-        const validHoldings = balanceData.holdings.filter(item => item.hldg_qty > 0);
+        const validHoldings = balanceData.holdings.filter(item => item.quantity > 0);
 
         // 2. 평가금액 순으로 정렬
-        const sorted = [...validHoldings].sort((a, b) => b.evlu_amt - a.evlu_amt);
+        const sorted = [...validHoldings].sort((a, b) => b.evaluationAmount - a.evaluationAmount);
 
         // 3. 상위 4개 종목과 나머지(기타)로 분류
         const topStocks = sorted.slice(0, 4);
-        const otherValue = sorted.slice(4).reduce((sum, item) => sum + item.evlu_amt, 0);
+        const otherValue = sorted.slice(4).reduce((sum, item) => sum + item.evaluationAmount, 0);
 
         const data = topStocks.map((stock, index) => ({
-            name: stock.prdt_name,
-            value: stock.evlu_amt,
+            name: stock.stockName,
+            value: stock.evaluationAmount,
             color: ['#ff383c', '#4f378a', '#00b050', '#ffa500'][index % 4]
         }));
 
@@ -218,7 +228,7 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
             if (!balanceData?.holdings) return;
 
             // 1. 보유 수량이 0보다 큰 종목만 필터링
-            const validHoldings = balanceData.holdings.filter(item => item.hldg_qty > 0);
+            const validHoldings = balanceData.holdings.filter(item => item.quantity > 0);
 
             if (validHoldings.length === 0) {
                 setSectorCompositionData([]);
@@ -227,12 +237,12 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
 
             // 2. 각 종목의 섹터 정보 비동기 병렬 조회
             const promises = validHoldings.map(async (stock) => {
-                const info = await getStockInfoFromDB(stock.pdno);
+                const info = await getStockInfoFromDB(stock.stockCode);
                 // 정보가 없거나 섹터가 빈 문자열이면 '기타'로 분류
                 const sectorName = (info && info.sector && info.sector.trim() !== "") ? info.sector : '기타';
                 return {
                     sector: sectorName,
-                    value: stock.evlu_amt
+                    value: stock.evaluationAmount
                 };
             });
 
@@ -265,59 +275,27 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
         calculateSectorComposition();
     }, [balanceData]); // balanceData가 변경될 때마다 실행
 
-    const [portfolios, setPortfolios] = useState<Portfolio[]>([
-        {
-            id: 1,
-            name: '포트폴리오 1',
-            type: 'neutral',
-            stocks: [
-                {
-                    name: '삼성전자',
-                    allocation: 25,
-                    reason: {
-                        news: ['3분기 실적 시장 기대치 상회', 'HBM 수주 확대'],
-                        reports: ['KB증권 목표주가 상향 (85,000원)', 'NH투자증권 투자의견 매수 유지'],
-                        valueChain: ['반도체 공급망의 핵심 기업', 'AI 칩 수요 증가로 수혜'],
-                    },
-                },
-                {
-                    name: 'SK하이닉스',
-                    allocation: 20,
-                    reason: {
-                        news: ['HBM3 생산 본격화', 'AI 반도체 시장 급성장'],
-                        reports: ['미래에셋증권 매수 추천'],
-                        valueChain: ['HBM 시장 점유율 1위'],
-                    },
-                },
-            ],
-        },
-    ]);
+    const getTypeColor = (type: string) => type === 'AGGRESSIVE' ? '#ff383c' : type === 'MODERATE' ? '#4f378a' : '#00b050';
+    const getTypeLabel = (type: string) => type === 'AGGRESSIVE' ? '위험형' : type === 'MODERATE' ? '중립형' : '안전형';
 
-    const [showAddPortfolio, setShowAddPortfolio] = useState(false);
-    const [activePortfolioId, setActivePortfolioId] = useState(1);
-    const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
-
-    const addNewPortfolio = (type: 'risk' | 'neutral' | 'safe') => {
-        const newId = Math.max(...portfolios.map(p => p.id)) + 1;
+    // 포트폴리오 추가
+    const addNewPortfolio = async (type: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE', name: string) => {
         const newPortfolio: Portfolio = {
-            id: newId,
-            name: `포트폴리오 ${newId}`,
-            type: type,
-            stocks: []
+            name: name,
+            totalAsset: 0,
+            cashBalance: 0,
+            riskLevel: type,
         };
-        setPortfolios([...portfolios, newPortfolio]);
-        setActivePortfolioId(newId);
-        setShowAddPortfolio(false);
+
+        await addPortfolio(newPortfolio)
+    };
+    // 포트폴리오 삭제
+    const removePortfolio = async (id: number) => {
+        await deletePortfolio(id);
     };
 
-    const removePortfolio = (id: number) => {
-        if (portfolios.length === 1) return;
-        setPortfolios(portfolios.filter(p => p.id !== id));
-        if (activePortfolioId === id) setActivePortfolioId(portfolios[0].id);
-    };
+    const activePortfolio = portfolios.find((portfolio) => portfolio.portfolioId === activePortfolioId);
 
-    const getTypeColor = (type: string) => type === 'risk' ? '#ff383c' : type === 'neutral' ? '#4f378a' : '#00b050';
-    const getTypeLabel = (type: string) => type === 'risk' ? '위험형' : type === 'neutral' ? '중립형' : '안전형';
 
     return (
         <div className="portfolio-container">
@@ -326,7 +304,7 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                 {/* Header */}
                 <div className="portfolio-header">
                     <h1 className="portfolio-title">AI 추천 포트폴리오</h1>
-                    <button onClick={() => setShowAddPortfolio(true)} className="btn-add-portfolio">
+                    <button onClick={() => addNewPortfolio("CONSERVATIVE", "새 포트폴리오")} className="btn-add-portfolio">
                         <Plus size={16} />
                         새 포트폴리오 추가
                     </button>
@@ -335,18 +313,18 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                 {/* Tabs */}
                 <div className="portfolio-tabs">
                     {portfolios.map((portfolio) => (
-                        <div key={portfolio.id} className="tab-item">
+                        <div key={portfolio.portfolioId} className="tab-item">
                             <button
-                                onClick={() => setActivePortfolioId(portfolio.id)}
-                                className={`btn-tab ${activePortfolioId === portfolio.id ? 'active' : ''}`}
+                                onClick={() => setActivePortfolioId(portfolio.portfolioId)}
+                                className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
                             >
                                 <span>{portfolio.name}</span>
-                                <span style={{ fontSize: '12px', color: getTypeColor(portfolio.type) }}>
-                                    ({getTypeLabel(portfolio.type)})
+                                <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
+                                    ({getTypeLabel(portfolio.riskLevel)})
                                 </span>
                             </button>
                             {portfolios.length > 1 && (
-                                <button onClick={() => removePortfolio(portfolio.id)} className="btn-remove-tab">
+                                <button onClick={() => removePortfolio(portfolio.portfolioId)} className="btn-remove-tab">
                                     <X size={12} color="#ff383c" />
                                 </button>
                             )}
@@ -358,23 +336,14 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                 {activePortfolio && (
                     <div className="animate-in">
                         {/* 1. 자산 요약 */}
-                        <AssetSummary
-                            total={myAssets.total}
-                            stockEval={myAssets.stockEval}
-                            profit={myAssets.profit}
-                            profitRate={myAssets.profitRate}
-                            cash={myAssets.cash}
-                            d1Cash={myAssets.d1Cash}
-                            d2Cash={myAssets.d2Cash}
-                            loading={loading}
-                        />
+                        <AssetSummary />
 
-                        {/* 2. 차트 영역 */}
+                        {/* 2. 차트 영역
                         <PortfolioCharts
                             assetData={assetCompositionData}
                             stockData={stockCompositionData}
                             sectorData={sectorCompositionData}
-                        />
+                        /> */}
 
                         {/* 3. 내 보유 주식 추이 */}
                         {balanceData?.holdings && balanceData.holdings.length > 0 && (
@@ -390,32 +359,32 @@ export function PortfolioPage({ onNavigateToHistory }: PortfolioPageProps) {
                                     gap: '24px'
                                 }}>
                                     {balanceData.holdings
-                                        .filter(stock => stock.hldg_qty > 0) // 필터 추가
+                                        .filter(stock => stock.quantity > 0) // 필터 추가
                                         .map((stock) => (
                                             <StockTrendCard
-                                                key={stock.pdno}
-                                                code={stock.pdno}
-                                                name={stock.prdt_name}
-                                                quantity={stock.hldg_qty}
-                                                avgPrice={stock.pchs_avg_pric}
+                                                key={stock.stockCode}
+                                                stockCode={stock.stockCode}
+                                                name={stock.stockName}
+                                                quantity={stock.quantity}
+                                                avgPrice={stock.avgPrice}
                                             />
-                                    ))}
+                                        ))}
                                 </div>
                             </div>
                         )}
 
                         {/* 4. AI 추천 종목 리스트 */}
-                        <PortfolioStockList stocks={activePortfolio.stocks} />
+                        <PortfolioStockList stocks={activePortfolio.holdings} />
                     </div>
                 )}
 
-                {/* Modal */}
+                {/* Modal
                 {showAddPortfolio && (
                     <AddPortfolioModal
                         onClose={() => setShowAddPortfolio(false)}
                         onAdd={addNewPortfolio}
                     />
-                )}
+                )} */}
             </div>
         </div>
     );

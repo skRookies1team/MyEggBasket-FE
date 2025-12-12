@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";  
+import { useNavigate } from "react-router-dom";
 import "../assets/Top10Rolling.css";
 
 export interface VolumeRankItem {
@@ -21,9 +21,11 @@ interface Props {
 
 export default function Top10Rolling({ data, interval = 2000 }: Props) {
   const [index, setIndex] = useState(0);
-  const navigate = useNavigate();      
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (data.length === 0) return;
+
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % data.length);
     }, interval);
@@ -31,14 +33,16 @@ export default function Top10Rolling({ data, interval = 2000 }: Props) {
     return () => clearInterval(timer);
   }, [data.length, interval]);
 
+  if (data.length === 0) return null;
+
   const item = data[index];
   const isUp = item.change >= 0;
 
   return (
     <div
       className="top-rolling-box"
-      onClick={() => navigate(`/stock/${item.code}`)}   
-      style={{ cursor: "pointer" }}                    
+      onClick={() => navigate(`/stock/${item.code}`)}
+      style={{ cursor: "pointer" }}
     >
       <div className="tr-rank">{item.rank}</div>
 

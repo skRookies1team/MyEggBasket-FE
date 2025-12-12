@@ -1,5 +1,7 @@
 // types/stock.ts
 
+import type { Holding } from "./portfolios";
+
 export type Period = 'minute' | 'day' | 'week' | 'month' | 'year';
 export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'report';
 
@@ -100,6 +102,7 @@ export interface AccountSummary {
 
 export interface AccountBalanceData {
     summary: AccountSummary;
+    holdings:AccountHolding[]
 }
 
 export interface InvestorInfo {

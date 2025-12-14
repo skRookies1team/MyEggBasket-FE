@@ -17,18 +17,18 @@ export default function Router() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/history" element={<HistoryPage />} />
         
         <Route element={<PrivateRoute />}>
+          <Route path="/" element={<MainPage />} />
           <Route
                     path="/portfolio"
                     element={<PortfolioPage onNavigateToHistory={() => navigate('/history')} />}
                 />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/stock/:code" element={<StockDetailPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route
             path="*"
             element={<div style={{ padding: 24 }}>No match</div>}

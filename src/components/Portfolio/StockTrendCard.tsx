@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { StockPriceData } from "../../types/stock";
 import { fetchStockCurrentPrice } from "../../api/liveStockApi";
-import { CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { LineChart } from "lucide-react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { fetchHistoricalData } from "../../api/stocksApi";
 
 export default function StockTrendCard({ stockCode, name, quantity, avgPrice }: { stockCode: string, name: string, quantity: number, avgPrice: number }) {
     const [chartData, setChartData] = useState<StockPriceData[]>([]);
@@ -14,18 +14,16 @@ export default function StockTrendCard({ stockCode, name, quantity, avgPrice }: 
         let isMounted = true;
         const loadData = async () => {
 
-            //수정사항1 : 주식 일, 주, 월, 년 API 연결
-
             // 1. 차트 데이터 (일봉, 최근 30일)
-            // const history = await fetchHistoricalData(code, 'day', token);
+            const history = await fetchHistoricalData(stockCode, 'day');
 
             // 2. 현재가 정보
             const current = await fetchStockCurrentPrice(stockCode);
 
             if (isMounted) {
-                // if (history && history.length > 0) {
-                //     setChartData(history.slice(-30));
-                // }
+                if (history && history.length > 0) {
+                    setChartData(history.slice(-30));
+                }
                 if (current) {
                     setCurrentPrice(current.currentPrice);
                     setChangeRate(current.changeRate);

@@ -84,13 +84,13 @@ export function PortfolioPage() {
         };
 
         fetchPrices();
-        // holdings가 변경될 때마다 재실행
     }, [holdings]);
 
     const myAssets = useMemo(() => {
         if (!holdings || !balanceData) {
-            return { total: 0, cash: 0, profit: 0, profitRate: 0, stockEval: 0 };
+            return { total: 0, totalCash: 0, D1Cash:0, D2Cash:0, profit: 0, profitRate: 0, stockEval: 0 };
         }
+        console.log(balanceData)
 
         const { summary } = balanceData;
         const accountHoldings = balanceData.holdings || [];
@@ -99,7 +99,10 @@ export function PortfolioPage() {
 
         let totalProfit = 0;
         let totalStockEval = 0;
-        const cash = summary.cashAmount;
+        const totalCash = summary.totalCashAmount;
+        const D1Cash=summary.d1CashAmount;
+        const D2Cash=summary.d2CashAmount;
+        
 
 
         for (const holdingStock of holdings) {
@@ -118,7 +121,7 @@ export function PortfolioPage() {
             }
         }
 
-        const total = cash + totalStockEval;
+        const total = totalCash + totalStockEval;
         // 전체 자산의 총 수익률을 계산하는 로직이 필요하다면 추가
         const profitRate = (totalStockEval > 0) ? (totalProfit / (totalStockEval - totalProfit)) * 100 : 0;
         // *주의: profitRate 계산 공식은 데이터 구조에 따라 달라질 수 있습니다.
@@ -126,7 +129,9 @@ export function PortfolioPage() {
         // 단일 객체 반환
         return {
             total,
-            cash,
+            totalCash,
+            D1Cash,
+            D2Cash,
             profit: totalProfit,
             profitRate: profitRate,
             stockEval: totalStockEval
@@ -138,7 +143,7 @@ export function PortfolioPage() {
         if (myAssets.total === 0) return [];
         return [
             { name: '주식', value: myAssets.stockEval, color: '#4f378a' },
-            { name: '현금', value: myAssets.cash, color: '#00b050' },
+            { name: '현금', value: myAssets.totalCash, color: '#00b050' },
         ];
     }, [myAssets]);
 

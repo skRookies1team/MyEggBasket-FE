@@ -6,7 +6,7 @@ interface newPortfolio {
     riskLevel: string;
     totalAsset: number,
     cashBalance: number,
-
+    stockCodes?: string[],
 }
 
 export async function fetchPortfolios() {

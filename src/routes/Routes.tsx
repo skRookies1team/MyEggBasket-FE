@@ -9,6 +9,7 @@ import MyPage from "../pages/MyPage";
 import PrivateRoute from "../routes/PrivateRoute";
 import Layout from "../components/Layout.tsx";
 import HistoryPage from "../pages/HistoryPage.tsx";
+import MyAssetPage from "../pages/MyAssetPage.tsx";
 
 export default function Router() {
   const navigate = useNavigate(); // 네비게이션 함수 생성
@@ -29,6 +30,7 @@ export default function Router() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/stock/:code" element={<StockDetailPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/myassets" element={<MyAssetPage />} />
           <Route
             path="*"
             element={<div style={{ padding: 24 }}>No match</div>}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { searchStocksFromDB} from "../api/stockApi";
-import type {StockSearchResult} from "../api/stockApi"// 추가된 API import
+import { searchStocksFromDB } from "../api/stockApi";
+import type { StockSearchResult } from "../api/stockApi"// 추가된 API import
 import "../assets/Nav.css";
 
 interface NavProps {
@@ -67,73 +67,76 @@ const Nav: React.FC<NavProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   };
 
   return (
-      <nav className="nav">
-        <div className="nav__left">
-          <button onClick={() => navigate("/")} className="nav__brand">
-            MyEggBasket
-          </button>
-          <button onClick={() => navigate("/portfolio")} className="nav__link">
-            포트폴리오
-          </button>
-          <button onClick={() => navigate("/history")} className="nav__link">
-            히스토리
-          </button>
-        </div>
+    <nav className="nav">
+      <div className="nav__left">
+        <button onClick={() => navigate("/")} className="nav__brand">
+          MyEggBasket
+        </button>
+        <button onClick={() => navigate("/portfolio")} className="nav__link">
+          포트폴리오
+        </button>
+        <button onClick={() => navigate("/myassets")} className="nav__link">
+          내 자산
+        </button>
+        <button onClick={() => navigate("/history")} className="nav__link">
+          히스토리
+        </button>
+      </div>
 
-        <div className="nav__center" ref={searchRef}>
-          <form onSubmit={submitSearch} className="nav__search-form" style={{ position: 'relative' }}>
-            <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onFocus={() => q.trim().length > 0 && setShowDropdown(true)}
-                placeholder="종목명, 종목코드 검색"
-                className="nav__search-input"
-            />
-            {/* 검색 결과 자동완성 드롭다운 */}
-            {showDropdown && searchResults.length > 0 && (
-                <ul className="search-dropdown">
-                  {searchResults.map((stock) => (
-                      <li
-                          key={stock.stockCode}
-                          onClick={() => handleStockClick(stock.stockCode)}
-                          className="search-item"
-                      >
-                        <span className="stock-name">{stock.name}</span>
-                        <span className="stock-code">{stock.stockCode}</span>
-                        <span className="market-type">{stock.marketType}</span>
-                      </li>
-                  ))}
-                </ul>
-            )}
-          </form>
-        </div>
-
-        <div className="nav__right">
-          {isAuthenticated ? (
-              <>
-                <button className="nav__link" onClick={() => navigate("/mypage")}>
-                  마이페이지
-                </button>
-                <button className="nav__link" onClick={handleLogout}>
-                  로그아웃
-                </button>
-              </>
-          ) : (
-              <button className="nav__login" onClick={() => navigate("/login")}>
-                로그인
-              </button>
+      <div className="nav__center" ref={searchRef}>
+        <form onSubmit={submitSearch} className="nav__search-form" style={{ position: 'relative' }}>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onFocus={() => q.trim().length > 0 && setShowDropdown(true)}
+            placeholder="종목명, 종목코드 검색"
+            className="nav__search-input"
+          />
+          {/* 검색 결과 자동완성 드롭다운 */}
+          {showDropdown && searchResults.length > 0 && (
+            <ul className="search-dropdown">
+              {searchResults.map((stock) => (
+                <li
+                  key={stock.stockCode}
+                  onClick={() => handleStockClick(stock.stockCode)}
+                  className="search-item"
+                >
+                  <span className="stock-name">{stock.name}</span>
+                  <span className="stock-code">{stock.stockCode}</span>
+                  <span className="market-type">{stock.marketType}</span>
+                </li>
+              ))}
+            </ul>
           )}
+        </form>
+      </div>
 
-          {isAuthenticated && (
-              <button
-                  className="nav__toggle"
-                  onClick={() => onToggleSidebar?.()}
-              >
-                {isSidebarOpen ? "✕" : "☰"}
-              </button>
-          )}
-        </div>
-      </nav>
+      <div className="nav__right">
+        {isAuthenticated ? (
+          <>
+            <button className="nav__link" onClick={() => navigate("/mypage")}>
+              마이페이지
+            </button>
+            <button className="nav__link" onClick={handleLogout}>
+              로그아웃
+            </button>
+          </>
+        ) : (
+          <button className="nav__login" onClick={() => navigate("/login")}>
+            로그인
+          </button>
+        )}
+
+        {isAuthenticated && (
+          <button
+            className="nav__toggle"
+            onClick={() => onToggleSidebar?.()}
+          >
+            {isSidebarOpen ? "✕" : "☰"}
+          </button>
+        )}
+      </div>
+    </nav>
   );
 };
 

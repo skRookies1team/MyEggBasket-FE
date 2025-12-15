@@ -5,14 +5,19 @@ import api from "../store/axiosStore";
 /** 1개 종목 + 1기간 snapshot 생성 */
 async function getSnapshotFromHistory(
   stockCode: string,
-  period: "day" | "week" | "month" | "year" 
+  period: "day" | "week" | "month" | "year"
 ): Promise<StockItem | null> {
 
   const history = await fetchHistoricalData(stockCode, period);
   if (!history || history.length < 2) return null;
 
-  const last = history[history.length - 1];
-  const prev = history[history.length - 2];
+  // 시간 기준 오름차순 정렬
+  const sorted = [...history].sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+  );
+
+  const last = sorted.at(-1)!;   // 최신
+  const prev = sorted.at(-2)!;   // 직전
 
   const change = last.price - prev.price;
   const percent = prev.price ? (change / prev.price) * 100 : 0;
@@ -27,7 +32,7 @@ async function getSnapshotFromHistory(
     change: Number(change.toFixed(2)),
     percent: Number(percent.toFixed(2)),
     volume: last.volume,
-    amount,
+    amount
   };
 }
 

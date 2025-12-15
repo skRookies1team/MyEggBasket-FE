@@ -25,7 +25,7 @@ export function useRealtimePrice(
   const subRef = useRef<StompSubscription | null>(null);
 
   useEffect(() => {
-    // ✅ 분봉이 아닐 때: Client 생성 자체를 하지 않음
+    // 분봉이 아닐 때: Client 생성 자체를 하지 않음
     if (!enabled || !stockCode) {
       return;
     }
@@ -68,7 +68,7 @@ export function useRealtimePrice(
     client.activate();
     clientRef.current = client;
 
-    // ✅ cleanup: enabled 변경 / 종목 변경 / unmount 시
+    // cleanup: enabled 변경 / 종목 변경 / unmount 시
     return () => {
       subRef.current?.unsubscribe();
       subRef.current = null;

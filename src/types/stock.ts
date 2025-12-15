@@ -1,5 +1,3 @@
-// types/stock.ts
-
 export type Period = 'minute' | 'day' | 'week' | 'month' | 'year';
 export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'report';
 
@@ -93,13 +91,16 @@ export interface AccountSummary {
     totalEvaluationAmount: number
     totalProfitLossAmount: number
     totalPurchaseAmount: number
-    cashAmount: number
+    totalCashAmount: number
+    d1CashAmount:number
+    d2CashAmount:number
     netAssetAmount: number
     profitRate: number
 }
 
 export interface AccountBalanceData {
     summary: AccountSummary;
+    holdings:AccountHolding[]
 }
 
 export interface InvestorInfo {

@@ -48,7 +48,7 @@ export default function MyBalance() {
 
   const totalAsset = Number(summary.totalEvaluationAmount ?? 0);
   const totalProfitLoss = Number(summary.totalProfitLossAmount ?? 0);
-  const cashAmount = Number(summary.cashAmount ?? 0);
+  const totalCashAmount = Number(summary.totalCashAmount ?? 0);
   const netAsset = Number(summary.netAssetAmount ?? 0);
 
   const filteredHoldings = holdings.filter(
@@ -76,7 +76,7 @@ export default function MyBalance() {
       <div className="mybal-card">
         <div className="mybal-card-title">현금(주문가능)</div>
         <div className="mybal-big-value">
-          {cashAmount.toLocaleString()}원
+          {totalCashAmount.toLocaleString()}원
         </div>
       </div>
 

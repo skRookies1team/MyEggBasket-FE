@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, TrendingUp } from 'lucide-react';
-import { getStockInfoFromDB } from '../api/stockApi';
-import type { AccountBalanceData } from '../types/stock';
+import type { AccountBalanceData, StockCurrentPrice } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
 import '../assets/PortfolioPage.css';
 import { fetchUserBalance } from '../api/accountApi';
 import { addPortfolio, deletePortfolio } from '../api/portfolioApi';
-import { useHistoryStore, useHoldingStore, usePortfolioStore } from '../store/historyStore';
+import { useHoldingStore, usePortfolioStore } from '../store/historyStore';
 import type { Holding, RiskLevel } from '../types/portfolios';
 import { AssetSummary } from '../components/Portfolio/AssetSummary';
 import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
 import StockTrendCard from '../components/Portfolio/StockTrendCard';
 import { AddPortfolioModal } from '../components/Portfolio/AddPortfolioModal';
+import { fetchStockCurrentPrice } from '../api/liveStockApi';
+import { getStockInfoFromDB } from '../api/stocksApi';
 
 export function PortfolioPage() {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
@@ -20,12 +21,16 @@ export function PortfolioPage() {
     const [sectorCompositionData, setSectorCompositionData] = useState<{ name: string, value: number, color: string }[]>([]);
     const [showAddPortfolio, setShowAddPortfolio] = useState(false);
     const [activePortfolioId, setActivePortfolioId] = useState<number>();
+    const [stockCurrentPrices, setStockCurrentPrices] = useState<
+        Record<string, StockCurrentPrice>
+    >({});
 
     const portfolios = usePortfolioStore((state) => state.portfolioList);
     const fetchPortfolios = usePortfolioStore((state) => state.fetchPortfolios);
 
     const holdings = useHoldingStore((state) => state.holdingList);
     const fetchHoldings = useHoldingStore((state) => state.fetchHoldings);
+
 
     useEffect(() => {
         fetchPortfolios();
@@ -45,25 +50,100 @@ export function PortfolioPage() {
         };
         loadData();
     }, []);
+    useEffect(() => {
+        if (!holdings) return;
+
+        const fetchPrices = async () => {
+            // 임시로 가격을 담을 객체
+            const newPrices: Record<string, StockCurrentPrice> = {};
+
+            for (const holdingStock of holdings) {
+                const stockCode = holdingStock.stock.stockCode;
+
+                // 이미 가격이 있다면 다시 fetching 하지 않을 수도 있습니다. (최적화)
+                // if (stockCurrentPrices[stockCode]) continue;
+
+                try {
+                    // 비동기 함수 호출 시 await 사용
+                    const data = await fetchStockCurrentPrice(stockCode);
+                    if (data) {
+                        newPrices[stockCode] = data;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching price for ${stockCode}:`, error);
+                }
+            }
+
+            // 모든 fetch가 끝난 후 상태 업데이트
+            if (Object.keys(newPrices).length > 0) {
+                setStockCurrentPrices((prevPrices) => ({
+                    ...prevPrices,
+                    ...newPrices,
+                }));
+            }
+        };
+
+        fetchPrices();
+    }, [holdings]);
 
     const myAssets = useMemo(() => {
-        if (!balanceData) return { total: 0, cash: 0, profit: 0, profitRate: 0, stockEval: 0, investment: 0 };
-        const { summary } = balanceData;
+        if (!holdings || !balanceData) {
+            return { total: 0, totalCash: 0, D1Cash:0, D2Cash:0, profit: 0, profitRate: 0, stockEval: 0 };
+        }
+        console.log(balanceData)
 
-        const total = summary.totalEvaluationAmount;
-        const cash = summary.cashAmount;
-        const profit = summary.totalProfitLossAmount;
-        const stockEval = total - cash;
-        const investment = total - profit;
-        const profitRate = investment !== 0 ? (profit / investment) * 100 : 0;
-        return { total, cash, investment, profit, profitRate, stockEval }; // stockEval 추가
-    }, [balanceData]);
+        const { summary } = balanceData;
+        const accountHoldings = balanceData.holdings || [];
+
+        
+
+        let totalProfit = 0;
+        let totalStockEval = 0;
+        const totalCash = summary.totalCashAmount;
+        const D1Cash=summary.d1CashAmount;
+        const D2Cash=summary.d2CashAmount;
+        
+
+
+        for (const holdingStock of holdings) {
+            const stockCode = holdingStock.stock.stockCode;
+            // balanceData.accountHoldings에서 해당 주식의 정보를 찾습니다.
+            const accountHolding = accountHoldings.find(
+                (stock) => stock.stockCode === stockCode
+            );
+
+            if (accountHolding) {
+                totalProfit += accountHolding.profitLossAmount || 0;
+                totalStockEval += accountHolding.evaluationAmount || 0;
+
+                // stockCurrentPrices 상태가 있다면 이 곳에서 사용할 수도 있습니다.
+                // const currentPrice = stockCurrentPrices[stockCode]?.currentPrice;
+            }
+        }
+
+        const total = totalCash + totalStockEval;
+        // 전체 자산의 총 수익률을 계산하는 로직이 필요하다면 추가
+        const profitRate = (totalStockEval > 0) ? (totalProfit / (totalStockEval - totalProfit)) * 100 : 0;
+        // *주의: profitRate 계산 공식은 데이터 구조에 따라 달라질 수 있습니다.
+
+        // 단일 객체 반환
+        return {
+            total,
+            totalCash,
+            D1Cash,
+            D2Cash,
+            profit: totalProfit,
+            profitRate: profitRate,
+            stockEval: totalStockEval
+        };
+        // stockCurrentPrices가 업데이트 될 때도 재계산이 필요할 수 있습니다.
+    }, [holdings, balanceData, stockCurrentPrices]);
 
     const assetCompositionData = useMemo(() => {
         if (myAssets.total === 0) return [];
         return [
             { name: '주식', value: myAssets.stockEval, color: '#4f378a' },
-            { name: '현금', value: myAssets.cash, color: '#00b050' },
+            { name: '현금', value: myAssets.totalCash, color: '#00b050' },
         ];
     }, [myAssets]);
 
@@ -95,7 +175,10 @@ export function PortfolioPage() {
 
     useEffect(() => {
         const calculateSectorComposition = async () => {
-            if (holdings) return;
+            if (!holdings || holdings.length === 0) {
+                setSectorCompositionData([]);
+                return;
+            }
 
             // 1. 보유 수량이 0보다 큰 종목만 필터링
             const validHoldings = holdings.filter(item => item.quantity > 0);
@@ -119,7 +202,7 @@ export function PortfolioPage() {
 
             // 3. 섹터별 금액 합산 (Grouping)
             const sectorMap: Record<string, number> = {};
-            results.forEach(({ sector, value }) => {
+            results.forEach(({ sector, value }: { sector: string; value: number }) => {
                 sectorMap[sector] = (sectorMap[sector] || 0) + value;
             });
 
@@ -163,7 +246,19 @@ export function PortfolioPage() {
     };
     // 포트폴리오 삭제
     const removePortfolio = async (id: number) => {
-        await deletePortfolio(id);
+        const isConfirmed = confirm("정말 포트폴리오를 삭제하시겠습니까?");
+
+        if (isConfirmed) {
+            try {
+                await deletePortfolio(id); // API 호출로 삭제
+                await fetchPortfolios(); // 목록 새로고침
+            } catch (error) {
+                console.error("삭제 중 오류 발생:", error);
+                alert("삭제에 실패했습니다. 다시 시도해 주세요.");
+            }
+        } else {
+            console.log("삭제가 취소되었습니다.");
+        }
     };
 
     const activePortfolio = portfolios.find((portfolio) => portfolio.portfolioId === activePortfolioId);
@@ -187,82 +282,86 @@ export function PortfolioPage() {
                     {portfolios.map((portfolio) => (
                         <div key={portfolio.portfolioId} className="tab-item">
                             <button
-                                onClick={async() => {
+                                onClick={async () => {
                                     setActivePortfolioId(portfolio.portfolioId);
                                     await fetchHoldings(portfolio.portfolioId);
                                 }}
-                            className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
+                                className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
                             >
-                            <span>{portfolio.name}</span>
-                            <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
-                                ({getTypeLabel(portfolio.riskLevel)})
-                            </span>
-                        </button>
+                                <span>{portfolio.name}</span>
+                                <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
+                                    ({getTypeLabel(portfolio.riskLevel)})
+                                </span>
+                            </button>
                             {
-                            portfolios.length > 1 && (
-                                <button onClick={() => removePortfolio(portfolio.portfolioId)} className="btn-remove-tab">
-                                    <X size={12} color="#ff383c" />
-                                </button>
-                            )
-                        }
+                                portfolios.length > 1 && (
+                                    <button onClick={async () => {
+                                        removePortfolio(portfolio.portfolioId)
+                                        await fetchPortfolios();
+                                    }
+                                    } className="btn-remove-tab">
+                                        <X size={12} color="#ff383c" />
+                                    </button>
+                                )
+                            }
                         </div>
                     ))}
-            </div>
-
-            {/* Main Content */}
-            {activePortfolio && (
-                <div className="animate-in">
-                    {/* 1. 자산 요약 */}
-                    <AssetSummary balanceData={balanceData} loading={loading} />
-
-                    {/* 2. 차트 영역 */}
-                    <PortfolioCharts
-                        assetData={assetCompositionData}
-                        stockData={stockCompositionData}
-                        sectorData={sectorCompositionData}
-                    />
-
-                    {/* 3. 내 보유 주식 추이 */}
-                    {holdings && holdings.length > 0 && (
-                        <div className="section-card">
-                            <div className="section-header" style={{ marginBottom: '20px' }}>
-                                <TrendingUp className="size-5 text-purple" style={{ marginRight: '8px' }} />
-                                <h3 className="section-title">내 보유 주식 추이</h3>
-                            </div>
-                            {/* Grid Layout with Inline Style */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                                gap: '24px'
-                            }}>
-                                {holdings
-                                    .filter(holdingStock => holdingStock.quantity > 0) // 필터 추가
-                                    .map((stock) => (
-                                        <StockTrendCard
-                                            key={stock.stock.stockCode}
-                                            stockCode={stock.stock.stockCode}
-                                            name={stock.stock.name}
-                                            quantity={stock.quantity}
-                                            avgPrice={stock.avgPrice}
-                                        />
-                                    ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 4. AI 추천 종목 리스트
-                        <PortfolioStockList stocks={activePortfolio.holdings} /> */}
                 </div>
-            )}
 
-            {/* Modal */}
-            {showAddPortfolio && (
-                <AddPortfolioModal
-                    onClose={() => setShowAddPortfolio(false)}
-                    onAdd={addNewPortfolio}
-                />
-            )}
-        </div>
+                {/* Main Content */}
+                {activePortfolio && (
+                    <div className="animate-in">
+                        {/* 1. 자산 요약 */}
+                        <AssetSummary assetData={myAssets} loading={loading} />
+
+                        {/* 2. 차트 영역 */}
+                        <PortfolioCharts
+                            assetData={assetCompositionData}
+                            stockData={stockCompositionData}
+                            sectorData={sectorCompositionData}
+                        />
+
+                        {/* 3. 내 보유 주식 추이 */}
+                        {holdings && holdings.length > 0 && (
+                            <div className="section-card">
+                                <div className="section-header" style={{ marginBottom: '20px' }}>
+                                    <TrendingUp className="size-5 text-purple" style={{ marginRight: '8px' }} />
+                                    <h3 className="section-title">내 보유 주식 추이</h3>
+                                </div>
+                                {/* Grid Layout with Inline Style */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                    gap: '24px'
+                                }}>
+                                    {holdings
+                                        .filter(holdingStock => holdingStock.quantity > 0) // 필터 추가
+                                        .map((stock) => (
+                                            <StockTrendCard
+                                                key={stock.stock.stockCode}
+                                                stockCode={stock.stock.stockCode}
+                                                name={stock.stock.name}
+                                                quantity={stock.quantity}
+                                                avgPrice={stock.avgPrice}
+                                            />
+                                        ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. AI 추천 종목 리스트
+                        <PortfolioStockList stocks={activePortfolio.holdings} /> */}
+                    </div>
+                )}
+
+                {/* Modal */}
+                {showAddPortfolio && (
+                    <AddPortfolioModal
+                        onClose={() => setShowAddPortfolio(false)}
+                        onAdd={addNewPortfolio}
+                    />
+                )}
+            </div>
         </div >
     );
 }

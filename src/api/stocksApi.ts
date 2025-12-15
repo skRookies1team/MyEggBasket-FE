@@ -41,7 +41,7 @@ export async function fetchHistoricalData(
       volume: item.volume,
     }));
   } catch (error) {
-    console.error("📉 차트 데이터 조회 실패", error);
+    console.error(" 차트 데이터 조회 실패", error);
     return [];
   }
 }

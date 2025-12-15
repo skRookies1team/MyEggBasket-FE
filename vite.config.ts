@@ -33,6 +33,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+
+      //3. naver api 보유종목
+      '/naver-api': { // '/naver-api' 경로로 들어오는 요청을
+        target: 'https://openapi.naver.com', // 네이버 API로 포워딩
+        changeOrigin: true, // 헤더 변경
+        rewrite: (path) => path.replace(/^\/naver-api/, ''), // 경로 재작성
+        secure: false, 
+      },
     },
   },
 });

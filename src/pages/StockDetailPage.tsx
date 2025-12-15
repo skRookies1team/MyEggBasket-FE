@@ -11,14 +11,16 @@ import { StockReports } from '../components/stock/StockReports';
 import { FINANCIAL_SERVICE_KEY } from '../config/api';
 
 // ★ API 및 훅 import
-import {
-    fetchHistoricalData,
-    getAccessToken,
-    fetchCurrentPrice,
-} from '../api/stockApi';
+// import {
+//     fetchHistoricalData,
+//     getAccessToken,
+//     fetchCurrentPrice,
+// } from '../api/stockApi';
 import { useRealtimeStock } from '../hooks/useRealtimeStock'; // 실시간 훅 추가
 
-import type { StockDetailData, Period, TabType, StockPriceData, FinancialData, CurrentPriceResult } from '../types/stock';
+import type { StockDetailData, Period, TabType, StockPriceData, FinancialData, StockCurrentPrice, } from '../types/stock';
+import { fetchHistoricalData } from '../api/stocksApi';
+import { fetchStockCurrentPrice } from '../api/liveStockApi';
 
 // --------------------------------------------------------------------------
 // Types
@@ -144,7 +146,7 @@ function StockDetailView({
     const [isChartLoading, setIsChartLoading] = useState<boolean>(false);
 
     // REST API 현재가 정보
-    const [restInfo, setRestInfo] = useState<CurrentPriceResult | null>(null);
+    const [restInfo, setRestInfo] = useState<StockCurrentPrice | null>(null);
 
     // --------------------------------------------------------------------------
     // 분봉 전용 로직 (Websocket + LocalStorage)
@@ -222,10 +224,7 @@ function StockDetailView({
         const loadHistory = async () => {
             setIsChartLoading(true);
             try {
-                const token = await getAccessToken();
-                if (!token || !isMounted) return;
-
-                const result = await fetchHistoricalData(stockCode, period, token);
+                const result = await fetchHistoricalData(stockCode, period);
                 if (isMounted) {
                     setHistoricalData(result);
                 }
@@ -246,11 +245,8 @@ function StockDetailView({
     useEffect(() => {
         let isMounted = true;
         const loadCurrentInfo = async () => {
-            const token = await getAccessToken();
-            if (!token) return;
-
             // *주의*: fetchCurrentPrice도 stockCode 인자 필요 (현재는 상수 사용 중)
-            const info = await fetchCurrentPrice(token, stockCode);
+            const info = await fetchStockCurrentPrice(stockCode);
             if (isMounted && info) {
                 setRestInfo(info);
             }
@@ -394,10 +390,10 @@ function StockDetailView({
     };
 
     // 데이터 결정
-    const displayPrice = realtimeInfo?.stck_prpr ?? restInfo?.stck_prpr ?? data.currentPrice;
-    const displayChange = realtimeInfo?.prdy_vrss ?? restInfo?.prdy_vrss ?? data.changeAmount;
-    const displayRate = realtimeInfo?.prdy_ctrt ?? restInfo?.prdy_ctrt ?? data.changeRate;
-    const displayVol = realtimeInfo?.acml_vol ?? restInfo?.acml_vol ?? 0;
+    const displayPrice = realtimeInfo?.stck_prpr ?? restInfo?.currentPrice ?? data.currentPrice;
+    const displayChange = realtimeInfo?.prdy_vrss ?? restInfo?.changeAmount ?? data.changeAmount;
+    const displayRate = realtimeInfo?.prdy_ctrt ?? restInfo?.changeRate ?? data.changeRate;
+    const displayVol = realtimeInfo?.acml_vol ?? restInfo?.volume ?? 0;
 
     return (
         <div className="min-h-screen bg-[#fef7ff] pb-20">

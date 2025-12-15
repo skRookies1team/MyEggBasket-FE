@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, TrendingUp } from 'lucide-react';
-import { getStockInfoFromDB } from '../api/stockApi';
 import type { AccountBalanceData, StockCurrentPrice } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
@@ -14,6 +13,7 @@ import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
 import StockTrendCard from '../components/Portfolio/StockTrendCard';
 import { AddPortfolioModal } from '../components/Portfolio/AddPortfolioModal';
 import { fetchStockCurrentPrice } from '../api/liveStockApi';
+import { getStockInfoFromDB } from '../api/stocksApi';
 
 export function PortfolioPage() {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);

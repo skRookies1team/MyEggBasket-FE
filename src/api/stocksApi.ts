@@ -5,16 +5,16 @@ import type { StockPriceData } from "../types/stock";
     KIS 기간별 시세 조회
 ============================================================ */
 
-interface KisChartData {
+interface KisPeriodStockData {
   time: string;
   price: number;
   volume: number;
 }
 
-interface KisChartResponse {
+interface KisPeriodStockResponse {
   stockCode: string;
   period: "day" | "week" | "month" | "year";
-  data: KisChartData[];
+  data: KisPeriodStockData[];
 }
 
 interface StockSearchResult {
@@ -30,7 +30,7 @@ export async function fetchHistoricalData(
   period: "day" | "week" | "month" | "year"
 ): Promise<StockPriceData[]> {
   try {
-    const res = await api.get<KisChartResponse>(
+    const res = await api.get<KisPeriodStockResponse>(
       `/kis/chart/${stockCode}`,
       { params: { period } }
     );
@@ -41,7 +41,7 @@ export async function fetchHistoricalData(
       volume: item.volume,
     }));
   } catch (error) {
-    console.error("📉 차트 데이터 조회 실패", error);
+    console.error(" 차트 데이터 조회 실패", error);
     return [];
   }
 }

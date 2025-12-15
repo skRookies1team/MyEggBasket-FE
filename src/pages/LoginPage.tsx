@@ -36,6 +36,13 @@ export default function LoginPage() {
       setFindPasswordData({ ...findPasswordData, [field]: e.target.value });
     };
 
+  // Enter 키 입력 시 로그인 처리
+  const handleEnter = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   const handleLogin = async () => {
     try {
       console.log("로그인 요청:", loginData);
@@ -78,6 +85,7 @@ export default function LoginPage() {
           value={loginData.email}
           onChange={handleLoginChange("email")}
           placeholder="이메일을 입력하세요"
+          onKeyDown={handleEnter} // Enter 키 이벤트 핸들러 추가
         />
       </div>
 
@@ -89,6 +97,7 @@ export default function LoginPage() {
           value={loginData.password}
           onChange={handleLoginChange("password")}
           placeholder="비밀번호를 입력하세요"
+          onKeyDown={handleEnter} // Enter 키 이벤트 핸들러 추가
         />
       </div>
 

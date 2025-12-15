@@ -1,14 +1,9 @@
 import { useState } from "react";
-import { BarChart3, Calendar, DollarSign, Download, TrendingUp } from "lucide-react";
+import { BarChart3, Calendar, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-interface Props {
-    portfolioId: number | null;
-}
 
-export default function HistoryGraph({
-    portfolioId,
-}: Props) {
+export default function HistoryGraph() {
     const [profitView, setProfitView] = useState<'monthly' | 'weekly'>('monthly');
 
     // RQ-43: 월별 주이 (수익)

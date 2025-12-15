@@ -1,5 +1,7 @@
 import type { Stock } from "../types/stock";
 
+export type RiskLevel = 'AGGRESSIVE' | 'MODERATE' | 'CONSERVATIVE';
+
 export interface Portfolio {
     portfolioId: number;
     userId: number;

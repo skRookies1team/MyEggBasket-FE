@@ -1,7 +1,8 @@
-import type{History} from '../../store/historyStore'
+import type { HistoryReport } from "../../types/portfolios";
+
 
 interface Props {
-    history: History | undefined;
+    history: HistoryReport | undefined;
 }
 
 export default function HistoryReport({ history }: Props) {

@@ -14,6 +14,7 @@
     "start:server": "node server/index.js"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.2.1",
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
     "cors": "^2.8.5",

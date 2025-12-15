@@ -5,7 +5,7 @@ import api from "../store/axiosStore";
 /** 1개 종목 + 1기간 snapshot 생성 */
 async function getSnapshotFromHistory(
   stockCode: string,
-  period: "day" | "week" | "month" | "year"
+  period: "day" | "week" | "month" | "year" 
 ): Promise<StockItem | null> {
 
   const history = await fetchHistoricalData(stockCode, period);

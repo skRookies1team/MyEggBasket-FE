@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useHistoryStore, useHoldingStore, usePortfolioStore, useStockCurrentPriceStore, } from '../../store/historyStore';
+import { useEffect, useState } from 'react';
+import { useHistoryStore, useHoldingStore, usePortfolioStore } from '../../store/historyStore';
 
 import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
@@ -7,11 +7,64 @@ import Egg2 from "../../assets/icons/egg2.png";
 import HistoryReport from './HistoryReport';
 import { DollarSign } from 'lucide-react';
 import type { Portfolio } from '../../types/portfolios';
+import { fetchStockCurrentPrice } from '../../api/liveStockApi';
 
 interface Props {
   portfolioId: number | null;
 }
 
+interface HoldingStockRowProps {
+  holdingStock: any;
+}
+
+function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
+  const [stockData, setStockData] = useState<{
+    currentPrice: number;
+    profit: number;
+    rate: number;
+  } | null>(null);
+
+  useEffect(() => {
+    async function getStockData() {
+      const data = await fetchStockCurrentPrice(holdingStock.stock.stockCode);
+      if (data) {
+        const currentPrice = data.currentPrice;
+        const profit = (currentPrice - holdingStock.avgPrice) * holdingStock.quantity;
+        const rate = holdingStock.avgPrice > 0 ? ((currentPrice - holdingStock.avgPrice) / holdingStock.avgPrice) * 100 : 0;
+        setStockData({ currentPrice, profit, rate });
+      }
+    }
+    getStockData();
+
+    const intervalId = setInterval(getStockData, 1000); // 1초마다 데이터 갱신
+
+    return () => {
+      clearInterval(intervalId); 
+    };
+  }, [holdingStock]);
+
+  if (!stockData) {
+    return (
+      <tr className="border-b border-[#f3edf7]">
+        <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
+        <td colSpan={5} className="py-3 px-4 text-center text-gray-500">현재가 불러오는 중...</td>
+      </tr>
+    );
+  }
+
+  const { currentPrice, profit, rate } = stockData;
+
+  return (
+    <tr className="border-b border-[#f3edf7] hover:bg-[#f3edf7]/50 transition-colors">
+      <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
+      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.quantity}</td>
+      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.avgPrice.toLocaleString()}원</td>
+      <td className="py-3 px-4 text-right text-[#1e1e1e]">{currentPrice.toLocaleString()}원</td>
+      <td className={`py-3 px-4 text-right font-medium ${profit > 0 ? 'text-red-500' : profit < 0 ? 'text-blue-600' : 'text-gray-800'}`}>{profit > 0 ? '+' : ''}{profit.toLocaleString()}원</td>
+      <td className={`py-3 px-4 text-right font-medium ${rate > 0 ? 'text-red-500' : rate < 0 ? 'text-blue-600' : 'text-gray-800'}`}>{rate > 0 ? '+' : ''}{rate.toFixed(2)}%</td>
+    </tr>
+  );
+}
 
 export default function HistoryAsset({ portfolioId }: Props) {
   const portfolios = usePortfolioStore((state) => state.portfolioList);
@@ -25,18 +78,13 @@ export default function HistoryAsset({ portfolioId }: Props) {
   const holdings = useHoldingStore((state) => state.holdingList);
   const fetchHoldings = useHoldingStore((state) => state.fetchHoldings)
 
-  const stockPrice = useStockCurrentPriceStore((state) => state.stockCurrentPrice);
-  const fetchStockPrice = useStockCurrentPriceStore((state) => state.fetchStockCurrentPrice);
-
   useEffect(() => {
     if (portfolioId !== null) {
       fetchHistory(portfolioId);
-    }
-
-    if (portfolioId !== null) {
       fetchHoldings(portfolioId);
     }
-  }, [portfolioId, fetchHistory,fetchHistory]);
+  }, [portfolioId, fetchHistory, fetchHoldings]);
+
 
   if (!portfolio) {
     return (
@@ -117,33 +165,9 @@ export default function HistoryAsset({ portfolioId }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {holdings.map((holdingStock) => {
-
-                  fetchStockPrice(holdingStock.stock.stockCode);
-
-                  const currentPrice = stockPrice.currentPrice;
-                  const profit = (currentPrice - holdingStock.avgPrice) * holdingStock.quantity;
-                  const rate = holdingStock.avgPrice > 0 ? ((currentPrice - holdingStock.avgPrice) / holdingStock.avgPrice) * 100 : 0;
-
-                  return (
-                    <tr key={holdingStock.stock.stockCode} className="border-b border-[#f3edf7] hover:bg-[#f3edf7]/50 transition-colors">
-                      <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
-                      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.quantity}</td>
-                      <td className="py-3 px-4 text-right text-[#49454f]">
-                        {holdingStock.avgPrice.toLocaleString()}원
-                      </td>
-                      <td className="py-3 px-4 text-right text-[#1e1e1e]">
-                        {currentPrice.toLocaleString()}원
-                      </td>
-                      <td className={`py-3 px-4 text-right font-medium ${profit > 0 ? 'text-red-500' : profit < 0 ? 'text-blue-600' : 'text-gray-800'}`}>
-                        {profit > 0 ? '+' : ''}{profit.toLocaleString()}원
-                      </td>
-                      <td className={`py-3 px-4 text-right font-medium ${rate > 0 ? 'text-red-500' : rate < 0 ? 'text-blue-600' : 'text-gray-800'}`}>
-                        {rate > 0 ? '+' : ''}{rate.toFixed(2)}%
-                      </td>
-                    </tr>
-                  );
-                })}
+                {holdings.map((holdingStock) => (
+                  <HoldingStockRow key={holdingStock.stock.stockCode} holdingStock={holdingStock} />
+                ))}
               </tbody>
             </table>
           </div>

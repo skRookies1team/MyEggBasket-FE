@@ -55,7 +55,7 @@ const Nav: React.FC<NavProps> = ({ onToggleSidebar, isSidebarOpen }) => {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/login");
   };
 
   // 엔터키 입력 시 첫 번째 결과로 이동하거나 검색 페이지로 이동 (여기서는 첫번째 결과 이동으로 구현)

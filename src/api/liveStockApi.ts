@@ -1,16 +1,14 @@
-// src/api/liveStockService.ts
-import { fetchHistoricalData, getStockInfoFromDB, getAccessToken } from "./stockApi";
+import { fetchHistoricalData, getStockInfoFromDB } from "./stocksApi";
 import type { StockCurrentPrice, StockItem } from "../types/stock";
 import api from "../store/axiosStore";
 
 /** 1개 종목 + 1기간 snapshot 생성 */
 async function getSnapshotFromHistory(
   stockCode: string,
-  period: "day" | "week" | "month" | "year",
-  token: string
+  period: "day" | "week" | "month" | "year"
 ): Promise<StockItem | null> {
 
-  const history = await fetchHistoricalData(stockCode, period, token);
+  const history = await fetchHistoricalData(stockCode, period);
   if (!history || history.length < 2) return null;
 
   const last = history[history.length - 1];
@@ -33,27 +31,26 @@ async function getSnapshotFromHistory(
   };
 }
 
-/** 50개 종목 snapshot (chunk + rate-limit 포함) */
+/** 50개 종목 snapshot (chunk 처리만 유지) */
 async function getSnapshots(
   tickers: string[],
-  period: "day" | "week" | "month" | "year",
-  token: string
+  period: "day" | "week" | "month" | "year"
 ): Promise<StockItem[]> {
 
   const results: StockItem[] = [];
-  const chunkSize = 10; // 한국투자 안전 최대치
+  const chunkSize = 10; // 프런트 부하 분산용
 
   for (let i = 0; i < tickers.length; i += chunkSize) {
     const batch = tickers.slice(i, i + chunkSize);
 
     const batchResults = await Promise.all(
-      batch.map((code) => getSnapshotFromHistory(code, period, token))
+      batch.map((code) => getSnapshotFromHistory(code, period))
     );
 
     results.push(...batchResults.filter((x): x is StockItem => x !== null));
 
-    // API 차단 방지를 위한 딜레이 (필수)
-    await new Promise((r) => setTimeout(r, 300));
+    // 너무 빠른 연속 요청 방지 
+    await new Promise((r) => setTimeout(r, 200));
   }
 
   return results;
@@ -64,9 +61,7 @@ export async function fetch50StocksByPeriod(
   period: "day" | "week" | "month" | "year",
   tickers: string[]
 ) {
-  const token = await getAccessToken();
-
-  const snapshots = await getSnapshots(tickers, period, token);
+  const snapshots = await getSnapshots(tickers, period);
 
   return {
     volume: [...snapshots].sort((a, b) => b.volume - a.volume),
@@ -76,9 +71,12 @@ export async function fetch50StocksByPeriod(
   };
 }
 
+/** 현재가 조회 */
 export async function fetchStockCurrentPrice(stockCode: string) {
   try {
-    const response = await api.get<StockCurrentPrice>(`kis/stock/current-price/${stockCode}?useVirtualServer=false`);
+    const response = await api.get<StockCurrentPrice>(
+      `/kis/stock/current-price/${stockCode}?useVirtualServer=false`
+    );
     return response.data;
   } catch (err) {
     console.error("주식 정보를 불러오는 중 오류:", err);

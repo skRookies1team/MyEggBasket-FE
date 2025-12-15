@@ -29,6 +29,7 @@ export default function Router() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/stock/:code" element={<StockDetailPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          {/* <Route path="/myassets" element={My} /> */}
           <Route
             path="*"
             element={<div style={{ padding: 24 }}>No match</div>}

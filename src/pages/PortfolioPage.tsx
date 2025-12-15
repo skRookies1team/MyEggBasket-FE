@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, X, TrendingUp } from 'lucide-react';
-import { getStockInfoFromDB } from '../api/stockApi';
-import type { AccountBalanceData, StockCurrentPrice } from '../types/stock';
+import type { AccountBalanceData, AccountHolding, StockCurrentPrice } from '../types/stock';
 
 // 스타일 및 컴포넌트 임포트
 import '../assets/PortfolioPage.css';
@@ -14,6 +13,8 @@ import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
 import StockTrendCard from '../components/Portfolio/StockTrendCard';
 import { AddPortfolioModal } from '../components/Portfolio/AddPortfolioModal';
 import { fetchStockCurrentPrice } from '../api/liveStockApi';
+import { getStockInfoFromDB } from '../api/stocksApi';
+import { addHolding } from '../api/holdingApi';
 
 export function PortfolioPage() {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
@@ -60,9 +61,6 @@ export function PortfolioPage() {
             for (const holdingStock of holdings) {
                 const stockCode = holdingStock.stock.stockCode;
 
-                // 이미 가격이 있다면 다시 fetching 하지 않을 수도 있습니다. (최적화)
-                // if (stockCurrentPrices[stockCode]) continue;
-
                 try {
                     // 비동기 함수 호출 시 await 사용
                     const data = await fetchStockCurrentPrice(stockCode);
@@ -88,21 +86,19 @@ export function PortfolioPage() {
 
     const myAssets = useMemo(() => {
         if (!holdings || !balanceData) {
-            return { total: 0, totalCash: 0, D1Cash:0, D2Cash:0, profit: 0, profitRate: 0, stockEval: 0 };
+            return { total: 0, totalCash: 0, D1Cash: 0, D2Cash: 0, profit: 0, profitRate: 0, stockEval: 0 };
         }
-        console.log(balanceData)
-
         const { summary } = balanceData;
         const accountHoldings = balanceData.holdings || [];
 
-        
+
 
         let totalProfit = 0;
         let totalStockEval = 0;
         const totalCash = summary.totalCashAmount;
-        const D1Cash=summary.d1CashAmount;
-        const D2Cash=summary.d2CashAmount;
-        
+        const D1Cash = summary.d1CashAmount;
+        const D2Cash = summary.d2CashAmount;
+
 
 
         for (const holdingStock of holdings) {
@@ -230,12 +226,50 @@ export function PortfolioPage() {
     const getTypeColor = (type: string) => type === 'AGGRESSIVE' ? '#ff383c' : type === 'MODERATE' ? '#4f378a' : '#00b050';
     const getTypeLabel = (type: string) => type === 'AGGRESSIVE' ? '위험형' : type === 'MODERATE' ? '중립형' : '안전형';
 
-    // 포트폴리오 추가
-    const addNewPortfolio = async (data: { name: string, riskLevel: RiskLevel, totalAsset: 0, cashBalance: 0 }) => {
+    const addNewPortfolio = async (data: {
+        name: string,
+        riskLevel: RiskLevel,
+        totalAsset: 0,
+        cashBalance: 0,
+        // 💡 변경: selectedHoldings를 받음
+        selectedHoldings: AccountHolding[]
+    }) => {
+        // 💡 변경: selectedHoldings를 분리합니다.
+        const { selectedHoldings, ...portfolioData } = data;
+        let newPortfolioId: number | undefined;
+
         try {
-            const newPortfolio = await addPortfolio(data);
-            if (newPortfolio) {
+            // 1. 새 포트폴리오 생성
+            const newPortfolio = await addPortfolio(portfolioData);
+
+            if (newPortfolio && newPortfolio.portfolioId) {
+                newPortfolioId = newPortfolio.portfolioId;
+                console.log(`새 포트폴리오 생성 완료. ID: ${newPortfolioId}`);
+
+                // 2. 선택된 종목들을 새 포트폴리오에 추가
+                if (selectedHoldings.length > 0) {
+                    console.log(`${selectedHoldings.length}개 종목을 새 포트폴리오에 추가 중...`);
+
+                    const holdingCreationPromises = selectedHoldings.map((holdingStock) => {
+                        // 💡 변경: 선택된 holdingStock 객체에서 quantity와 avgPrice 값을 사용
+                        const newHoldingData = {
+                            stockCode: holdingStock.stockCode,
+                            quantity: holdingStock.quantity, // 🚀 기존 보유 수량 사용
+                            avgPrice: holdingStock.avgPrice, // 🚀 기존 평균 단가 사용
+                            currentWeight: 0, // 초기값 0
+                            targetWeight: 0 // 초기값 0
+                        };
+                        return addHolding(newPortfolioId!, newHoldingData);
+                    });
+
+                    // 모든 종목 추가 API 호출이 완료될 때까지 기다립니다.
+                    await Promise.all(holdingCreationPromises);
+                    console.log("모든 보유 종목 추가 완료.");
+                }
+
+                // 3. 포트폴리오 목록 새로고침 및 활성 포트폴리오 설정
                 await fetchPortfolios();
+                setActivePortfolioId(newPortfolioId);
             }
         } catch (error) {
             console.error("포트폴리오 추가 실패:", error);

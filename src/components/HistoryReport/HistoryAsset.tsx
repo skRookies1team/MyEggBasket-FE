@@ -39,7 +39,7 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
     const intervalId = setInterval(getStockData, 1000); // 1초마다 데이터 갱신
 
     return () => {
-      clearInterval(intervalId); 
+      clearInterval(intervalId);
     };
   }, [holdingStock]);
 
@@ -67,6 +67,7 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
 }
 
 export default function HistoryAsset({ portfolioId }: Props) {
+
   const portfolios = usePortfolioStore((state) => state.portfolioList);
   const portfolio: Portfolio | undefined = portfolios.find(
     (p) => p.portfolioId === portfolioId
@@ -85,7 +86,6 @@ export default function HistoryAsset({ portfolioId }: Props) {
     }
   }, [portfolioId, fetchHistory, fetchHoldings]);
 
-
   if (!portfolio) {
     return (
       <div className="p-6 text-center text-gray-500">
@@ -96,6 +96,9 @@ export default function HistoryAsset({ portfolioId }: Props) {
 
   const successRate = history?.successRate ?? null;
 
+  const totalStockValue = holdings.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
+  const totalAsset = totalStockValue + (portfolio.cashBalance ?? 0);
+
   let eggIcon = null;
   if (successRate !== null) {
     eggIcon =
@@ -105,7 +108,6 @@ export default function HistoryAsset({ portfolioId }: Props) {
         <img src={Egg2} alt="Bad Egg" className="w-8 h-8 ml-2" />
       );
   }
-
 
   return (
     <div className="flex space-x-4">
@@ -126,16 +128,9 @@ export default function HistoryAsset({ portfolioId }: Props) {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
-              <p className="text-gray-600">총 자산</p>
+              <p className="text-gray-600">주식 현재 평가 금액</p>
               <p className="text-lg font-bold text-gray-800">
-                {portfolio.totalAsset?.toLocaleString() ?? 0}원
-              </p>
-            </div>
-
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
-              <p className="text-gray-600">예수금</p>
-              <p className="text-lg font-bold text-gray-800">
-                {portfolio.cashBalance?.toLocaleString() ?? 0}원
+                {totalAsset.toLocaleString()}원
               </p>
             </div>
           </div>

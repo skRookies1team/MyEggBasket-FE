@@ -1,13 +1,26 @@
 export type Period = 'minute' | 'day' | 'week' | 'month' | 'year';
 export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'report';
 
+
+// 현재가 데이터 타입
 export interface StockPriceData {
-  time: string;
+  time: string | number;
   price: number;
-  open?: number;
-  high?: number;
-  low?: number;
+  open: number;
+  high: number;
+  low: number;
+  close?: number;
   volume: number;
+}
+
+// 차트/ 보조지표 기준 타입
+export interface StockCandle {
+  time: string; // 거래 시간
+  open: number; // 시가
+  high: number; // 고가
+  low: number; // 저가
+  close: number; // 종가
+  volume: number; // 거래량
 }
 
 export interface StockItem {

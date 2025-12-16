@@ -2,9 +2,12 @@ export type Period = 'minute' | 'day' | 'week' | 'month' | 'year';
 export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'report';
 
 export interface StockPriceData {
-    time: string;
-    price: number;
-    volume: number;
+  time: string;
+  price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume: number;
 }
 
 export interface StockItem {

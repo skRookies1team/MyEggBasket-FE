@@ -1,37 +1,49 @@
 import { create } from "zustand";
-import api from "../store/axiosStore";
+import { fetchTradeHistory } from "../api/tradeApi";
 
-// 1. API 응답 데이터에 맞는 타입 정의
+// ===== API 응답 타입 (TransactionDTO.Response 매핑) =====
 export interface TradeHistoryItem {
   transactionId: number;
+
   stockCode: string;
   stockName: string;
+
   type: "BUY" | "SELL";
   typeDescription: string;
-  status: "COMPLETED";
+
+  status: string; // COMPLETED, PENDING, CANCELLED 등
   statusDescription: string;
+
   quantity: number;
   price: number;
   totalPrice: number;
+
+  triggerSource?: "MANUAL" | "AI";
+  triggerSourceName?: string;
+
   executedAt: string;
 }
 
 interface OrderState {
   tradeHistory: TradeHistoryItem[];
-  fetchTradeHistory: (userId: number) => Promise<void>;
+  loading: boolean;
+  fetchTradeHistory: (status?: string, virtual?: boolean) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set) => ({
   tradeHistory: [],
+  loading: false,
 
-  // 2. 새로운 API 엔드포인트로 체결 내역을 가져오는 함수
-  fetchTradeHistory: async (userId: number) => {
+  fetchTradeHistory: async (status, virtual = false) => {
     try {
-      const response = await api.get<TradeHistoryItem[]>(`/users/${userId}/orders?status=completed`);
-      set({ tradeHistory: response.data });
+      set({ loading: true });
+      const data = await fetchTradeHistory(status, virtual);
+      set({ tradeHistory: data });
     } catch (error) {
-      console.error("체결 내역을 불러오는 중 오류가 발생했습니다.", error);
-      set({ tradeHistory: [] }); // 오류 발생 시 빈 배열로 초기화
+      console.error("거래 내역 조회 실패", error);
+      set({ tradeHistory: [] });
+    } finally {
+      set({ loading: false });
     }
   },
 }));

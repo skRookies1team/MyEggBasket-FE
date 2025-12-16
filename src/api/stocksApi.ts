@@ -1,13 +1,14 @@
 import api from "../store/axiosStore";
-import type { StockPriceData } from "../types/stock";
+import type { Period, StockCandle } from "../types/stock";
 
 /* ============================================================
     KIS 기간별 시세 조회 (day / week / month / year)
 ============================================================ */
 
+/** KIS API 응답 전용 타입 (외부 노출 ❌) */
 interface KisPeriodStockData {
   time: string;
-  price: number;  
+  price: number; // 종가
   open: number;
   high: number;
   low: number;
@@ -16,26 +17,27 @@ interface KisPeriodStockData {
 
 interface KisPeriodStockResponse {
   stockCode: string;
-  period: "day" | "week" | "month" | "year";
+  period: Period;
   data: KisPeriodStockData[];
 }
 
 export async function fetchHistoricalData(
   stockCode: string,
-  period: "day" | "week" | "month" | "year"
-): Promise<StockPriceData[]> {
+  period: Period
+): Promise<StockCandle[]> {
   try {
     const res = await api.get<KisPeriodStockResponse>(
       `/kis/chart/${stockCode}`,
       { params: { period } }
     );
 
+    // ✅ API → 도메인 변환 (여기서만)
     return res.data.data.map((item) => ({
       time: item.time,
-      price: item.price,
       open: item.open,
       high: item.high,
       low: item.low,
+      close: item.price,   // 🔥 핵심
       volume: item.volume,
     }));
   } catch (error) {
@@ -63,7 +65,7 @@ export async function getStockInfoFromDB(
     const res = await api.get<StockSearchResult>(`/stocks/${code}`);
     return res.data;
   } catch (error) {
-    console.error(" 종목 DB 조회 실패", error);
+    console.error("종목 DB 조회 실패", error);
     return null;
   }
 }

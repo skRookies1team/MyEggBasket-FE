@@ -1,237 +1,155 @@
+import { useEffect, useRef } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  ComposedChart,
-  Customized,
-} from "recharts";
-import type { StockPriceData, Period } from "../../types/stock";
+  createChart,
+  ColorType,
+  CandlestickSeries,
+  HistogramSeries,
+} from "lightweight-charts";
 
-/* ============================================================
-   Candlestick Renderer (band scale 대응)
-============================================================ */
-function Candlestick(props: any) {
-  const { xAxisMap, yAxisMap, data } = props;
+import type {
+  IChartApi,
+  ISeriesApi,
+  CandlestickData,
+  HistogramData,
+  UTCTimestamp,
+} from "lightweight-charts";
 
-  if (!xAxisMap || !yAxisMap || !data) return null;
+import type { StockPriceData } from "../../types/stock";
 
-  const xAxis: any = Object.values(xAxisMap)[0];
-  const yAxis: any = Object.values(yAxisMap)[0];
-
-  if (!xAxis?.scale || !yAxis?.scale) return null;
-
-  const scaleX = xAxis.scale;
-  const scaleY = yAxis.scale;
-
-  // band scale 폭
-  const bandWidth =
-    typeof scaleX.bandwidth === "function"
-      ? scaleX.bandwidth()
-      : 10;
-
-  const candleWidth = Math.max(4, bandWidth * 0.6);
-
-  return (
-    <>
-      {data.map((d: any, i: number) => {
-        if (
-          d.open == null ||
-          d.high == null ||
-          d.low == null ||
-          d.price == null
-        ) {
-          return null;
-        }
-
-        const x0 = scaleX(d.time);
-        if (x0 == null) return null;
-
-        const x = x0 + bandWidth / 2;
-
-        const openY = scaleY(d.open);
-        const closeY = scaleY(d.price);
-        const highY = scaleY(d.high);
-        const lowY = scaleY(d.low);
-
-        if (
-          [openY, closeY, highY, lowY].some(
-            (v) => typeof v !== "number"
-          )
-        ) {
-          return null;
-        }
-
-        const isUp = d.price >= d.open;
-        const color = isUp ? "#ff383c" : "#1e6bff";
-
-        return (
-          <g key={i}>
-            {/* High - Low */}
-            <line
-              x1={x}
-              x2={x}
-              y1={highY}
-              y2={lowY}
-              stroke={color}
-              strokeWidth={1}
-            />
-
-            {/* Open - Close */}
-            <rect
-              x={x - candleWidth / 2}
-              y={Math.min(openY, closeY)}
-              width={candleWidth}
-              height={Math.max(1, Math.abs(closeY - openY))}
-              fill={color}
-            />
-          </g>
-        );
-      })}
-    </>
-  );
-}
-
-/* ============================================================
-   StockChart
-============================================================ */
+/* ------------------------------------------------------------------ */
+/* Props */
+/* ------------------------------------------------------------------ */
 interface StockChartProps {
   data: StockPriceData[];
-  period?: Period;
-  fixedDomain?: [number, number];
+  height?: number;
 }
 
-export function StockChart({
-  data,
-  period = "day",
-  fixedDomain,
-}: StockChartProps) {
-  if (!data || data.length === 0) {
-    return <div className="text-center p-10">데이터가 없습니다.</div>;
+/* ------------------------------------------------------------------ */
+/* Component */
+/* ------------------------------------------------------------------ */
+export function StockChart({ data, height = 420 }: StockChartProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef =
+    useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef =
+    useRef<ISeriesApi<"Histogram"> | null>(null);
+
+  /* ------------------ chart init ------------------ */
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const chart = createChart(containerRef.current, {
+      height,
+      layout: {
+        background: {
+          type: ColorType.Solid,
+          color: "#0f172a", // dark
+        },
+        textColor: "#cbd5f5",
+      },
+      grid: {
+        vertLines: { color: "rgba(148,163,184,0.1)" },
+        horzLines: { color: "rgba(148,163,184,0.1)" },
+      },
+      rightPriceScale: {
+        borderColor: "rgba(148,163,184,0.3)",
+      },
+      timeScale: {
+        borderColor: "rgba(148,163,184,0.3)",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      crosshair: {
+        mode: 1,
+      },
+    });
+
+    //  v4 방식: addSeries
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#ef4444",
+      downColor: "#3b82f6",
+      borderUpColor: "#ef4444",
+      borderDownColor: "#3b82f6",
+      wickUpColor: "#ef4444",
+      wickDownColor: "#3b82f6",
+    });
+
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceScaleId: "volume",
+      priceFormat: { type: "volume" },
+    });
+
+    // v4 방식 scaleMargins
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.8,
+        bottom: 0,
+      },
+    });
+    chart.timeScale().fitContent();
+
+    chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+    volumeSeriesRef.current = volumeSeries;
+
+    return () => {
+      chart.remove();
+      chartRef.current = null;
+    };
+  }, [height]);
+
+  /* ------------------ data update ------------------ */
+  useEffect(() => {
+    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
+    if (!data || data.length === 0) return;
+
+    const candleData: CandlestickData<UTCTimestamp>[] = data
+      .filter(
+        (d): d is StockPriceData & {
+          open: number;
+          high: number;
+          low: number;
+        } =>
+          d.open !== undefined &&
+          d.high !== undefined &&
+          d.low !== undefined
+      )
+      .map((d) => ({
+        time: normalizeTime(d.time),
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      }));
+
+    const volumeData: HistogramData[] = data.map((d) => ({
+      time: normalizeTime(d.time),
+      value: d.volume ?? 0,
+      color: d.close >= d.open
+        ? "rgba(239,68,68,0.6)"
+        : "rgba(59,130,246,0.6)",
+    }));
+
+    candleSeriesRef.current.setData(candleData);
+    volumeSeriesRef.current.setData(volumeData);
+  }, [data]);
+
+  return <div ref={containerRef} style={{ width: "100%" }} />;
+}
+
+/* ------------------------------------------------------------------ */
+/* Utils */
+/* ------------------------------------------------------------------ */
+function normalizeTime(
+  time: string | number
+): UTCTimestamp {
+  // YYYY-MM-DD
+  if (typeof time === "string") {
+    return (new Date(time).getTime() / 1000) as UTCTimestamp;
   }
 
-  /* ---------------------------
-     ✅ 데이터 오름차순 정렬 (중요)
-  ---------------------------- */
-  const sortedData = [...data].sort(
-    (a, b) =>
-      new Date(a.time).getTime() -
-      new Date(b.time).getTime()
-  );
-
-  /* ---------------------------
-     Y축 도메인 계산
-  ---------------------------- */
-  let priceDomain: [number | "auto", number | "auto"] = [
-    "auto",
-    "auto",
-  ];
-
-  if (fixedDomain) {
-    priceDomain = fixedDomain;
-  } else {
-    const prices = sortedData.flatMap((d) =>
-      d.high != null && d.low != null
-        ? [d.high, d.low]
-        : [d.price]
-    );
-
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    const pad = Math.max(1, Math.round((max - min) * 0.1));
-
-    priceDomain = [min - pad, max + pad];
-  }
-
-  const formatTick = (value: string) => {
-    if (period === "minute") {
-      const d = new Date(value);
-      return isNaN(d.getTime())
-        ? value
-        : d.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
-    }
-    return value;
-  };
-
-  const isMinute = period === "minute";
-
-  return (
-    <div className="space-y-6">
-      {/* ================= 가격 차트 ================= */}
-      <div className="bg-white rounded-2xl border border-[#d9d9d9] p-6">
-        <h3 className="text-[#1e1e1e] mb-4">
-          {isMinute ? "실시간 가격" : "캔들 차트"}
-        </h3>
-
-        <div style={{ width: "100%", height: 400 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            {isMinute ? (
-              /* ---------- 분봉: LineChart ---------- */
-              <LineChart data={sortedData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="time"
-                  type="category"
-                  allowDuplicatedCategory={false}
-                  tickFormatter={formatTick}
-                />
-                <YAxis domain={priceDomain} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke="#ff383c"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            ) : (
-              /* ---------- 일/주/월/년: Candlestick ---------- */
-              <ComposedChart data={sortedData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="time"
-                  type="category"
-                  allowDuplicatedCategory={false}
-                />
-                <YAxis domain={priceDomain} />
-                <Tooltip />
-                <Customized component={Candlestick} />
-              </ComposedChart>
-            )}
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ================= 거래량 ================= */}
-      <div className="bg-white rounded-2xl border border-[#d9d9d9] p-6">
-        <h3 className="text-[#1e1e1e] mb-4">거래량</h3>
-        <div style={{ width: "100%", height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={sortedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                type="category"
-                allowDuplicatedCategory={false}
-                tickFormatter={formatTick}
-              />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="volume" fill="#ffb703" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
-  );
+  // unix timestamp (ms or sec)
+  return (time > 1e12 ? time / 1000 : time) as UTCTimestamp;
 }

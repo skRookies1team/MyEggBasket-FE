@@ -6,9 +6,9 @@ export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'repo
 export interface StockPriceData {
   time: string | number;
   price: number;
-  open: number;
-  high: number;
-  low: number;
+  open?: number;
+  high?: number;
+  low?: number;
   close?: number;
   volume: number;
 }
@@ -151,3 +151,4 @@ export interface StockCurrentPrice {
     lowPrice: number;
     closePrice:number;
 }
+

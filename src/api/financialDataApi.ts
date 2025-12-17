@@ -29,58 +29,58 @@ export const getCorpCode = async (stockCode: string) => {
   } 
 };
 
+/* financialDataApi.ts */
+
+// reprt_code 매핑 객체 추가
+export const REPRT_CODES = {
+  '1Q': '11013', // 1분기보고서
+  '2Q': '11012', // 반기보고서
+  '3Q': '11014', // 3분기보고서
+  '4Q': '11011', // 사업보고서
+} as const;
+
+export type QuarterType = keyof typeof REPRT_CODES;
+
 /**
- * 기업의 주요 재무지표(매출, 이익, 부채 등)를 가져옵니다.
- * @param stockCode 종목코드 (6자리)
- * @param year 결산년도
+ * @param reprtCode 분기 코드 (11013, 11012 등)
  */
-export const fetchFinancialMetrics = async (stockCode: string, year:string) => {
+export const fetchFinancialMetrics = async (stockCode: string, year: string, reprtCode: string) => {
     const corpCode = await getCorpCode(stockCode);
     if (!corpCode) return null;
-    console.log(corpCode)
-  try {
-    const response = await axios.get<DartFinancialResponse>(`${BASE_URL}/fnlttSinglAcnt.json`, {
-      params: {
-        crtfc_key: DART_API_KEY,
-        corp_code: corpCode,
-        bsns_year: year,
-        reprt_code: "11011", // 사업보고서(결산) 기준
-      },
-    });
 
-    if (response.data.status === '000' && response.data.list) {
-      const list = response.data.list;
-      
-      // 필요한 데이터만 추출
-      const findVal = (name: string) => 
-        parseInt(list.find(item => item.account_nm.includes(name))?.thstrm_amount.replace(/,/g, '') || '0');
+    try {
+        const response = await axios.get<DartFinancialResponse>(`${BASE_URL}/fnlttSinglAcnt.json`, {
+            params: {
+                crtfc_key: DART_API_KEY,
+                corp_code: corpCode,
+                bsns_year: year,
+                reprt_code: reprtCode, 
+            },
+        });
 
-      const revenue = findVal('매출액');
-      const profit = findVal('영업이익');
-      const netProfit = findVal('당기순이익');
-      const totalLiabilities = findVal('부채총계');
-      const totalEquity = findVal('자본총계');
+        // 결과가 없거나 status가 '013'(조회된 데이터가 없음)인 경우 처리
+        if (response.data.status !== '000' || !response.data.list) {
+            return { status: response.data.status, message: response.data.message };
+        }
 
-      // 부채비율 계산 (부채총계 / 자본총계 * 100)
-      const debtRatio = totalEquity !== 0 ? (totalLiabilities / totalEquity) * 100 : 0;
-      
-      // 첫 번째 항목의 접수번호를 사용해 보고서 링크 생성 가능
-      const reportLink = list[0]?.receipt_no 
-        ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${list[0].receipt_no}` 
-        : '';
+        const list = response.data.list;
+        const findVal = (name: string) => 
+            parseInt(list.find(item => item.account_nm.includes(name))?.thstrm_amount.replace(/,/g, '') || '0');
 
-      return {
-        year,
-        revenue,
-        profit,
-        netProfit,
-        debtRatio,
-        reportLink
-      };
+        const revenue = findVal('매출액');
+        const profit = findVal('영업이익');
+        const netProfit = findVal('당기순이익');
+        const totalLiabilities = findVal('부채총계');
+        const totalEquity = findVal('자본총계');
+        const debtRatio = totalEquity !== 0 ? (totalLiabilities / totalEquity) * 100 : 0;
+        
+        const reportLink = list[0]?.receipt_no 
+            ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${list[0].receipt_no}` 
+            : '';
+
+        return { year, revenue, profit, netProfit, totalLiabilities, totalEquity, debtRatio, reportLink, status: '000' };
+    } catch (error) {
+        console.error('DART Financial Fetch Error:', error);
+        return null;
     }
-    return null;
-  } catch (error) {
-    console.error('DART Financial Fetch Error:', error);
-    return null;
-  }
 };

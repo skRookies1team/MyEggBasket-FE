@@ -7,37 +7,43 @@ import {
   HistogramSeries,
 } from "lightweight-charts";
 
-import type {
-  IChartApi,
-  ISeriesApi
-} from "lightweight-charts";
+import type { IChartApi, ISeriesApi } from "lightweight-charts";
 
-import type { StockPriceData } from "../../../types/stock";
+import type { Period, StockCandle } from "../../../types/stock";
 import type {
   MAIndicator,
   BollingerIndicator,
 } from "../../../types/indicator";
 
-import { normalizeTime } from "./utils";
 import { MAChart } from "./MAChart";
 import { BollingerChart } from "./BollingerChart";
 
 interface Props {
-  data: StockPriceData[];
+  candles: StockCandle[];         
+  period: Period;
+
+  showMA?: boolean;
+  showBollinger?: boolean;
+
   maIndicators?: MAIndicator[];
   bollinger?: BollingerIndicator | null;
   height?: number;
 }
 
 export function PriceVolumeChart({
-  data,
+  candles,
+  period,
+  showMA = true,
+  showBollinger = true,
   maIndicators = [],
   bollinger = null,
   height = 420,
 }: Props) {
+  // eslint / ts unused 방지 (추후 timeScale 옵션에 사용 예정)
+  void period;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // 🔥 핵심: chart를 state로 관리
   const [chart, setChart] = useState<IChartApi | null>(null);
 
   const candleSeriesRef =
@@ -60,7 +66,8 @@ export function PriceVolumeChart({
         horzLines: { color: "rgba(148,163,184,0.1)" },
       },
       rightPriceScale: {
-        borderColor: "rgba(148,163,184,0.3)" },
+        borderColor: "rgba(148,163,184,0.3)",
+      },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
@@ -91,7 +98,6 @@ export function PriceVolumeChart({
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
-    // 여기!
     setChart(chart);
 
     return () => {
@@ -103,39 +109,49 @@ export function PriceVolumeChart({
   /* ------------------ Data update ------------------ */
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
-    if (!data?.length) return;
+    if (!candles.length) return;
 
     candleSeriesRef.current.setData(
-      data
-        .filter((d) => d.open && d.high && d.low)
-        .map((d) => ({
-          time: normalizeTime(d.time),
-          open: d.open!,
-          high: d.high!,
-          low: d.low!,
-          close: d.close,
-        }))
+      candles.map((c) => ({
+        time: c.time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+      }))
     );
 
     volumeSeriesRef.current.setData(
-      data.map((d) => ({
-        time: normalizeTime(d.time),
-        value: d.volume ?? 0,
+      candles.map((c) => ({
+        time: c.time,
+        value: c.volume,
         color:
-          d.close >= (d.open ?? d.close)
+          c.close >= c.open
             ? "rgba(239,68,68,0.6)"
             : "rgba(59,130,246,0.6)",
       }))
     );
-  }, [data]);
+  }, [candles]);
 
   return (
     <>
       <div ref={containerRef} style={{ width: "100%" }} />
 
-      {/* 이제 chart가 null → 실제 값으로 바뀌며 리렌더 발생 */}
-      <MAChart chart={chart} indicators={maIndicators} />
-      <BollingerChart chart={chart} bollinger={bollinger} />
+      {/* MA */}
+      {showMA && (
+        <MAChart
+          chart={chart}
+          indicators={maIndicators}
+        />
+      )}
+
+      {/* Bollinger */}
+      {showBollinger && (
+        <BollingerChart
+          chart={chart}
+          bollinger={bollinger}
+        />
+      )}
     </>
   );
 }

@@ -1,56 +1,92 @@
-import "../../../assets/IndicatorToggle.css";
+import { useState, useRef, useEffect } from "react";
+import type { IndicatorState } from "../../../types/indicator";
+import "../../../assets/Stock/IndicatorToggle.css";
 
-/* ------------------------------------------------------------------ */
-/* Types */
-/* ------------------------------------------------------------------ */
-export type IndicatorKey = "price" |"ma" | "bollinger" |"rsi" | "macd" | "stochastic";
-
-interface IndicatorToggleProps {
-  enabled: IndicatorKey[];
-  onChange: (next: IndicatorKey[]) => void;
+interface Props {
+  indicators: IndicatorState;
+  onChange: (next: IndicatorState) => void;
 }
 
-/* ------------------------------------------------------------------ */
-/* Indicator Config */
-/* ------------------------------------------------------------------ */
-const INDICATORS: { key: IndicatorKey; label: string }[] = [
-  { key: "ma", label: "이동평균선" },
-  { key: "bollinger", label: "볼린저 밴드"},
-  { key: "rsi", label: "RSI" },
-  { key: "macd", label: "MACD" },
-  { key: "stochastic", label: "스토캐스틱"}
-];
+export function IndicatorToggle({ indicators, onChange }: Props) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-/* ------------------------------------------------------------------ */
-/* Component */
-/* ------------------------------------------------------------------ */
-export function IndicatorToggle({
-  enabled,
-  onChange,
-}: IndicatorToggleProps) {
-  const toggle = (key: IndicatorKey) => {
-    if (enabled.includes(key)) {
-      // 가격 차트는 항상 켜져 있어야 함
-      if (key === "price") return;
-      onChange(enabled.filter((k) => k !== key));
-    } else {
-      onChange([...enabled, key]);
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function toggle(key: keyof IndicatorState) {
+    onChange({
+      ...indicators,
+      [key]: !indicators[key],
+    });
+  }
 
   return (
-    <div className="indicator-toggle">
-      {INDICATORS.map(({ key, label }) => (
-        <button
-          key={key}
-          className={`indicator-btn ${
-            enabled.includes(key) ? "active" : ""
-          }`}
-          onClick={() => toggle(key)}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="indicator-toggle" ref={ref}>
+      <button
+        className="indicator-button"
+        onClick={() => setOpen((v) => !v)}
+      >
+        ⚙ 보조지표
+      </button>
+
+      {open && (
+        <div className="indicator-popover">
+          <label>
+            <input
+              type="checkbox"
+              checked={indicators.ma}
+              onChange={() => toggle("ma")}
+            />
+            MA
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              checked={indicators.bollinger}
+              onChange={() => toggle("bollinger")}
+            />
+            Bollinger
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              checked={indicators.rsi}
+              onChange={() => toggle("rsi")}
+            />
+            RSI
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              checked={indicators.macd}
+              onChange={() => toggle("macd")}
+            />
+            MACD
+          </label>
+
+          <label>
+            <input
+              type="checkbox"
+              checked={indicators.stochastic}
+              onChange={() => toggle("stochastic")}
+            />
+            Stochastic
+          </label>
+        </div>
+      )}
     </div>
   );
 }

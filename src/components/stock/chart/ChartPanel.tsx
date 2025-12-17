@@ -1,52 +1,45 @@
-// src/components/stock/StockChart.tsx
 import { useMemo } from "react";
 
-import type { StockPriceData, StockCandle } from "../../types/stock";
+import type { Period, StockPriceData, StockCandle } from "../../../types/stock";
 import type {
+  IndicatorState,
   MAIndicator,
-  BollingerIndicator,
   RSIIndicator,
   MACDIndicator,
+  BollingerIndicator,
   StochasticIndicator,
-} from "../../types/indicator";
-import type { IndicatorState } from "../../types/indicator";
+} from "../../../types/indicator";
 
-import { PriceVolumeChart } from "../stock/chart/PriceChart";
-import { RSIChart } from "./chart/RSIChart";
-import { MACDChart } from "./chart/MACDChart";
-import { StochasticChart } from "./chart/StochasticChart";
+import { PriceVolumeChart } from "./PriceChart";
+import { RSIChart } from "./RSIChart";
+import { MACDChart } from "./MACDChart";
+import { StochasticChart } from "./StochasticChart";
 
-import { toCandle } from "../../utils/chart/normalizeCandle";
-import { calculateRSI } from "../../utils/indicators/rsi";
-import { calculateMA } from "../../utils/indicators/ma";
-import { calculateMACD } from "../../utils/indicators/macd";
-import { calculateBollinger } from "../../utils/indicators/bollinger";
-import { calculateStochastic } from "../../utils/indicators/stochastic";
+import { toCandle } from "../../../utils/chart/normalizeCandle";
+import { calculateMA } from "../../../utils/indicators/ma";
+import { calculateRSI } from "../../../utils/indicators/rsi";
+import { calculateMACD } from "../../../utils/indicators/macd";
+import { calculateBollinger } from "../../../utils/indicators/bollinger";
+import { calculateStochastic } from "../../../utils/indicators/stochastic";
 
-/* ------------------------------------------------------------------ */
-/* Props */
-/* ------------------------------------------------------------------ */
-interface StockChartProps {
-  data: StockPriceData[];
+interface Props {
+  period: Period;
   indicators: IndicatorState;
-  period: "minute" | "day" | "week" | "month" | "year";
+  data?: StockPriceData[];
 }
 
-/* ------------------------------------------------------------------ */
-/* Component */
-/* ------------------------------------------------------------------ */
-export function StockChart({
-  data,
-  indicators,
+export function ChartPanel({
   period,
-}: StockChartProps) {
+  indicators,
+  data = [],
+}: Props) {
   /* ------------------ normalize ------------------ */
   const candles: StockCandle[] = useMemo(
-    () => (data?.length ? toCandle(data) : []),
+    () => (data.length ? toCandle(data) : []),
     [data]
   );
 
-  /* ------------------ indicators 계산 ------------------ */
+  /* ------------------ indicator 계산 ------------------ */
   const maIndicators: MAIndicator[] = useMemo(
     () =>
       indicators.ma && candles.length
@@ -92,18 +85,16 @@ export function StockChart({
   );
 
   /* ------------------ guard ------------------ */
-  if (!data?.length) {
-    return <div style={{ padding: 16 }}>차트 데이터가 없습니다.</div>;
-  }
-
   if (!candles.length) {
-    return <div style={{ padding: 16 }}>캔들 데이터가 없습니다.</div>;
+    return <div className="chart-panel">차트 데이터가 없습니다.</div>;
   }
 
   /* ------------------ render ------------------ */
   return (
-    <div style={{ width: "100%" }}>
-      {/* 메인 차트 */}
+    <div className="chart-panel">
+      {/* ===================== */}
+      {/* Main Price Chart */}
+      {/* ===================== */}
       <PriceVolumeChart
         candles={candles}
         period={period}
@@ -114,17 +105,23 @@ export function StockChart({
         height={420}
       />
 
+      {/* ===================== */}
       {/* RSI */}
+      {/* ===================== */}
       {indicators.rsi && rsi && (
         <RSIChart indicator={rsi} height={140} />
       )}
 
+      {/* ===================== */}
       {/* MACD */}
+      {/* ===================== */}
       {indicators.macd && macd && (
         <MACDChart indicator={macd} height={160} />
       )}
 
+      {/* ===================== */}
       {/* Stochastic */}
+      {/* ===================== */}
       {indicators.stochastic && stochastic && (
         <StochasticChart indicator={stochastic} height={140} />
       )}

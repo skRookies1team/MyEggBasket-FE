@@ -1,3 +1,4 @@
+// stock/chart/RSIChart.tsx
 import { useEffect, useRef } from "react";
 import {
   createChart,
@@ -12,14 +13,14 @@ import type {
   UTCTimestamp,
 } from "lightweight-charts";
 
-import type { StockPriceData } from "../../../types/stock";
+import type { RSIIndicator } from "../../../types/indicator";
 import { normalizeTime } from "./utils";
 
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
 interface RSIChartProps {
-  data: (StockPriceData & { rsi?: number })[];
+  indicator: RSIIndicator;
   height?: number;
 }
 
@@ -27,7 +28,7 @@ interface RSIChartProps {
 /* Component */
 /* ------------------------------------------------------------------ */
 export function RSIChart({
-  data,
+  indicator,
   height = 140,
 }: RSIChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,10 +44,7 @@ export function RSIChart({
     const chart = createChart(containerRef.current, {
       height,
       layout: {
-        background: {
-          type: ColorType.Solid,
-          color: "#0f172a",
-        },
+        background: { type: ColorType.Solid, color: "#0f172a" },
         textColor: "#cbd5f5",
       },
       grid: {
@@ -54,41 +52,26 @@ export function RSIChart({
         horzLines: { color: "rgba(148,163,184,0.1)" },
       },
       rightPriceScale: {
-        borderColor: "rgba(148,163,184,0.3)",
         autoScale: false,
-        scaleMargins: {
-          top: 0.15,
-          bottom: 0.15,
-        },
+        scaleMargins: { top: 0.15, bottom: 0.15 },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: "rgba(148,163,184,0.3)",
       },
-      crosshair: {
-        mode: 1,
-      },
+      crosshair: { mode: 1 },
     });
 
-    /* RSI Line */
     const rsiSeries = chart.addSeries(LineSeries, {
       color: "#a855f7",
       lineWidth: 2,
     });
 
-    /* RSI fixed range */
-    chart.priceScale("right").setAutoScale(false);
-    chart.priceScale("right").applyOptions({
-      scaleMargins: { top: 0.15, bottom: 0.15 },
-    });
-
-    // 기준선 (30 / 70)
+    // 기준선
     rsiSeries.createPriceLine({
       price: 70,
       color: "#ef4444",
-      lineWidth: 1,
-      lineStyle: 2, // dashed
+      lineStyle: 2,
       axisLabelVisible: true,
       title: "70",
     });
@@ -96,7 +79,6 @@ export function RSIChart({
     rsiSeries.createPriceLine({
       price: 30,
       color: "#3b82f6",
-      lineWidth: 1,
       lineStyle: 2,
       axisLabelVisible: true,
       title: "30",
@@ -110,23 +92,23 @@ export function RSIChart({
     return () => {
       chart.remove();
       chartRef.current = null;
+      rsiSeriesRef.current = null;
     };
   }, [height]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
     if (!rsiSeriesRef.current) return;
-    if (!data || data.length === 0) return;
+    if (!indicator?.data?.length) return;
 
-    const rsiData: LineData<UTCTimestamp>[] = data
-      .filter((d) => d.rsi !== undefined)
-      .map((d) => ({
-        time: normalizeTime(d.time),
-        value: d.rsi!,
+    const seriesData: LineData<UTCTimestamp>[] =
+      indicator.data.map((p) => ({
+        time: normalizeTime(p.time),
+        value: p.value,
       }));
 
-    rsiSeriesRef.current.setData(rsiData);
-  }, [data]);
+    rsiSeriesRef.current.setData(seriesData);
+  }, [indicator]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;
 }

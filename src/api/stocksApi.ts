@@ -31,13 +31,13 @@ export async function fetchHistoricalData(
       { params: { period } }
     );
 
-    // ✅ API → 도메인 변환 (여기서만)
+    // API → 도메인 변환 (여기서만)
     return res.data.data.map((item) => ({
       time: item.time,
       open: item.open,
       high: item.high,
       low: item.low,
-      close: item.price,   // 🔥 핵심
+      close: item.price,   
       volume: item.volume,
     }));
   } catch (error) {

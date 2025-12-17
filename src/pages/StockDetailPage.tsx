@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { StockHeader } from '../components/stock/StockHeader';
 import { StockChart } from '../components/stock/StockChart';
 import { StockOrderBook } from '../components/stock/StockOrderBook';
-import { StockIndicators } from '../components/stock/StockIndicators';
 import { StockTabNav } from '../components/stock/StockTabNav';
 import { StockNews } from '../components/stock/StockNews';
 import { StockFinancials } from '../components/stock/StockFinancials';
@@ -254,8 +253,6 @@ function StockDetailView({
         {activeTab === 'info' && (
           <StockFinancials data={data.financials} />
         )}
-
-        {activeTab === 'indicators' && <StockIndicators />}
 
         {activeTab === 'report' && (
           <StockReports data={data.reports} />

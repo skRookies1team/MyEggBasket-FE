@@ -8,11 +8,9 @@ interface StockTabNavProps {
 export function StockTabNav({ activeTab, onTabChange }: StockTabNavProps) {
     const tabs: { id: TabType; label: string }[] = [
         { id: 'chart', label: '차트' },
-        { id: 'order', label: '호가/주문' },
         { id: 'news', label: '뉴스' },
         { id: 'info', label: '기업정보' },
-        { id: 'indicators', label: '차트지표' },
-        { id: 'report', label: '리포트' },
+        { id: 'report', label: '리포트' }
     ];
     return (
         <div className="bg-white border-b border-[#e8e8e8]">

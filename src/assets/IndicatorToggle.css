@@ -1,0 +1,28 @@
+.indicator-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 8px 4px 12px;
+}
+
+.indicator-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.indicator-btn:hover {
+  background: #020617;
+  color: #e5e7eb;
+}
+
+.indicator-btn.active {
+  background: #1e40af;
+  border-color: #1e40af;
+  color: #fff;
+}

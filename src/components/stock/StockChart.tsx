@@ -1,155 +1,137 @@
-import { useEffect, useRef } from "react";
-import {
-  createChart,
-  ColorType,
-  CandlestickSeries,
-  HistogramSeries,
-} from "lightweight-charts";
-
-import type {
-  IChartApi,
-  ISeriesApi,
-  CandlestickData,
-  HistogramData,
-  UTCTimestamp,
-} from "lightweight-charts";
+// src/components/stock/StockChart.tsx
+import { useState, useMemo } from "react";
 
 import type { StockPriceData } from "../../types/stock";
+import type { IndicatorKey } from "../stock/chart/IndicatorToggle";
+
+import { PriceVolumeChart } from "./chart/PriceChart";
+import { RSIChart } from "./chart/RSIChart";
+import { MACDChart } from "./chart/MACDChart";
+import { StochasticChart } from "./chart/StochasticChart";
+
+import { IndicatorToggle } from "../stock/chart/IndicatorToggle";
+
+import { toCandle } from "../../utils/chart/normalizeCandle";
+import { calculateRSI } from "../../utils/indicators/rsi";
+import { calculateMA } from "../../utils/indicators/ma";
+import { calculateMACD } from "../../utils/indicators/macd";
+import { calculateBollinger } from "../../utils/indicators";
+import { calculateStochastic } from "../../utils/indicators";
+
+import {
+    mergeRSI,
+    mergeMACD
+} from "../../utils/chart/indicatorMapper";
 
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
 interface StockChartProps {
-  data: StockPriceData[];
-  height?: number;
+    data: StockPriceData[];
 }
 
 /* ------------------------------------------------------------------ */
 /* Component */
 /* ------------------------------------------------------------------ */
-export function StockChart({ data, height = 420 }: StockChartProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+export function StockChart({ data }: StockChartProps) {
+    /* ------------------ hooks (항상 실행) ------------------ */
+    const [enabled, setEnabled] = useState<IndicatorKey[]>(["price"]);
 
-  const chartRef = useRef<IChartApi | null>(null);
-  const candleSeriesRef =
-    useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeSeriesRef =
-    useRef<ISeriesApi<"Histogram"> | null>(null);
+    const candles = useMemo(
+        () => (data?.length ? toCandle(data) : []),
+        [data]
+    );
 
-  /* ------------------ chart init ------------------ */
-  useEffect(() => {
-    if (!containerRef.current) return;
+    const rsi = useMemo(
+        () => (candles.length ? calculateRSI(candles, 14) : null),
+        [candles]
+    );
 
-    const chart = createChart(containerRef.current, {
-      height,
-      layout: {
-        background: {
-          type: ColorType.Solid,
-          color: "#0f172a", // dark
-        },
-        textColor: "#cbd5f5",
-      },
-      grid: {
-        vertLines: { color: "rgba(148,163,184,0.1)" },
-        horzLines: { color: "rgba(148,163,184,0.1)" },
-      },
-      rightPriceScale: {
-        borderColor: "rgba(148,163,184,0.3)",
-      },
-      timeScale: {
-        borderColor: "rgba(148,163,184,0.3)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        mode: 1,
-      },
-    });
+    const maIndicators = useMemo(
+        () =>
+            candles.length
+                ? [
+                    calculateMA(candles, 5),
+                    calculateMA(candles, 20),
+                    calculateMA(candles, 60),
+                ]
+                : [],
+        [candles]
+    );
 
-    //  v4 방식: addSeries
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#ef4444",
-      downColor: "#3b82f6",
-      borderUpColor: "#ef4444",
-      borderDownColor: "#3b82f6",
-      wickUpColor: "#ef4444",
-      wickDownColor: "#3b82f6",
-    });
+    const macd = useMemo(
+        () => (candles.length ? calculateMACD(candles) : null),
+        [candles]
+    );
 
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceScaleId: "volume",
-      priceFormat: { type: "volume" },
-    });
+    const rsiData = useMemo(
+        () => (rsi ? mergeRSI(candles, rsi) : []),
+        [candles, rsi]
+    );
 
-    // v4 방식 scaleMargins
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: {
-        top: 0.8,
-        bottom: 0,
-      },
-    });
-    chart.timeScale().fitContent();
+    const macdData = useMemo(
+        () => (macd ? mergeMACD(candles, macd) : []),
+        [candles, macd]
+    );
 
-    chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
+    const bollinger = useMemo(
+        () =>
+            candles.length
+                ? calculateBollinger(candles, 20, 2)
+                : null,
+        [candles]
+    );
 
-    return () => {
-      chart.remove();
-      chartRef.current = null;
-    };
-  }, [height]);
+    const stochastic = useMemo(
+        () =>
+            candles.length
+                ? calculateStochastic(candles, 14, 3)
+                : null,
+        [candles]
+    );
 
-  /* ------------------ data update ------------------ */
-  useEffect(() => {
-    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
-    if (!data || data.length === 0) return;
+    /* ------------------ early return (이제 안전) ------------------ */
+    if (!data?.length) {
+        return <div style={{ padding: 16 }}>차트 데이터가 없습니다.</div>;
+    }
 
-    const candleData: CandlestickData<UTCTimestamp>[] = data
-      .filter(
-        (d): d is StockPriceData & {
-          open: number;
-          high: number;
-          low: number;
-        } =>
-          d.open !== undefined &&
-          d.high !== undefined &&
-          d.low !== undefined
-      )
-      .map((d) => ({
-        time: normalizeTime(d.time),
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      }));
+    if (candles.length === 0) {
+        return <div style={{ padding: 16 }}>캔들 데이터가 없습니다.</div>;
+    }
 
-    const volumeData: HistogramData[] = data.map((d) => ({
-      time: normalizeTime(d.time),
-      value: d.volume ?? 0,
-      color: d.close >= d.open
-        ? "rgba(239,68,68,0.6)"
-        : "rgba(59,130,246,0.6)",
-    }));
+    /* ------------------ render ------------------ */
+    return (
+        <div style={{ width: "100%" }}>
+            {/* 지표 토글 */}
+            <IndicatorToggle
+                enabled={enabled}
+                onChange={setEnabled}
+            />
 
-    candleSeriesRef.current.setData(candleData);
-    volumeSeriesRef.current.setData(volumeData);
-  }, [data]);
+            {/* 가격 + 거래량 */}
+            {enabled.includes("price") && (
+                <PriceVolumeChart
+                    data={data}
+                    maIndicators={enabled.includes("ma") ? maIndicators : []}
+                    bollinger={enabled.includes("bollinger") ? bollinger : null}
+                    height={420}
+                />
+            )}
 
-  return <div ref={containerRef} style={{ width: "100%" }} />;
-}
+            {/* RSI */}
+            {enabled.includes("rsi") && (
+                <RSIChart data={rsiData} height={140} />
+            )}
 
-/* ------------------------------------------------------------------ */
-/* Utils */
-/* ------------------------------------------------------------------ */
-function normalizeTime(
-  time: string | number
-): UTCTimestamp {
-  // YYYY-MM-DD
-  if (typeof time === "string") {
-    return (new Date(time).getTime() / 1000) as UTCTimestamp;
-  }
+            {/* MACD */}
+            {enabled.includes("macd") && (
+                <MACDChart data={macdData} height={160} />
+            )}
 
-  // unix timestamp (ms or sec)
-  return (time > 1e12 ? time / 1000 : time) as UTCTimestamp;
+            {/* Stochastic */}
+            {enabled.includes("stochastic") && stochastic && (
+                <StochasticChart data={stochastic} height={140} />
+            )}
+        </div>
+    );
 }

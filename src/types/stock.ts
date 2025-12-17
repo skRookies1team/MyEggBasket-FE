@@ -134,6 +134,7 @@ export interface Stock{
     stockCode: string;
     name: string;
     marketType: string;
+    corpCode:string;
     sector: string;
     industryCode: string;
 }

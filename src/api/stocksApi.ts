@@ -1,5 +1,5 @@
 import api from "../store/axiosStore";
-import type { StockPriceData } from "../types/stock";
+import type { Stock, StockPriceData } from "../types/stock";
 
 /* ============================================================
     KIS 기간별 시세 조회 (day / week / month / year)
@@ -52,6 +52,7 @@ interface StockSearchResult {
   stockCode: string;
   name: string;
   marketType: string;
+  corpCode: string;
   sector: string;
   industryCode: string;
 }
@@ -67,3 +68,4 @@ export async function getStockInfoFromDB(
     return null;
   }
 }
+

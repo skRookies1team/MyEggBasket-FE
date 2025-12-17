@@ -41,6 +41,13 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/naver-api/, ''), // 경로 재작성
         secure: false, 
       },
+      // 4.dart api 공시데이터
+      '/dart-api': { // '/naver-api' 경로로 들어오는 요청을
+        target: 'https://opendart.fss.or.kr/api', // 네이버 API로 포워딩
+        changeOrigin: true, // 헤더 변경
+        rewrite: (path) => path.replace(/^\/dart-api/, ''), // 경로 재작성
+        secure: false, 
+      },
     },
   },
 });

@@ -6,7 +6,6 @@ import { StockOrderBook } from '../components/stock/StockOrderBook';
 import { StockIndicators } from '../components/stock/StockIndicators';
 import { StockTabNav } from '../components/stock/StockTabNav';
 import { StockNews } from '../components/stock/StockNews';
-import { StockFinancials } from '../components/stock/StockFinancials';
 import { StockReports } from '../components/stock/StockReports';
 
 import type {
@@ -21,6 +20,7 @@ import { useRealtimePrice } from '../hooks/useRealtimeStock';
 import { fetchHistoricalData } from '../api/stocksApi';
 import { fetchStockCurrentPrice } from '../api/liveStockApi';
 import { subscribeRealtimePrice } from '../api/realtimeApi';
+import { StockFinancials } from '../components/stock/StockFinancials';
 
 /* ------------------------------------------------------------------ */
 /* 타입 유틸 */
@@ -252,7 +252,9 @@ function StockDetailView({
         )}
 
         {activeTab === 'info' && (
-          <StockFinancials data={data.financials} />
+          <StockFinancials
+            stockCode={stockCode}
+          />
         )}
 
         {activeTab === 'indicators' && <StockIndicators />}

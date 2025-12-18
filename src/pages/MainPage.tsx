@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { fetch50StocksByPeriod } from "../api/liveStockApi";
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
@@ -7,15 +6,15 @@ import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
 import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
-import { useSnapshotStore } from "../store/snapshotStore";
 import { TICKERS } from "../data/stockInfo";
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock.ts";
 import "../assets/MaingPage.css";
-import { fetchRealtimePrice } from '../api/realtimePrice';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import { getStockInfoFromDB } from "../api/stocksApi.ts";
+import { subscribeRealtimePrice } from "../api/realtimeApi.ts";
+import { BACKEND_WS_URL } from "../config/api.ts";
 
 
 export default function MainPage() {
@@ -25,7 +24,6 @@ export default function MainPage() {
 
   const [showTicker, setShowTicker] = useState(false);
   const indexSectionRef = useRef<HTMLDivElement | null>(null);
-  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
 const [liveData, setLiveData] = useState<{
     volume: StockItem[];
@@ -135,9 +133,9 @@ const [liveData, setLiveData] = useState<{
   // 2. 웹소켓 연결 및 구독 (API 호출 없이 트리거만 수행)
   useEffect(() => {
     // 백엔드에 증권사 실시간 데이터 요청 트리거
-    TICKERS.forEach(code =>{ fetchRealtimePrice(code)});
+    TICKERS.forEach(code =>{ subscribeRealtimePrice(code)});
 
-    const socket = new SockJS(`http://localhost:8081/ws`);
+    const socket = new SockJS(`${BACKEND_WS_URL}/ws`);
     const stompClient = Stomp.over(socket);
     stompClient.debug = () => {}; 
 
@@ -207,8 +205,6 @@ const [liveData, setLiveData] = useState<{
           <div style={{ marginTop: "32px" }}>
             <LiveStockPanel
               data={liveData}
-              period={period}
-              onPeriodChange={setPeriod}
             />
           </div>
         )}

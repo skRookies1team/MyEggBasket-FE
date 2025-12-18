@@ -27,12 +27,12 @@ export default function MarketIndexContainer({
     const load = async () => {
       try {
         const kospiData = await fetchKoreaIndex("0001");
-        const kosdaqData = await fetchKoreaIndex("1001");
+        // const kosdaqData = await fetchKoreaIndex("1001");
 
-        const sp = await fetchForeignIndex("SPX");
-        const nd = await fetchForeignIndex("NDX");
-        const dw = await fetchForeignIndex("DOW");
-        const wt = await fetchForeignIndex("CL");
+        // const sp = await fetchForeignIndex("SPX");
+        // const nd = await fetchForeignIndex("NDX");
+        // const dw = await fetchForeignIndex("DOW");
+        // const wt = await fetchForeignIndex("CL");
 
         setKospi(kospiData);
         setKosdaq(kosdaqData);

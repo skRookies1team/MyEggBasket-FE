@@ -77,7 +77,9 @@ export default function HistoryAsset({ portfolioId }: Props) {
   const fetchHistory = useHistoryStore((state) => state.fetchHistory);
 
   const holdings = useHoldingStore((state) => state.holdingList);
-  const fetchHoldings = useHoldingStore((state) => state.fetchHoldings)
+  const fetchHoldings = useHoldingStore((state) => state.fetchHoldings);
+
+  const [totalStockValue, setTotalStockValue] = useState(0);
 
   useEffect(() => {
     if (portfolioId !== null) {
@@ -85,6 +87,27 @@ export default function HistoryAsset({ portfolioId }: Props) {
       fetchHoldings(portfolioId);
     }
   }, [portfolioId, fetchHistory, fetchHoldings]);
+
+  useEffect(() => {
+    const calculateTotalValue = async () => {
+      if (holdings.length > 0) {
+        const promises = holdings.map(stock => fetchStockCurrentPrice(stock.stock.stockCode));
+        const results = await Promise.all(promises);
+
+        const totalValue = results.reduce((sum, data, index) => {
+          const currentPrice = data?.currentPrice ?? 0;
+          const quantity = holdings[index].quantity;
+          return sum + (currentPrice * quantity);
+        }, 0);
+
+        setTotalStockValue(totalValue);
+      } else {
+        setTotalStockValue(0);
+      }
+    };
+
+    calculateTotalValue();
+  }, [holdings]);
 
   if (!portfolio) {
     return (
@@ -95,9 +118,6 @@ export default function HistoryAsset({ portfolioId }: Props) {
   }
 
   const successRate = history?.successRate ?? null;
-
-  const totalStockValue = holdings.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
-  const totalAsset = totalStockValue + (portfolio.cashBalance ?? 0);
 
   let eggIcon = null;
   if (successRate !== null) {
@@ -130,7 +150,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
             <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
               <p className="text-gray-600">주식 현재 평가 금액</p>
               <p className="text-lg font-bold text-gray-800">
-                {totalAsset.toLocaleString()}원
+                {totalStockValue.toLocaleString()}원
               </p>
             </div>
           </div>

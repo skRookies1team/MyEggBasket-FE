@@ -54,6 +54,7 @@ interface StockSearchResult {
   stockCode: string;
   name: string;
   marketType: string;
+  corpCode: string;
   sector: string;
   industryCode: string;
 }
@@ -69,3 +70,4 @@ export async function getStockInfoFromDB(
     return null;
   }
 }
+

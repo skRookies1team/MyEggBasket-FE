@@ -1,13 +1,12 @@
-// src/pages/StockDetailPage.tsx
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-
-import { StockHeader } from "../components/stock/StockHeader";
-import { StockChart } from "../components/stock/StockChart";
-import { StockTabNav } from "../components/stock/StockTabNav";
-import { StockNews } from "../components/stock/StockNews";
-import { StockFinancials } from "../components/stock/StockFinancials";
-import { StockReports } from "../components/stock/StockReports";
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { StockHeader } from '../components/stock/StockHeader';
+import { StockChart } from '../components/stock/StockChart';
+import { StockOrderBook } from '../components/stock/StockOrderBook';
+import { StockIndicators } from '../components/stock/StockIndicators';
+import { StockTabNav } from '../components/stock/StockTabNav';
+import { StockNews } from '../components/stock/StockNews';
+import { StockReports } from '../components/stock/StockReports';
 
 import type {
   StockDetailData,
@@ -17,10 +16,11 @@ import type {
   StockCurrentPrice,
 } from "../types/stock";
 
-import { useRealtimePrice } from "../hooks/useRealtimeStock";
-import { fetchHistoricalData } from "../api/stocksApi";
-import { fetchStockCurrentPrice } from "../api/liveStockApi";
-import { subscribeRealtimePrice } from "../api/realtimeApi";
+import { useRealtimePrice } from '../hooks/useRealtimeStock';
+import { fetchHistoricalData } from '../api/stocksApi';
+import { fetchStockCurrentPrice } from '../api/liveStockApi';
+import { subscribeRealtimePrice } from '../api/realtimeApi';
+import { StockFinancials } from '../components/stock/StockFinancials';
 
 /* ------------------------------------------------------------------ */
 /* 타입 유틸 */
@@ -188,8 +188,10 @@ function StockDetailView({
           <StockNews data={data.news} query={stockCode} />
         )}
 
-        {activeTab === "info" && (
-          <StockFinancials data={data.financials} />
+        {activeTab === 'info' && (
+          <StockFinancials
+            stockCode={stockCode}
+          />
         )}
 
         {activeTab === "report" && (

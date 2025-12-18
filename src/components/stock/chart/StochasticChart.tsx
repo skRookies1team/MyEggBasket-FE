@@ -1,9 +1,5 @@
 import { useEffect, useRef } from "react";
-import {
-  createChart,
-  ColorType,
-  LineSeries,
-} from "lightweight-charts";
+import { createChart, ColorType, LineSeries } from "lightweight-charts";
 
 import type {
   IChartApi,
@@ -15,74 +11,110 @@ import type {
 import type { StochasticIndicator } from "../../../types/indicator";
 import { normalizeTime } from "./utils";
 
-interface Props {
-  data: StochasticIndicator;
+/* ------------------------------------------------------------------ */
+/* Props */
+/* ------------------------------------------------------------------ */
+interface StochasticChartProps {
+  indicator: StochasticIndicator;
   height?: number;
 }
 
+/* ------------------------------------------------------------------ */
+/* Component */
+/* ------------------------------------------------------------------ */
 export function StochasticChart({
-  data,
+  indicator,
   height = 140,
-}: Props) {
+}: StochasticChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
 
+  const chartRef = useRef<IChartApi | null>(null);
   const kRef = useRef<ISeriesApi<"Line"> | null>(null);
   const dRef = useRef<ISeriesApi<"Line"> | null>(null);
 
-  /* chart init */
+  /* ------------------ chart init ------------------ */
   useEffect(() => {
     if (!containerRef.current) return;
 
     const chart = createChart(containerRef.current, {
       height,
       layout: {
-        background: { type: ColorType.Solid, color: "#020617" },
+        background: { type: ColorType.Solid, color: "#0f172a" },
         textColor: "#cbd5f5",
+      },
+      grid: {
+        vertLines: { color: "rgba(148,163,184,0.1)" },
+        horzLines: { color: "rgba(148,163,184,0.1)" },
       },
       rightPriceScale: {
         autoScale: false,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
+        scaleMargins: { top: 0.15, bottom: 0.15 },
       },
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
+      timeScale: { timeVisible: true, secondsVisible: false },
       crosshair: { mode: 1 },
     });
 
-    const kSeries = chart.addSeries(LineSeries, {
-      color: "#22c55e", // %K
+    const kLine = chart.addSeries(LineSeries, {
+      color: "#60a5fa",
       lineWidth: 2,
+      title: "%K",
     });
 
-    const dSeries = chart.addSeries(LineSeries, {
-      color: "#eab308", // %D
+    const dLine = chart.addSeries(LineSeries, {
+      color: "#f59e0b",
       lineWidth: 2,
+      title: "%D",
     });
 
-    chartRef.current = chart;
-    kRef.current = kSeries;
-    dRef.current = dSeries;
+    // 기준선 80/20
+    kLine.createPriceLine({
+      price: 80,
+      color: "rgba(239,68,68,0.8)",
+      lineStyle: 2,
+      axisLabelVisible: true,
+      title: "80",
+    });
+
+    kLine.createPriceLine({
+      price: 20,
+      color: "rgba(59,130,246,0.8)",
+      lineStyle: 2,
+      axisLabelVisible: true,
+      title: "20",
+    });
 
     chart.timeScale().fitContent();
 
-    return () => chart.remove();
+    chartRef.current = chart;
+    kRef.current = kLine;
+    dRef.current = dLine;
+
+    return () => {
+      chart.remove();
+      chartRef.current = null;
+      kRef.current = null;
+      dRef.current = null;
+    };
   }, [height]);
 
-  /* data update */
+  /* ------------------ data update ------------------ */
   useEffect(() => {
     if (!kRef.current || !dRef.current) return;
+    if (!indicator?.k?.length || !indicator?.d?.length) return;
 
-    const toLine = (arr: any[]): LineData<UTCTimestamp>[] =>
-      arr.map((d) => ({
-        time: normalizeTime(d.time),
-        value: d.value,
-      }));
+    const kData: LineData<UTCTimestamp>[] = indicator.k.map((p) => ({
+      time: normalizeTime(p.time),
+      value: p.value,
+    }));
 
-    kRef.current.setData(toLine(data.k));
-    dRef.current.setData(toLine(data.d));
-  }, [data]);
+    const dData: LineData<UTCTimestamp>[] = indicator.d.map((p) => ({
+      time: normalizeTime(p.time),
+      value: p.value,
+    }));
+
+    kRef.current.setData(kData);
+    dRef.current.setData(dData);
+  }, [indicator]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;
 }

@@ -12,9 +12,9 @@ import type {
   StockDetailData,
   Period,
   TabType,
-  StockPriceData,
+  StockCandle,
   StockCurrentPrice,
-} from '../types/stock';
+} from "../types/stock";
 
 import { useRealtimePrice } from '../hooks/useRealtimeStock';
 import { fetchHistoricalData } from '../api/stocksApi';
@@ -25,8 +25,8 @@ import { StockFinancials } from '../components/stock/StockFinancials';
 /* ------------------------------------------------------------------ */
 /* 타입 유틸 */
 /* ------------------------------------------------------------------ */
-type HistoryPeriod = Exclude<Period, 'minute'>;
-const isHistoryPeriod = (p: Period): p is HistoryPeriod => p !== 'minute';
+type HistoryPeriod = Exclude<Period, "minute">;
+const isHistoryPeriod = (p: Period): p is HistoryPeriod => p !== "minute";
 
 /* ------------------------------------------------------------------ */
 /* [Container] */
@@ -35,80 +35,48 @@ export default function StockDetailPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
 
-  const stockCode = code || '005930';
+  const stockCode = code ?? "005930";
 
-  /* -------------------------------
-     탭 상태 (분봉 여부 판단의 기준)
-  -------------------------------- */
-  const [period, setPeriod] = useState<Period>('day');
+  /* ------------------ period ------------------ */
+  const [period, setPeriod] = useState<Period>("day");
 
-  /* -------------------------------
-     ✅ 분봉일 때만 STOMP 연결
-  -------------------------------- */
+  /* ------------------ realtime price (minute only) ------------------ */
   const realtimeData = useRealtimePrice(
     stockCode,
-    period === 'minute'
+    period === "minute"
   );
 
-  /* -------------------------------
-     종목명 헬퍼
-  -------------------------------- */
-  const getStockName = (code: string) => {
-    const map: Record<string, string> = {
-      '005930': '삼성전자',
-      '000660': 'SK하이닉스',
-      '035420': 'NAVER',
-      '005380': '현대차',
-      '051910': 'LG화학',
-    };
-    return map[code] || `종목(${code})`;
-  };
-
-  /* -------------------------------
-     ✅ 분봉 진입 시 REST 구독 (1회)
-  -------------------------------- */
+  /* ------------------ minute subscribe ------------------ */
   const subscribedRef = useRef(false);
 
   useEffect(() => {
-    if (period !== 'minute') {
-      subscribedRef.current = false; // 분봉 나가면 초기화
+    if (period !== "minute") {
+      subscribedRef.current = false;
       return;
     }
-
     if (subscribedRef.current) return;
 
     subscribedRef.current = true;
     subscribeRealtimePrice(stockCode).catch(console.error);
-
   }, [period, stockCode]);
 
-  /* -------------------------------
-     REST 현재가 (fallback)
-  -------------------------------- */
+  /* ------------------ REST current price ------------------ */
   const [restInfo, setRestInfo] = useState<StockCurrentPrice | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    const load = async () => {
-      try {
-        const info = await fetchStockCurrentPrice(stockCode);
-        if (mounted && info) setRestInfo(info);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
+    fetchStockCurrentPrice(stockCode)
+      .then((res) => mounted && setRestInfo(res))
+      .finally(() => mounted && setLoading(false));
 
-    load();
     return () => {
       mounted = false;
     };
   }, [stockCode]);
 
-  /* -------------------------------
-     실시간 > REST > 기본값
-  -------------------------------- */
+  /* ------------------ header data ------------------ */
   const combinedData: StockDetailData = useMemo(
     () => ({
       currentPrice:
@@ -127,17 +95,15 @@ export default function StockDetailPage() {
         0,
 
       chartData: [],
-      orderBook: { sell: [], buy: [] },
       news: [],
       financials: { revenue: [], profit: [] },
       reports: [],
     }),
-    [realtimeData, restInfo],
+    [realtimeData, restInfo]
   );
 
   return (
     <StockDetailView
-      stockName={getStockName(stockCode)}
       stockCode={stockCode}
       data={combinedData}
       period={period}
@@ -152,80 +118,55 @@ export default function StockDetailPage() {
 /* [View] */
 /* ------------------------------------------------------------------ */
 function StockDetailView({
-  stockName,
   stockCode,
   data,
   period,
   onPeriodChange,
   onBack,
-  isLoading = false,
+  isLoading,
 }: {
-  stockName: string;
   stockCode: string;
-  data: StockDetailData | null;
+  data: StockDetailData;
   period: Period;
   onPeriodChange: (p: Period) => void;
   onBack: () => void;
-  isLoading?: boolean;
+  isLoading: boolean;
 }) {
-  const [activeTab, setActiveTab] = useState<TabType>('chart');
+  const [activeTab, setActiveTab] = useState<TabType>("chart");
+  const [historicalData, setHistoricalData] = useState<StockCandle[]>([]);
 
-  const [historicalData, setHistoricalData] = useState<StockPriceData[]>([]);
-  const [isChartLoading, setIsChartLoading] = useState(false);
-
-  /* -------------------------------
-     day / week / month / year 만 REST
-  -------------------------------- */
+  /* ------------------ historical chart data ------------------ */
   useEffect(() => {
     if (!isHistoryPeriod(period)) return;
 
-    let mounted = true;
-
-    const loadHistory = async () => {
-      setIsChartLoading(true);
-      try {
-        const result = await fetchHistoricalData(stockCode, period);
-        if (mounted) setHistoricalData(result);
-      } finally {
-        if (mounted) setIsChartLoading(false);
-      }
-    };
-
-    loadHistory();
-    return () => {
-      mounted = false;
-    };
+    fetchHistoricalData(stockCode, period)
+      .then(setHistoricalData)
+      .catch(console.error);
   }, [period, stockCode]);
 
-  const displayChartData = useMemo(() => {
-    if (!isHistoryPeriod(period)) return [];
+  const displayChartData = useMemo(
+    () =>
+      [...historicalData].sort(
+        (a, b) =>
+          new Date(a.time).getTime() -
+          new Date(b.time).getTime()
+      ),
+    [historicalData]
+  );
 
-    return [...historicalData].sort(
-      (a, b) =>
-        new Date(a.time).getTime() -
-        new Date(b.time).getTime(),
-    );
-  }, [period, historicalData]);
-
-  if (isLoading || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-[#fef7ff] pb-20">
       <StockHeader
-        stockName={stockName}
+        stockName={stockCode}
         currentPrice={data.currentPrice}
         changeAmount={data.changeAmount}
         changeRate={data.changeRate}
-        period={period}
-        onPeriodChange={onPeriodChange}
         onBack={onBack}
-        isLive={period === 'minute'}
+        isLive={period === "minute"}
         acmlVol={0}
       />
 
@@ -235,20 +176,16 @@ function StockDetailView({
       />
 
       <div className="max-w-[1600px] mx-auto p-6">
-        {activeTab === 'chart' && (
-          <StockChart data={displayChartData} period={period} />
-        )}
-
-        {activeTab === 'order' && (
-          <StockOrderBook
-            stockCode={stockCode}
-            orderBook={data.orderBook}
-            currentPrice={data.currentPrice}
+        {activeTab === "chart" && (
+          <StockChart
+            data={displayChartData}
+            period={period}
+            onPeriodChange={onPeriodChange}
           />
         )}
 
-        {activeTab === 'news' && (
-          <StockNews data={data.news} query={stockName} />
+        {activeTab === "news" && (
+          <StockNews data={data.news} query={stockCode} />
         )}
 
         {activeTab === 'info' && (
@@ -257,9 +194,7 @@ function StockDetailView({
           />
         )}
 
-        {activeTab === 'indicators' && <StockIndicators />}
-
-        {activeTab === 'report' && (
+        {activeTab === "report" && (
           <StockReports data={data.reports} />
         )}
       </div>

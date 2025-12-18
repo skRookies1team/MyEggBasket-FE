@@ -1,5 +1,5 @@
 export type Period = 'minute' | 'day' | 'week' | 'month' | 'year';
-export type TabType = 'chart' | 'order' | 'news' | 'info' | 'indicators' | 'report';
+export type TabType = 'chart' | 'news' | 'info' | 'report';
 
 
 // 현재가 데이터 타입
@@ -85,7 +85,7 @@ export interface StockDetailData {
     changeAmount: number;
     changeRate: number;
     chartData: StockPriceData[];
-    orderBook: OrderBookData;
+    orderBook?: OrderBookData;
     news: NewsItem[];
     financials: FinancialData;
     reports: ReportItem[];

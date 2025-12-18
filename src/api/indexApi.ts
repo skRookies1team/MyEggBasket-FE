@@ -8,13 +8,12 @@ function toNum(v: any): number {
 // 🇰🇷 국내 지수 변환
 function mapKoreaIndex(res: any) {
   const list = res.output;
-  const item = list[list.length - 1]; // 최신값
 
   return {
-    current: toNum(item.bstp_nmix_prpr),
-    change: toNum(item.bstp_nmix_prdy_vrss),
-    rate: toNum(item.bstp_nmix_prdy_ctrt),
-    volume: toNum(item.acml_vol),
+    current: toNum(list.bstp_nmix_prpr),
+    change: toNum(list.bstp_nmix_prdy_vrss),
+    rate: toNum(list.bstp_nmix_prdy_ctrt),
+    volume: toNum(list.acml_vol),
   };
 }
 

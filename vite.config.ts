@@ -8,6 +8,10 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  define: {
+    // global 미정의 에러 해결
+    global: 'window',
+  },
   server: {
     proxy: {
       // 1. 한국투자증권 API용 (uapi 또는 oauth2로 시작하는 요청)
@@ -39,14 +43,14 @@ export default defineConfig({
         target: 'https://openapi.naver.com', // 네이버 API로 포워딩
         changeOrigin: true, // 헤더 변경
         rewrite: (path) => path.replace(/^\/naver-api/, ''), // 경로 재작성
-        secure: false, 
+        secure: false,
       },
       // 4.dart api 공시데이터
       '/dart-api': { // '/naver-api' 경로로 들어오는 요청을
         target: 'https://opendart.fss.or.kr/api', // 네이버 API로 포워딩
         changeOrigin: true, // 헤더 변경
         rewrite: (path) => path.replace(/^\/dart-api/, ''), // 경로 재작성
-        secure: false, 
+        secure: false,
       },
     },
   },

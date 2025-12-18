@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { fetch50StocksByPeriod } from "../api/liveStockApi";
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
@@ -7,7 +6,6 @@ import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
 import NewsTabs from "../components/News/NewTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
 import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
-import { useSnapshotStore } from "../store/snapshotStore";
 import { TICKERS } from "../data/stockInfo";
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock.ts";
@@ -47,17 +45,6 @@ const [liveData, setLiveData] = useState<{
     const timer = setInterval(loadRank, 20000);
     return () => clearInterval(timer);
   }, []);
-
-  // // --------------------------- Snapshot + 기간별 데이터 ----------------------------
-  // useEffect(() => {
-  //   async function load() {
-  //     const data = await fetch50StocksByPeriod(period, TICKERS);
-  //     setLiveData(data);
-  //     useSnapshotStore.getState().setSnapshot(period, data);
-  //   }
-
-  //   load();
-  // }, [period]);
 
   // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
   useEffect(() => {

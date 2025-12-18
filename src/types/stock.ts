@@ -85,7 +85,7 @@ export interface StockDetailData {
     changeAmount: number;
     changeRate: number;
     chartData: StockPriceData[];
-    orderBook: OrderBookData;
+    orderBook?: OrderBookData;
     news: NewsItem[];
     financials: FinancialData;
     reports: ReportItem[];

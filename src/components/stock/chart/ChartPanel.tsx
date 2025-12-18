@@ -3,11 +3,7 @@ import { useMemo } from "react";
 import type { Period, StockPriceData, StockCandle } from "../../../types/stock";
 import type {
   IndicatorState,
-  MAIndicator,
-  RSIIndicator,
-  MACDIndicator,
-  BollingerIndicator,
-  StochasticIndicator,
+  MAIndicator
 } from "../../../types/indicator";
 
 import { PriceVolumeChart } from "./PriceChart";
@@ -21,6 +17,8 @@ import { calculateRSI } from "../../../utils/indicators/rsi";
 import { calculateMACD } from "../../../utils/indicators/macd";
 import { calculateBollinger } from "../../../utils/indicators/bollinger";
 import { calculateStochastic } from "../../../utils/indicators/stochastic";
+
+import "../../../assets/Stock/ChartPanel.css";
 
 interface Props {
   period: Period;
@@ -52,7 +50,7 @@ export function ChartPanel({
     [candles, indicators.ma]
   );
 
-  const rsi: RSIIndicator | null = useMemo(
+  const rsi = useMemo(
     () =>
       indicators.rsi && candles.length
         ? calculateRSI(candles, 14)
@@ -60,7 +58,7 @@ export function ChartPanel({
     [candles, indicators.rsi]
   );
 
-  const macd: MACDIndicator | null = useMemo(
+  const macd = useMemo(
     () =>
       indicators.macd && candles.length
         ? calculateMACD(candles)
@@ -68,7 +66,7 @@ export function ChartPanel({
     [candles, indicators.macd]
   );
 
-  const bollinger: BollingerIndicator | null = useMemo(
+  const bollinger = useMemo(
     () =>
       indicators.bollinger && candles.length
         ? calculateBollinger(candles, 20, 2)
@@ -76,7 +74,7 @@ export function ChartPanel({
     [candles, indicators.bollinger]
   );
 
-  const stochastic: StochasticIndicator | null = useMemo(
+  const stochastic = useMemo(
     () =>
       indicators.stochastic && candles.length
         ? calculateStochastic(candles, 14, 3)
@@ -84,47 +82,59 @@ export function ChartPanel({
     [candles, indicators.stochastic]
   );
 
-  /* ------------------ guard ------------------ */
   if (!candles.length) {
     return <div className="chart-panel">차트 데이터가 없습니다.</div>;
   }
 
-  /* ------------------ render ------------------ */
   return (
     <div className="chart-panel">
-      {/* ===================== */}
-      {/* Main Price Chart */}
-      {/* ===================== */}
-      <PriceVolumeChart
-        candles={candles}
-        period={period}
-        showMA={indicators.ma}
-        showBollinger={indicators.bollinger}
-        maIndicators={maIndicators}
-        bollinger={bollinger}
-        height={420}
-      />
+      {/* 기준 컨테이너 */}
+      <div className="chart-canvas-wrapper">
 
-      {/* ===================== */}
-      {/* RSI */}
-      {/* ===================== */}
-      {indicators.rsi && rsi && (
-        <RSIChart indicator={rsi} height={140} />
-      )}
+        {/* 오른쪽 위 보조지표 체크박스 */}
+        <div className="indicator-panel-top">
+          <label><input type="checkbox" checked={indicators.ma} readOnly /> MA</label>
+          <label><input type="checkbox" checked={indicators.bollinger} readOnly /> Bollinger</label>
+          <label><input type="checkbox" checked={indicators.rsi} readOnly /> RSI</label>
+          <label><input type="checkbox" checked={indicators.macd} readOnly /> MACD</label>
+          <label><input type="checkbox" checked={indicators.stochastic} readOnly /> Stochastic</label>
+        </div>
 
-      {/* ===================== */}
-      {/* MACD */}
-      {/* ===================== */}
-      {indicators.macd && macd && (
-        <MACDChart indicator={macd} height={160} />
-      )}
+        {/* ===================== */}
+        {/* Main Price Chart */}
+        {/* ===================== */}
+        <PriceVolumeChart
+          candles={candles}
+          period={period}
+          showMA={indicators.ma}
+          showBollinger={indicators.bollinger}
+          maIndicators={maIndicators}
+          bollinger={bollinger}
+          height={420}
+        />
 
-      {/* ===================== */}
-      {/* Stochastic */}
-      {/* ===================== */}
-      {indicators.stochastic && stochastic && (
-        <StochasticChart indicator={stochastic} height={140} />
-      )}
+        {/* ===================== */}
+        {/* RSI */}
+        {/* ===================== */}
+        {indicators.rsi && rsi && (
+          <RSIChart indicator={rsi} height={140} />
+        )}
+
+        {/* ===================== */}
+        {/* MACD */}
+        {/* ===================== */}
+        {indicators.macd && macd && (
+          <MACDChart indicator={macd} height={160} />
+        )}
+
+        {/* ===================== */}
+        {/* Stochastic */}
+        {/* ===================== */}
+        {indicators.stochastic && stochastic && (
+          <StochasticChart indicator={stochastic} height={140} />
+        )}
+
+      </div>
     </div>
   );
 }

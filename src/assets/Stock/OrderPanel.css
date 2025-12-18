@@ -1,0 +1,71 @@
+/* ============================== */
+/* OrderPanel 기본 텍스트 색상 */
+/* ============================== */
+
+.order-panel {
+  color: #ffffff;              /* 🔥 전체 기본 텍스트 흰색 */
+  background: #0f0f14;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================== */
+/* OrderBook 내부 텍스트 */
+/* ============================== */
+
+.order-panel .orderbook,
+.order-panel .orderbook * {
+  color: #ffffff;              
+}
+
+/* ============================== */
+/* 호가 가격 강조 (선택) */
+/* ============================== */
+
+.order-panel .orderbook-row.sell .price {
+  color: #ff5a5a;               /* 매도 */
+}
+
+.order-panel .orderbook-row.buy .price {
+  color: #4ea1ff;               /* 매수 */
+}
+
+/* 수량은 살짝 연하게 */
+.order-panel .orderbook-row .volume {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================== */
+/* 헤더 */
+/* ============================== */
+
+.order-panel .orderbook-header span,
+.order-panel .orderbook-header strong {
+  color: #ffffff;
+}
+
+/* ============================== */
+/* 주문 컨트롤 영역 */
+/* ============================== */
+
+.order-panel .order-controls label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.order-panel .order-controls input {
+  color: #ffffff;
+  background: #15151d;
+  border: 1px solid #2a2a36;
+}
+
+.order-panel .order-summary {
+  color: #ffffff;
+}
+
+/* 에러 메시지 */
+.order-panel .order-error {
+  color: #ff6b6b;
+}

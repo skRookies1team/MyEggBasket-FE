@@ -1,35 +1,22 @@
 // src/components/stock/StockChart.tsx
-import { useMemo } from "react";
+import { useState } from "react";
 
-import type { StockPriceData, StockCandle } from "../../types/stock";
-import type {
-  MAIndicator,
-  BollingerIndicator,
-  RSIIndicator,
-  MACDIndicator,
-  StochasticIndicator,
-} from "../../types/indicator";
+import type { StockCandle, Period } from "../../types/stock";
 import type { IndicatorState } from "../../types/indicator";
 
-import { PriceVolumeChart } from "../stock/chart/PriceChart";
-import { RSIChart } from "./chart/RSIChart";
-import { MACDChart } from "./chart/MACDChart";
-import { StochasticChart } from "./chart/StochasticChart";
-
-import { toCandle } from "../../utils/chart/normalizeCandle";
-import { calculateRSI } from "../../utils/indicators/rsi";
-import { calculateMA } from "../../utils/indicators/ma";
-import { calculateMACD } from "../../utils/indicators/macd";
-import { calculateBollinger } from "../../utils/indicators/bollinger";
-import { calculateStochastic } from "../../utils/indicators/stochastic";
+import { ChartLayout } from "./chart/ChartLayout";
+import { ChartToolbar } from "./chart/ChartToolbar";
 
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
 interface StockChartProps {
-  data: StockPriceData[];
-  indicators: IndicatorState;
-  period: "minute" | "day" | "week" | "month" | "year";
+  data: StockCandle[];
+  period: Period;
+  onPeriodChange?: (p: Period) => void;
+  orderBook?: any;
+  currentPrice?: number;
+  stockCode?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -37,97 +24,39 @@ interface StockChartProps {
 /* ------------------------------------------------------------------ */
 export function StockChart({
   data,
-  indicators,
   period,
+  onPeriodChange,
+  orderBook,
+  currentPrice = 0,
+  stockCode = "",
 }: StockChartProps) {
-  /* ------------------ normalize ------------------ */
-  const candles: StockCandle[] = useMemo(
-    () => (data?.length ? toCandle(data) : []),
-    [data]
-  );
+  const [indicators, setIndicators] = useState<IndicatorState>({
+    ma: false,
+    bollinger: false,
+    rsi: false,
+    macd: false,
+    stochastic: false,
+  });
 
-  /* ------------------ indicators 계산 ------------------ */
-  const maIndicators: MAIndicator[] = useMemo(
-    () =>
-      indicators.ma && candles.length
-        ? [
-            calculateMA(candles, 5),
-            calculateMA(candles, 20),
-            calculateMA(candles, 60),
-          ]
-        : [],
-    [candles, indicators.ma]
-  );
-
-  const rsi: RSIIndicator | null = useMemo(
-    () =>
-      indicators.rsi && candles.length
-        ? calculateRSI(candles, 14)
-        : null,
-    [candles, indicators.rsi]
-  );
-
-  const macd: MACDIndicator | null = useMemo(
-    () =>
-      indicators.macd && candles.length
-        ? calculateMACD(candles)
-        : null,
-    [candles, indicators.macd]
-  );
-
-  const bollinger: BollingerIndicator | null = useMemo(
-    () =>
-      indicators.bollinger && candles.length
-        ? calculateBollinger(candles, 20, 2)
-        : null,
-    [candles, indicators.bollinger]
-  );
-
-  const stochastic: StochasticIndicator | null = useMemo(
-    () =>
-      indicators.stochastic && candles.length
-        ? calculateStochastic(candles, 14, 3)
-        : null,
-    [candles, indicators.stochastic]
-  );
-
-  /* ------------------ guard ------------------ */
-  if (!data?.length) {
-    return <div style={{ padding: 16 }}>차트 데이터가 없습니다.</div>;
-  }
-
-  if (!candles.length) {
-    return <div style={{ padding: 16 }}>캔들 데이터가 없습니다.</div>;
-  }
-
-  /* ------------------ render ------------------ */
   return (
-    <div style={{ width: "100%" }}>
-      {/* 메인 차트 */}
-      <PriceVolumeChart
-        candles={candles}
+    <div className="stock-chart">
+      {/* Toolbar */}
+      <ChartToolbar
         period={period}
-        showMA={indicators.ma}
-        showBollinger={indicators.bollinger}
-        maIndicators={maIndicators}
-        bollinger={bollinger}
-        height={420}
+        onPeriodChange={onPeriodChange ?? (() => {})}
+        indicators={indicators}
+        onIndicatorChange={setIndicators}
       />
 
-      {/* RSI */}
-      {indicators.rsi && rsi && (
-        <RSIChart indicator={rsi} height={140} />
-      )}
-
-      {/* MACD */}
-      {indicators.macd && macd && (
-        <MACDChart indicator={macd} height={160} />
-      )}
-
-      {/* Stochastic */}
-      {indicators.stochastic && stochastic && (
-        <StochasticChart indicator={stochastic} height={140} />
-      )}
+      {/* Chart + OrderBook */}
+      <ChartLayout
+        period={period}
+        indicators={indicators}
+        data={data}                
+        orderBook={orderBook}
+        currentPrice={currentPrice}
+        stockCode={stockCode}
+      />
     </div>
   );
 }

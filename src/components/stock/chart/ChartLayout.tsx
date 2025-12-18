@@ -1,14 +1,16 @@
-import type { Period, OrderBookData } from "../../../types/stock";
+import type { Period, OrderBookData, StockPriceData } from "../../../types/stock";
 import type { IndicatorState } from "../../../types/indicator";
 
 import { ChartPanel } from "./ChartPanel";
-import { StockOrderBook } from "../StockOrderBook";
+import { OrderPanel } from "./OrderPanel";
+
+import "../../../assets/Stock/ChartLayout.css";
 
 interface Props {
   period: Period;
   indicators: IndicatorState;
-
-  orderBook: OrderBookData;
+  data: StockPriceData[];
+  orderBook: OrderBookData | null; // ✅ null 허용
   currentPrice: number;
   stockCode: string;
 }
@@ -16,20 +18,26 @@ interface Props {
 export function ChartLayout({
   period,
   indicators,
+  data,
   orderBook,
   currentPrice,
   stockCode,
 }: Props) {
   return (
     <div className="chart-layout">
+      {/* ===================== */}
       {/* 좌측: 차트 */}
+      {/* ===================== */}
       <ChartPanel
         period={period}
         indicators={indicators}
+        data={data}
       />
 
+      {/* ===================== */}
       {/* 우측: 호가 + 주문 */}
-      <StockOrderBook
+      {/* ===================== */}
+      <OrderPanel
         orderBook={orderBook}
         currentPrice={currentPrice}
         stockCode={stockCode}

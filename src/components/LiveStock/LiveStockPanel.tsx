@@ -1,6 +1,5 @@
 import { useState } from "react";
 import LiveStockTabs from "../LiveStock/LiveStockTabs";
-import LiveStockPeriodTabs from "../LiveStock/LiveStockPeriodTabs";
 import LiveStockTable from "../LiveStock/LiveStockTable";
 import { useFavoriteStore } from "../../store/favoriteStore";
 import Basket1 from "../../assets/icons/basket1.png"
@@ -15,10 +14,9 @@ interface Props {
     rise: StockItem[];
     fall: StockItem[];
   };
-
 }
 
-export default function LiveStockPanel({ data}: Props) {
+export default function LiveStockPanel({data}: Props) {
   const [category, setCategory] = useState<"volume" | "amount" | "rise" | "fall">("volume");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 

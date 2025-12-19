@@ -60,7 +60,6 @@ export function useRealtimePrice(stockCode: string, enabled: boolean) {
     });
 
     client.onConnect = () => {
-      console.log("[STOMP] Connected for single stock:", stockCode);
       
       // ✅ 외부 함수를 사용하여 구독 로직 일원화
       subRef.current = requestStockSubscription(client, stockCode, (payload) => {

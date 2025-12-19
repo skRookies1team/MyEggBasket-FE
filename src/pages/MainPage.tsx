@@ -202,7 +202,7 @@ export default function MainPage() {
         )}
 
         {activeTab === "news" && <NewsTabs />}
-        {activeTab === "investor" && <InvestorTrend />}
+        {activeTab === "investor" && <InvestorTrend data={liveData} />}
       </div>
     </div>
   );

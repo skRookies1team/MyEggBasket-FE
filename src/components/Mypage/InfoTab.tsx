@@ -11,7 +11,7 @@ export default function InfoTab() {
   const deleteAccount = useAuthStore((state) => state.deleteAccount);
   const navigate = useNavigate();
 
-  // 🔥 InfoTab 로드 시 user가 없으면 자동으로 불러오도록 수정
+  // InfoTab 로드 시 user 없으면 fetch
   useEffect(() => {
     if (!user) {
       fetchUser();
@@ -19,19 +19,18 @@ export default function InfoTab() {
   }, [user, fetchUser]);
 
   const handleDelete = async () => {
-    // ❗ user 값이 없을 때 아무 반응 없던 문제 해결
     if (!user?.id) {
       alert("사용자 정보를 불러오지 못했습니다. 다시 로그인해주세요.");
       return;
     }
 
     const ok = window.confirm(
-      "정말로 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+      "정말로 회원 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다."
     );
     if (!ok) return;
 
     try {
-      await deleteAccount(); // 전역 authStore에서 처리
+      await deleteAccount();
       navigate("/");
     } catch (error) {
       console.error("회원 탈퇴 오류:", error);
@@ -40,13 +39,30 @@ export default function InfoTab() {
   };
 
   return (
-    <>
+    <div className="space-y-6">
+      {/* User Info */}
       <UserInfoSection />
+
+      {/* API Key */}
       <ApiKeySection />
 
-      <button className="mypage-delete-btn" onClick={handleDelete}>
-        회원 탈퇴
-      </button>
-    </>
+      {/* Danger Zone */}
+      <div className="rounded-2xl border border-red-500/30 bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-5">
+        <h3 className="mb-2 text-sm font-semibold text-red-400">
+          ⚠️ Danger Zone
+        </h3>
+        <p className="mb-4 text-xs text-gray-400">
+          회원 탈퇴 시 계정 정보, API Key, 거래 내역은 복구할 수 없습니다.
+        </p>
+
+        <button
+          onClick={handleDelete}
+          className="w-full rounded-lg bg-red-500/20 py-2 text-sm font-semibold
+                     text-red-400 transition hover:bg-red-500/30"
+        >
+          회원 탈퇴
+        </button>
+      </div>
+    </div>
   );
 }

@@ -1,10 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { StockHeader } from '../components/stock/StockHeader';
-import { StockChart } from '../components/stock/StockChart';
-import { StockTabNav } from '../components/stock/StockTabNav';
-import { StockNews } from '../components/stock/StockNews';
-import { StockReports } from '../components/stock/StockReports';
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+
+import { StockHeader } from "../components/stock/StockHeader";
+import { StockChart } from "../components/stock/StockChart";
+import { StockTabNav } from "../components/stock/StockTabNav";
+import { StockNews } from "../components/stock/StockNews";
+import { StockReports } from "../components/stock/StockReports";
+import { StockFinancials } from "../components/stock/StockFinancials";
 
 import type {
   StockDetailData,
@@ -14,11 +16,10 @@ import type {
   StockCurrentPrice,
 } from "../types/stock";
 
-import { useRealtimePrice } from '../hooks/useRealtimeStock';
-import { fetchHistoricalData } from '../api/stocksApi';
-import { fetchStockCurrentPrice } from '../api/liveStockApi';
-import { subscribeRealtimePrice } from '../api/realtimeApi';
-import { StockFinancials } from '../components/stock/StockFinancials';
+import { useRealtimePrice } from "../hooks/useRealtimeStock";
+import { fetchHistoricalData } from "../api/stocksApi";
+import { fetchStockCurrentPrice } from "../api/liveStockApi";
+import { subscribeRealtimePrice } from "../api/realtimeApi";
 
 /* ------------------------------------------------------------------ */
 /* 타입 유틸 */
@@ -27,7 +28,7 @@ type HistoryPeriod = Exclude<Period, "minute">;
 const isHistoryPeriod = (p: Period): p is HistoryPeriod => p !== "minute";
 
 /* ------------------------------------------------------------------ */
-/* [Container] */
+/* Container */
 /* ------------------------------------------------------------------ */
 export default function StockDetailPage() {
   const { code } = useParams<{ code: string }>();
@@ -35,16 +36,15 @@ export default function StockDetailPage() {
 
   const stockCode = code ?? "005930";
 
-  /* ------------------ period ------------------ */
   const [period, setPeriod] = useState<Period>("day");
 
-  /* ------------------ realtime price (minute only) ------------------ */
+  /* realtime (minute only) */
   const realtimeData = useRealtimePrice(
     stockCode,
     period === "minute"
   );
 
-  /* ------------------ minute subscribe ------------------ */
+  /* minute subscribe */
   const subscribedRef = useRef(false);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function StockDetailPage() {
     subscribeRealtimePrice(stockCode).catch(console.error);
   }, [period, stockCode]);
 
-  /* ------------------ REST current price ------------------ */
+  /* REST current price */
   const [restInfo, setRestInfo] = useState<StockCurrentPrice | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +74,7 @@ export default function StockDetailPage() {
     };
   }, [stockCode]);
 
-  /* ------------------ header data ------------------ */
+  /* header data */
   const combinedData: StockDetailData = useMemo(
     () => ({
       currentPrice:
@@ -113,7 +113,7 @@ export default function StockDetailPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/* [View] */
+/* View */
 /* ------------------------------------------------------------------ */
 function StockDetailView({
   stockCode,
@@ -133,7 +133,7 @@ function StockDetailView({
   const [activeTab, setActiveTab] = useState<TabType>("chart");
   const [historicalData, setHistoricalData] = useState<StockCandle[]>([]);
 
-  /* ------------------ historical chart data ------------------ */
+  /* historical chart data */
   useEffect(() => {
     if (!isHistoryPeriod(period)) return;
 
@@ -153,11 +153,16 @@ function StockDetailView({
   );
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] text-gray-400">
+        데이터 로딩 중...
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[#fef7ff] pb-20">
+    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+      {/* Header */}
       <StockHeader
         stockName={stockCode}
         currentPrice={data.currentPrice}
@@ -168,32 +173,42 @@ function StockDetailView({
         acmlVol={0}
       />
 
-      <StockTabNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {/* Tabs */}
+      <div className="border-b border-[#232332] bg-[#0a0a0f]">
+        <StockTabNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      </div>
 
-      <div className="max-w-[1600px] mx-auto p-6">
+      {/* Content */}
+      <div className="mx-auto max-w-[1600px] px-4 py-6">
         {activeTab === "chart" && (
-          <StockChart
-            data={displayChartData}
-            period={period}
-            onPeriodChange={onPeriodChange}
-          />
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockChart
+              data={displayChartData}
+              period={period}
+              onPeriodChange={onPeriodChange}
+            />
+          </div>
         )}
 
         {activeTab === "news" && (
-          <StockNews data={data.news} query={stockCode} />
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockNews data={data.news} query={stockCode} />
+          </div>
         )}
 
-        {activeTab === 'info' && (
-          <StockFinancials
-            stockCode={stockCode}
-          />
+        {activeTab === "info" && (
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockFinancials stockCode={stockCode} />
+          </div>
         )}
 
         {activeTab === "report" && (
-          <StockReports data={data.reports} />
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockReports data={data.reports} />
+          </div>
         )}
       </div>
     </div>

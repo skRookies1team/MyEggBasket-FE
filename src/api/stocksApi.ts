@@ -50,7 +50,7 @@ export async function fetchHistoricalData(
    단일 종목 상세 정보 조회 (DB)
 ============================================================ */
 
-interface StockSearchResult {
+export interface StockSearchResult {
   stockCode: string;
   name: string;
   marketType: string;

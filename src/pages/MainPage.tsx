@@ -1,123 +1,112 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  Box,
+  Container,
+  Card,
+  CardContent,
+  Tabs,
+  Tab,
+  Typography,
+} from "@mui/material";
+import { TrendingUp, Newspaper, Users, Flame } from "lucide-react";
+import { Client } from "@stomp/stompjs";
+
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
 import AIIssueLayout from "../components/AIIssueBubble/AIIssueLayout";
-import NewsTabs from "../components/News/NewTabs";
+import NewsTabs from "../components/News/NewsTabs";
 import InvestorTrend from "../components/Investor/InvestorTrend";
+
 import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
+import { getStockInfoFromDB } from "../api/stocksApi";
+import { requestStockSubscription } from "../hooks/useRealtimeStock";
+import { BACKEND_WS_URL } from "../config/api";
 import { TICKERS } from "../data/stockInfo";
+
 import type { VolumeRankItem } from "../components/Top10Rolling";
-import type { StockItem } from "../types/stock.ts";
-import "../assets/MaingPage.css";
-import { Client } from "@stomp/stompjs";
-import { getStockInfoFromDB } from "../api/stocksApi.ts";
-import { BACKEND_WS_URL } from "../config/api.ts";
-import { requestStockSubscription } from "../hooks/useRealtimeStock.ts";
+import type { StockItem } from "../types/stock";
 
-
-export default function MainPage() {
-  const [activeTab, setActiveTab] = useState<
-    "main" | "news" | "investor"
-  >("main");
-
+export default function MainPageDarkRealtime() {
+  const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0);
   const [showTicker, setShowTicker] = useState(false);
-  const indexSectionRef = useRef<HTMLDivElement | null>(null);
+  const indexRef = useRef<HTMLDivElement | null>(null);
+
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
   const [liveData, setLiveData] = useState<{
     volume: StockItem[];
     amount: StockItem[];
     rise: StockItem[];
     fall: StockItem[];
-  }>({
-    volume: [], amount: [], rise: [], fall: [],
-  });
+  }>({ volume: [], amount: [], rise: [], fall: [] });
 
-  // --------------------------- 거래량 순위 Top10 ----------------------------
+  /* ---------------- 거래량 TOP10 ---------------- */
   useEffect(() => {
-    async function loadRank() {
+    const load = async () => {
       const list = await fetchVolumeRankTop10();
       if (list) setTop10Rank(list);
-    }
-
-    loadRank();
-    const timer = setInterval(loadRank, 20000);
+    };
+    load();
+    const timer = setInterval(load, 20000);
     return () => clearInterval(timer);
   }, []);
 
-  // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
+  /* ---------------- 주요 지수 sticky ---------------- */
   useEffect(() => {
-    if (!indexSectionRef.current) return;
-
+    if (!indexRef.current) return;
     const observer = new IntersectionObserver(
       ([entry]) => setShowTicker(!entry.isIntersecting),
       { threshold: 0 }
     );
-
-    observer.observe(indexSectionRef.current);
+    observer.observe(indexRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // --------------------------- AI Issue Dummy ----------------------------
-  const issueBubbles = [
-    { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#FF5A4E" },
-    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#FF5A4E" },
-    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#FF5A4E" },
-    { name: "K-POP", size: 75, mentions: 1850, change: 4.1, color: "#FF5A4E" },
-    { name: "바이오", size: 120, mentions: 7940, change: -2.8, color: "#4169E1" },
-    { name: "메타버스", size: 65, mentions: 1200, change: 3.2, color: "#4169E1" },
-    { name: "클라우드", size: 85, mentions: 2680, change: 5.6, color: "#4169E1" }
-  ];
-
-  // -------------------구독---------------------
-  // 1. 실시간 가격 업데이트 및 "항목 추가" 로직
-  const updateRealtimePrice = async (updatedStock: any) => {
-    const stockData = await getStockInfoFromDB(updatedStock.stockCode)
+  /* ---------------- 실시간 주가 업데이트 ---------------- */
+  const updateRealtimePrice = async (updated: any) => {
+    const info = await getStockInfoFromDB(updated.stockCode);
 
     setLiveData((prev) => {
-      const updateOrAdd = (list: StockItem[]) => {
-
-        const existingItemIndex = list.findIndex(item => item.code === updatedStock.stockCode);
-
-        if (existingItemIndex !== -1) {
-
-          return list.map((item, idx) =>
-            idx === existingItemIndex
+      const update = (list: StockItem[]) => {
+        const idx = list.findIndex(i => i.code === updated.stockCode);
+        if (idx !== -1) {
+          return list.map((item, i) =>
+            i === idx
               ? {
-                ...item,
-                price: updatedStock.price,
-                percent: updatedStock.diffRate,
-                volume: updatedStock.volume,
-                amount: updatedStock.tradingValue,
-                change: updatedStock.diff
-              }
+                  ...item,
+                  price: updated.price,
+                  percent: updated.diffRate,
+                  volume: updated.volume,
+                  amount: updated.tradingValue,
+                  change: updated.diff,
+                }
               : item
           );
-        } else {
-          // 2) 없다면: 새 항목으로 추가
-          const newItem: StockItem = {
-            code: updatedStock.stockCode,
-            name: stockData?.name || updatedStock.stockCode,
-            price: updatedStock.price,
-            percent: updatedStock.diffRate,
-            volume: updatedStock.volume,
-            amount: updatedStock.tradingValue,
-            change: updatedStock.diff,
-          };
-
-          return [...list, newItem];
         }
+        return [
+          ...list,
+          {
+            code: updated.stockCode,
+            name: info?.name ?? updated.stockCode,
+            price: updated.price,
+            percent: updated.diffRate,
+            volume: updated.volume,
+            amount: updated.tradingValue,
+            change: updated.diff,
+          },
+        ];
       };
 
       return {
-        volume: updateOrAdd(prev.volume),
-        amount: updateOrAdd(prev.amount),
-        rise: updateOrAdd(prev.rise),
-        fall: updateOrAdd(prev.fall),
+        volume: update(prev.volume),
+        amount: update(prev.amount),
+        rise: update(prev.rise),
+        fall: update(prev.fall),
       };
     });
   };
 
+  /* ---------------- STOMP 구독 ---------------- */
   useEffect(() => {
     const client = new Client({
       brokerURL: `ws://${new URL(BACKEND_WS_URL).host}/ws`,
@@ -125,74 +114,116 @@ export default function MainPage() {
     });
 
     client.onConnect = () => {
-      console.log("[STOMP] MainPage Connected");
-      TICKERS.forEach((stockCode) => {
-        requestStockSubscription(client, stockCode, (data) => {
-          updateRealtimePrice(data);
-        });
+      TICKERS.forEach(code => {
+        requestStockSubscription(client, code, updateRealtimePrice);
       });
     };
 
     client.activate();
-
     return () => {
-      client.deactivate();
+      client.deactivate(); // ❗ async 아님
     };
   }, []);
 
+  /* ---------------- AI Issue ---------------- */
+  const issueBubbles = [
+    { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#7c3aed" },
+    { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#00e676" },
+    { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#29b6f6" },
+    { name: "바이오", size: 120, mentions: 7940, change: 4.5, color: "#ff4d6a" },
+  ];
+
   return (
-    <div className="main-container">
-      {/* 🔹 카드 영역 사라지면 → 상단 sticky 티커 */}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#0a0a0f",
+        py: 4,
+
+        /* ============================= */
+        /* 메인페이지 레이블 전체 흰색 */
+        /* ============================= */
+        color: "#ffffff",
+
+        "& .MuiTypography-root": {
+          color: "#ffffff",
+        },
+
+        "& .MuiTab-root": {
+          color: "#ffffff",
+          opacity: 0.7,
+          "&.Mui-selected": {
+            color: "#ffffff",
+            opacity: 1,
+          },
+        },
+
+        "& .MuiButton-root": {
+          color: "#ffffff",
+        },
+
+        "& .MuiChip-label": {
+          color: "#ffffff",
+        },
+
+        /* 보조 텍스트 */
+        "& .MuiTypography-colorTextSecondary": {
+          color: "#b5b5c5",
+        },
+      }}
+    >
+      {/* 🔹 Sticky 지수 티커 */}
       {showTicker && (
-        <div className="ticker-sticky">
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10 }}>
           <MarketIndexContainer showTickerOnly />
-        </div>
+        </Box>
       )}
 
-      {/* 🔹 메인 상단 → 카드만 표시 */}
-      <div className="market-index-section" ref={indexSectionRef}>
-        <h2 className="market-index-title"> 주요 지수 </h2>
-        <MarketIndexContainer showCardsOnly /> {/* ✅ 변경 */}
-      </div>
+      <Container maxWidth="xl">
+        {/* 🔹 주요 지수 카드 */}
+        <Box ref={indexRef} sx={{ mb: 4 }}>
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+            주요 지수
+          </Typography>
+          <MarketIndexContainer showCardsOnly />
+        </Box>
 
-      {top10Rank.length > 0 && (
-        <Top10Rolling data={top10Rank} interval={2500} />
-      )}
-
-      <h2 className="text-[#1e1e1e] mb-4 flex items-center gap-2">
-        AI 이슈포착
-      </h2>
-
-      <AIIssueLayout bubbles={issueBubbles} />
-
-      <div className="tab-menu">
-        {[
-          { id: "main", label: "메인" },
-          { id: "news", label: "뉴스" },
-          { id: "investor", label: "투자자 동향" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            className={`tab-button ${activeTab === tab.id ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.id as any)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="tab-content">
-        {activeTab === "main" && (
-          <div style={{ marginTop: "32px" }}>
-            <LiveStockPanel
-              data={liveData}
-            />
-          </div>
+        {/* 🔹 거래량 TOP10 */}
+        {top10Rank.length > 0 && (
+          <Box sx={{ mb: 4 }}>
+            <Top10Rolling data={top10Rank} interval={2500} />
+          </Box>
         )}
 
-        {activeTab === "news" && <NewsTabs />}
-        {activeTab === "investor" && <InvestorTrend data={liveData} />}
-      </div>
-    </div>
+        {/* 🔹 AI 이슈 */}
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Typography variant="h6" fontWeight={600}>
+              AI 이슈포착
+            </Typography>
+          </Box>
+          <AIIssueLayout bubbles={issueBubbles} />
+        </Box>
+
+        {/* 🔹 메인 카드 */}
+        <Card sx={{ bgcolor: "#1a1a24", border: "1px solid #2a2a35" }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            sx={{ px: 2, borderBottom: "1px solid #2a2a35" }}
+          >
+            <Tab icon={<TrendingUp size={16} />} iconPosition="start" label="메인" />
+            <Tab icon={<Newspaper size={16} />} iconPosition="start" label="뉴스" />
+            <Tab icon={<Users size={16} />} iconPosition="start" label="투자자 동향" />
+          </Tabs>
+
+          <CardContent sx={{ p: 4 }}>
+            {activeTab === 0 && <LiveStockPanel data={liveData} />}
+            {activeTab === 1 && <NewsTabs />}
+            {activeTab === 2 && <InvestorTrend data={liveData} />}
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

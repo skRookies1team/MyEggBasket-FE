@@ -44,7 +44,7 @@ export default function HistoryPage() {
       {selectedPortfolioId !== null && (
         <div className="space-y-8">
           <HistoryAsset portfolioId={selectedPortfolioId} />
-          <HistoryGraph portfolioId={selectedPortfolioId} />
+          <HistoryGraph />
         </div>
       )}
     </div>

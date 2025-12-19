@@ -34,12 +34,13 @@ export default function MarketIndexContainer({
         const dw = await fetchForeignIndex("DOW");
         const wt = await fetchForeignIndex("CL");
 
-        setKospi(kospiData);
-        setKosdaq(kosdaqData);
-        setSP500(sp);
-        setNasdaq(nd);
-        setDow(dw);
-        setWTI(wt);
+        if (kospiData) setKospi(kospiData);
+        if (kosdaqData) setKosdaq(kosdaqData);
+
+        if(sp) setSP500(sp);
+        if(nd) setNasdaq(nd);
+        if(dw) setDow(dw);
+        if(wt) setWTI(wt);
       } catch (err) {
         console.error("Index load failed:", err);
       }
@@ -55,22 +56,22 @@ export default function MarketIndexContainer({
   // ----------------------------------------------------
   const kospiMiniChart: number[] | undefined = kospi
     ? kospi.miniChartData ?? [
-        kospi.current - 6,
-        kospi.current - 4,
-        kospi.current - 5,
-        kospi.current - 2,
-        kospi.current
-      ]
+      kospi.current - 6,
+      kospi.current - 4,
+      kospi.current - 5,
+      kospi.current - 2,
+      kospi.current
+    ]
     : undefined;
 
   const kosdaqMiniChart: number[] | undefined = kosdaq
     ? kosdaq.miniChartData ?? [
-        kosdaq.current - 3,
-        kosdaq.current - 2,
-        kosdaq.current - 1,
-        kosdaq.current + 0.5,
-        kosdaq.current
-      ]
+      kosdaq.current - 3,
+      kosdaq.current - 2,
+      kosdaq.current - 1,
+      kosdaq.current + 0.5,
+      kosdaq.current
+    ]
     : undefined;
 
   // ----------------------------------------------------

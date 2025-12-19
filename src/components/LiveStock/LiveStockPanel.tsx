@@ -15,11 +15,10 @@ interface Props {
     rise: StockItem[];
     fall: StockItem[];
   };
-  period: "day" | "week" | "month" | "year";
-  onPeriodChange: (v: any) => void;
+
 }
 
-export default function LiveStockPanel({ data, period, onPeriodChange }: Props) {
+export default function LiveStockPanel({ data}: Props) {
   const [category, setCategory] = useState<"volume" | "amount" | "rise" | "fall">("volume");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
@@ -77,9 +76,6 @@ export default function LiveStockPanel({ data, period, onPeriodChange }: Props) 
 
       {/* 정렬 탭 */}
       <LiveStockTabs selected={category} onChange={setCategory} />
-
-      {/* 기간 탭 */}
-      <LiveStockPeriodTabs selected={period} onChange={onPeriodChange} />
 
       {/* 관심종목 없음 텍스트 */}
       {noFavorites ? (

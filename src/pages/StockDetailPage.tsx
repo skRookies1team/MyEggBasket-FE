@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StockHeader } from '../components/stock/StockHeader';
 import { StockChart } from '../components/stock/StockChart';
-import { StockOrderBook } from '../components/stock/StockOrderBook';
-import { StockIndicators } from '../components/stock/StockIndicators';
 import { StockTabNav } from '../components/stock/StockTabNav';
 import { StockNews } from '../components/stock/StockNews';
 import { StockReports } from '../components/stock/StockReports';

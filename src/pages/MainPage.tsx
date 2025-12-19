@@ -10,11 +10,10 @@ import { TICKERS } from "../data/stockInfo";
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock.ts";
 import "../assets/MaingPage.css";
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
+import { Client } from "@stomp/stompjs";
 import { getStockInfoFromDB } from "../api/stocksApi.ts";
-import { subscribeRealtimePrice } from "../api/realtimeApi.ts";
 import { BACKEND_WS_URL } from "../config/api.ts";
+import { requestStockSubscription } from "../hooks/useRealtimeStock.ts";
 
 
 export default function MainPage() {
@@ -25,7 +24,7 @@ export default function MainPage() {
   const [showTicker, setShowTicker] = useState(false);
   const indexSectionRef = useRef<HTMLDivElement | null>(null);
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
-const [liveData, setLiveData] = useState<{
+  const [liveData, setLiveData] = useState<{
     volume: StockItem[];
     amount: StockItem[];
     rise: StockItem[];
@@ -82,41 +81,41 @@ const [liveData, setLiveData] = useState<{
   ];
 
   // -------------------구독---------------------
-// 1. 실시간 가격 업데이트 및 "항목 추가" 로직
-  const updateRealtimePrice = async(updatedStock: any) => {
+  // 1. 실시간 가격 업데이트 및 "항목 추가" 로직
+  const updateRealtimePrice = async (updatedStock: any) => {
     const stockData = await getStockInfoFromDB(updatedStock.stockCode)
 
     setLiveData((prev) => {
       const updateOrAdd = (list: StockItem[]) => {
-        // 해당 종목이 이미 리스트에 있는지 확인
+
         const existingItemIndex = list.findIndex(item => item.code === updatedStock.stockCode);
 
         if (existingItemIndex !== -1) {
-          // 1) 이미 있다면: 해당 항목만 업데이트
+
           return list.map((item, idx) =>
             idx === existingItemIndex
-              ? { 
-                  ...item, 
-                  price: updatedStock.price, 
-                  percent: updatedStock.diffRate,
-                  volume: updatedStock.volume,
-                  amount: updatedStock.tradingValue, // 거래대금
-                  change: updatedStock.diff // 전일대비 변동액
-                }
+              ? {
+                ...item,
+                price: updatedStock.price,
+                percent: updatedStock.diffRate,
+                volume: updatedStock.volume,
+                amount: updatedStock.tradingValue,
+                change: updatedStock.diff
+              }
               : item
           );
         } else {
           // 2) 없다면: 새 항목으로 추가
           const newItem: StockItem = {
             code: updatedStock.stockCode,
-            name: stockData?.name || updatedStock.stockCode, // 이름이 없으면 코드로 대체
+            name: stockData?.name || updatedStock.stockCode, 
             price: updatedStock.price,
             percent: updatedStock.diffRate,
             volume: updatedStock.volume,
             amount: updatedStock.tradingValue,
             change: updatedStock.diff,
           };
-          // 기존 리스트 뒤에 추가
+
           return [...list, newItem];
         }
       };
@@ -130,32 +129,25 @@ const [liveData, setLiveData] = useState<{
     });
   };
 
-  // 2. 웹소켓 연결 및 구독 (API 호출 없이 트리거만 수행)
   useEffect(() => {
-    // 백엔드에 증권사 실시간 데이터 요청 트리거
-    TICKERS.forEach(code =>{ subscribeRealtimePrice(code)});
+    const client = new Client({
+      brokerURL: `ws://${new URL(BACKEND_WS_URL).host}/ws`,
+      reconnectDelay: 5000,
+    });
 
-    const socket = new SockJS(`${BACKEND_WS_URL}/ws`);
-    const stompClient = Stomp.over(socket);
-    stompClient.debug = () => {}; 
-
-    stompClient.connect({}, () => {
-      console.log("Connected to WebSocket");
+    client.onConnect = () => {
+      console.log("[STOMP] MainPage Connected");
       TICKERS.forEach((stockCode) => {
-        stompClient.subscribe(`/topic/realtime-price/${stockCode}`, (sdk: any) => {
-          const data = JSON.parse(sdk.body);
+        requestStockSubscription(client, stockCode, (data) => {
           updateRealtimePrice(data); 
         });
       });
-    });
+    };
+
+    client.activate();
 
     return () => {
-      // 연결이 수립된 상태(connected === true)일 때만 disconnect 호출
-      if (stompClient && stompClient.connected) {
-        stompClient.disconnect(() => {
-          console.log("STOMP Disconnected");
-        });
-      }
+      client.deactivate();
     };
   }, []);
 

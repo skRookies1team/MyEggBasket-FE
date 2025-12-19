@@ -22,13 +22,9 @@ export function PortfolioPage() {
     const [sectorCompositionData, setSectorCompositionData] = useState<{ name: string, value: number, color: string }[]>([]);
     const [showAddPortfolio, setShowAddPortfolio] = useState(false);
     const [activePortfolioId, setActivePortfolioId] = useState<number>();
-    const [stockCurrentPrices, setStockCurrentPrices] = useState<
-        Record<string, StockCurrentPrice>
-    >({});
-
+    
     const portfolios = usePortfolioStore((state) => state.portfolioList);
     const fetchPortfolios = usePortfolioStore((state) => state.fetchPortfolios);
-
     const holdings = useHoldingStore((state) => state.holdingList);
     const fetchHoldings = useHoldingStore((state) => state.fetchHoldings);
 
@@ -51,6 +47,7 @@ export function PortfolioPage() {
         };
         loadData();
     }, []);
+
     useEffect(() => {
         if (!holdings) return;
 
@@ -70,14 +67,6 @@ export function PortfolioPage() {
                 } catch (error) {
                     console.error(`Error fetching price for ${stockCode}:`, error);
                 }
-            }
-
-            // 모든 fetch가 끝난 후 상태 업데이트
-            if (Object.keys(newPrices).length > 0) {
-                setStockCurrentPrices((prevPrices) => ({
-                    ...prevPrices,
-                    ...newPrices,
-                }));
             }
         };
 
@@ -111,9 +100,6 @@ export function PortfolioPage() {
             if (accountHolding) {
                 totalProfit += accountHolding.profitLossAmount || 0;
                 totalStockEval += accountHolding.evaluationAmount || 0;
-
-                // stockCurrentPrices 상태가 있다면 이 곳에서 사용할 수도 있습니다.
-                // const currentPrice = stockCurrentPrices[stockCode]?.currentPrice;
             }
         }
 
@@ -133,7 +119,7 @@ export function PortfolioPage() {
             stockEval: totalStockEval
         };
         // stockCurrentPrices가 업데이트 될 때도 재계산이 필요할 수 있습니다.
-    }, [holdings, balanceData, stockCurrentPrices]);
+    }, [holdings, balanceData]);
 
     const assetCompositionData = useMemo(() => {
         if (myAssets.total === 0) return [];

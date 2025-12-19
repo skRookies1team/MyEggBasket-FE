@@ -1,12 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { Period, StockPriceData, StockCandle } from "../../../types/stock";
 import type {
   IndicatorState,
-  MAIndicator
+  MAIndicator,
 } from "../../../types/indicator";
+import type { HoverOHLC } from "./PriceChart";
 
-import { PriceVolumeChart } from "./PriceChart";
+import { PriceChart } from "./PriceChart";
 import { RSIChart } from "./RSIChart";
 import { MACDChart } from "./MACDChart";
 import { StochasticChart } from "./StochasticChart";
@@ -36,6 +37,9 @@ export function ChartPanel({
     () => (data.length ? toCandle(data) : []),
     [data]
   );
+
+  /* ------------------ hover OHLC ------------------ */
+  const [hoverOHLC, setHoverOHLC] = useState<HoverOHLC | null>(null);
 
   /* ------------------ indicator 계산 ------------------ */
   const maIndicators: MAIndicator[] = useMemo(
@@ -88,22 +92,54 @@ export function ChartPanel({
 
   return (
     <div className="chart-panel">
-      {/* 기준 컨테이너 */}
+      {/* ===================== */}
+      {/* Price Chart + OHLC */}
+      {/* ===================== */}
       <div className="chart-canvas-wrapper">
-
-        {/* 오른쪽 위 보조지표 체크박스 */}
-        <div className="indicator-panel-top">
-          <label><input type="checkbox" checked={indicators.ma} readOnly /> MA</label>
-          <label><input type="checkbox" checked={indicators.bollinger} readOnly /> Bollinger</label>
-          <label><input type="checkbox" checked={indicators.rsi} readOnly /> RSI</label>
-          <label><input type="checkbox" checked={indicators.macd} readOnly /> MACD</label>
-          <label><input type="checkbox" checked={indicators.stochastic} readOnly /> Stochastic</label>
+        {/* OHLC Overlay */}
+        <div className="ohlc-overlay">
+          {hoverOHLC ? (
+            <>
+              <span>
+                <span className="ohlc-label">O</span>
+                <span className="ohlc-value">
+                  {hoverOHLC.open.toLocaleString()}
+                </span>
+              </span>
+              <span>
+                <span className="ohlc-label">H</span>
+                <span className="ohlc-value">
+                  {hoverOHLC.high.toLocaleString()}
+                </span>
+              </span>
+              <span>
+                <span className="ohlc-label">L</span>
+                <span className="ohlc-value">
+                  {hoverOHLC.low.toLocaleString()}
+                </span>
+              </span>
+              <span>
+                <span className="ohlc-label">C</span>
+                <span className="ohlc-value">
+                  {hoverOHLC.close.toLocaleString()}
+                </span>
+              </span>
+              <span>
+                <span className="ohlc-label">V</span>
+                <span className="ohlc-value">
+                  {hoverOHLC.volume.toLocaleString()}
+                </span>
+              </span>
+            </>
+          ) : (
+            <span className="ohlc-placeholder">
+              차트에 마우스를 올리면 OHLC 표시
+            </span>
+          )}
         </div>
 
-        {/* ===================== */}
-        {/* Main Price Chart */}
-        {/* ===================== */}
-        <PriceVolumeChart
+        {/* Price Chart */}
+        <PriceChart
           candles={candles}
           period={period}
           showMA={indicators.ma}
@@ -111,30 +147,30 @@ export function ChartPanel({
           maIndicators={maIndicators}
           bollinger={bollinger}
           height={420}
+          onHover={setHoverOHLC}
         />
-
-        {/* ===================== */}
-        {/* RSI */}
-        {/* ===================== */}
-        {indicators.rsi && rsi && (
-          <RSIChart indicator={rsi} height={140} />
-        )}
-
-        {/* ===================== */}
-        {/* MACD */}
-        {/* ===================== */}
-        {indicators.macd && macd && (
-          <MACDChart indicator={macd} height={160} />
-        )}
-
-        {/* ===================== */}
-        {/* Stochastic */}
-        {/* ===================== */}
-        {indicators.stochastic && stochastic && (
-          <StochasticChart indicator={stochastic} height={140} />
-        )}
-
       </div>
+
+      {/* ===================== */}
+      {/* RSI */}
+      {/* ===================== */}
+      {indicators.rsi && rsi && (
+        <RSIChart indicator={rsi} height={140} />
+      )}
+
+      {/* ===================== */}
+      {/* MACD */}
+      {/* ===================== */}
+      {indicators.macd && macd && (
+        <MACDChart indicator={macd} height={160} />
+      )}
+
+      {/* ===================== */}
+      {/* Stochastic */}
+      {/* ===================== */}
+      {indicators.stochastic && stochastic && (
+        <StochasticChart indicator={stochastic} height={140} />
+      )}
     </div>
   );
 }

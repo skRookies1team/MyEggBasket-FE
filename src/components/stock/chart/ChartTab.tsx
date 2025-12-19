@@ -22,10 +22,10 @@ export function ChartTab({
 
   // 보조지표 상태
   const [indicators, setIndicators] = useState<IndicatorState>({
-    ma: true,
-    bollinger: true,
-    rsi: true,
-    macd: true,
+    ma: false,
+    bollinger: false,
+    rsi: false,
+    macd: false,
     stochastic: false,
   });
 

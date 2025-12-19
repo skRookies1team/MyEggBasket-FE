@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { TrendingUp } from 'lucide-react';
 import type { AccountBalanceData, AccountHolding} from '../types/stock';
 
-// 스타일 및 컴포넌트 임포트
-import '../assets/PortfolioPage.css';
 import { fetchUserBalance } from '../api/accountApi';
-import { AssetSummary } from '../components/Portfolio/AssetSummary';
-import { PortfolioCharts } from '../components/Portfolio/PortfolioCharts';
-import StockTrendCard from '../components/Portfolio/StockTrendCard';
+import { AssetSummary } from '../components/MyAssets/AssetSummary';
+import { AssetCharts } from '../components/MyAssets/AssetCharts';
+import AssetStockTrendCard from '../components/MyAssets/AssetStockTrendCard';
 
 import { getStockInfoFromDB } from '../api/stocksApi';
 
+// 스타일 및 컴포넌트 임포트
+import '../assets/PortfolioPage.css';
 
 export default function MyAssetPage() {
     const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
@@ -156,38 +156,6 @@ export default function MyAssetPage() {
         <div className="portfolio-container">
             <div className="portfolio-wrapper">
 
-
-                {/* Tabs
-                <div className="portfolio-tabs">
-                    {portfolios.map((portfolio) => (
-                        <div key={portfolio.portfolioId} className="tab-item">
-                            <button
-                                onClick={async () => {
-                                    setActivePortfolioId(portfolio.portfolioId);
-                                    await fetchHoldings(portfolio.portfolioId);
-                                }}
-                                className={`btn-tab ${activePortfolioId === portfolio.portfolioId ? 'active' : ''}`}
-                            >
-                                <span>{portfolio.name}</span>
-                                <span style={{ fontSize: '12px', color: getTypeColor(portfolio.riskLevel) }}>
-                                    ({getTypeLabel(portfolio.riskLevel)})
-                                </span>
-                            </button>
-                            {
-                                portfolios.length > 1 && (
-                                    <button onClick={async () => {
-                                        removePortfolio(portfolio.portfolioId)
-                                        await fetchPortfolios();
-                                    }
-                                    } className="btn-remove-tab">
-                                        <X size={12} color="#ff383c" />
-                                    </button>
-                                )
-                            }
-                        </div>
-                    ))}
-                </div> */}
-
                 {/* Main Content */}
                 {accountHoldings.length > 0 && (
                     <div className="animate-in">
@@ -195,13 +163,13 @@ export default function MyAssetPage() {
                         <AssetSummary assetData={myAssets} loading={loading} />
 
                         {/* 2. 차트 영역 */}
-                        <PortfolioCharts
+                        <AssetCharts
                             assetData={assetCompositionData}
                             stockData={stockCompositionData}
                             sectorData={sectorCompositionData}
                         />
 
-                        {/* 3. 내 보유 주식 추이 */}
+                        {/* 3. 총 보유 주식 추이 */}
                         {accountHoldings && accountHoldings.length > 0 && (
                             <div className="section-card">
                                 <div className="section-header" style={{ marginBottom: '20px' }}>
@@ -217,7 +185,7 @@ export default function MyAssetPage() {
                                     {accountHoldings
                                         .filter(holdingStock => holdingStock.quantity > 0) // 필터 추가
                                         .map((stock) => (
-                                            <StockTrendCard
+                                            <AssetStockTrendCard
                                                 key={stock.stockCode}
                                                 stockCode={stock.stockCode}
                                                 name={stock.stockName}

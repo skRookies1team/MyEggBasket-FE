@@ -71,3 +71,22 @@ export async function getStockInfoFromDB(
   }
 }
 
+export async function searchStocks(
+  keyword: string
+): Promise<StockSearchResult[]> {
+  try {
+    if (!keyword.trim()) return [];
+
+    const res = await api.get<StockSearchResult[]>(
+      "/stocks/search",
+      {
+        params: { keyword },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error("종목 검색 실패", error);
+    return [];
+  }
+}

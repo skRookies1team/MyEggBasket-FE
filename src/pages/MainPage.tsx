@@ -45,17 +45,6 @@ export default function MainPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // // --------------------------- Snapshot + 기간별 데이터 ----------------------------
-  // useEffect(() => {
-  //   async function load() {
-  //     const data = await fetch50StocksByPeriod(period, TICKERS);
-  //     setLiveData(data);
-  //     useSnapshotStore.getState().setSnapshot(period, data);
-  //   }
-
-  //   load();
-  // }, [period]);
-
   // --------------------------- 주요 지수 영역 sticky 처리 ----------------------------
   useEffect(() => {
     if (!indexSectionRef.current) return;

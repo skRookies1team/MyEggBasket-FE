@@ -1,4 +1,4 @@
-// stock/chart/PriceVolumeChart.tsx
+// stock/chart/PriceChart.tsx
 import { useEffect, useRef, useState } from "react";
 import {
   createChart,
@@ -10,16 +10,23 @@ import {
 import type { IChartApi, ISeriesApi } from "lightweight-charts";
 
 import type { Period, StockCandle } from "../../../types/stock";
-import type {
-  MAIndicator,
-  BollingerIndicator,
-} from "../../../types/indicator";
+import type { MAIndicator, BollingerIndicator } from "../../../types/indicator";
 
 import { MAChart } from "./MAChart";
 import { BollingerChart } from "./BollingerChart";
 
+/* ------------------ Hover 타입 ------------------ */
+export interface HoverOHLC {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+/* ------------------ Props ------------------ */
 interface Props {
-  candles: StockCandle[];         
+  candles: StockCandle[];
   period: Period;
 
   showMA?: boolean;
@@ -28,9 +35,12 @@ interface Props {
   maIndicators?: MAIndicator[];
   bollinger?: BollingerIndicator | null;
   height?: number;
+
+  /** 마우스 호버(크로스헤어 이동) 시 OHLC/Volume 전달 */
+  onHover?: (ohlc: HoverOHLC | null) => void;
 }
 
-export function PriceVolumeChart({
+export function PriceChart({
   candles,
   period,
   showMA = true,
@@ -38,6 +48,7 @@ export function PriceVolumeChart({
   maIndicators = [],
   bollinger = null,
   height = 420,
+  onHover,
 }: Props) {
   // eslint / ts unused 방지 (추후 timeScale 옵션에 사용 예정)
   void period;
@@ -46,10 +57,8 @@ export function PriceVolumeChart({
 
   const [chart, setChart] = useState<IChartApi | null>(null);
 
-  const candleSeriesRef =
-    useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeSeriesRef =
-    useRef<ISeriesApi<"Histogram"> | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   /* ------------------ Chart init ------------------ */
   useEffect(() => {
@@ -98,13 +107,49 @@ export function PriceVolumeChart({
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
 
+    /* ------------------ Hover ------------------ */
+    const handleCrosshairMove = (param: any) => {
+      const candleSeriesApi = candleSeriesRef.current;
+      const volumeSeriesApi = volumeSeriesRef.current;
+
+      if (!param?.time || !candleSeriesApi || !volumeSeriesApi) {
+        onHover?.(null);
+        return;
+      }
+
+      const prices = param.seriesPrices as Map<any, any> | undefined;
+      if (!prices) {
+        onHover?.(null);
+        return;
+      }
+
+      const price = prices.get(candleSeriesApi);
+      const volume = prices.get(volumeSeriesApi);
+
+      if (!price) {
+        onHover?.(null);
+        return;
+      }
+
+      onHover?.({
+        open: Number(price.open),
+        high: Number(price.high),
+        low: Number(price.low),
+        close: Number(price.close),
+        volume: typeof volume === "number" ? volume : Number(volume ?? 0),
+      });
+    };
+
+    chart.subscribeCrosshairMove(handleCrosshairMove);
+
     setChart(chart);
 
     return () => {
+      chart.unsubscribeCrosshairMove(handleCrosshairMove);
       chart.remove();
       setChart(null);
     };
-  }, [height]);
+  }, [height, onHover]);
 
   /* ------------------ Data update ------------------ */
   useEffect(() => {
@@ -138,20 +183,10 @@ export function PriceVolumeChart({
       <div ref={containerRef} style={{ width: "100%" }} />
 
       {/* MA */}
-      {showMA && (
-        <MAChart
-          chart={chart}
-          indicators={maIndicators}
-        />
-      )}
+      {showMA && <MAChart chart={chart} indicators={maIndicators} />}
 
       {/* Bollinger */}
-      {showBollinger && (
-        <BollingerChart
-          chart={chart}
-          bollinger={bollinger}
-        />
-      )}
+      {showBollinger && <BollingerChart chart={chart} bollinger={bollinger} />}
     </>
   );
 }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { RiskLevel } from '../../types/portfolios';
 import { fetchUserBalance } from '../../api/accountApi';
-import type { AccountBalanceData, AccountHolding } from '../../types/stock';
+import type { AccountHolding } from '../../types/stock';
 interface AddPortfolioModalProps {
     onClose: () => void;
-    // 💡 수정: Stock[] 대신 선택된 AccountHolding 객체 리스트를 전달하도록 타입 변경
+    // 수정: Stock[] 대신 선택된 AccountHolding 객체 리스트를 전달하도록 타입 변경
     onAdd: (data: { 
         name: string, 
         riskLevel: RiskLevel, 

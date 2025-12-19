@@ -5,16 +5,16 @@ interface CompositionData {
     name: string;
     value: number;
     color: string;
-    // ✅ 이 한 줄을 추가하여 인덱스 시그니처 오류를 해결합니다.
     [key: string]: any; 
 }
 
 interface PortfolioChartsProps {
+    assetData: CompositionData[];
     stockData: CompositionData[];
     sectorData: CompositionData[]; // 섹터 데이터가 없다면 빈 배열 처리
 }
 
-export function PortfolioCharts({ stockData, sectorData }: PortfolioChartsProps) {
+export function AssetCharts({ assetData, stockData, sectorData }: PortfolioChartsProps) {
     const renderChart = (title: string, data: CompositionData[]) => (
         <div className="section-card">
             <div className="section-header">
@@ -47,6 +47,7 @@ export function PortfolioCharts({ stockData, sectorData }: PortfolioChartsProps)
 
     return (
         <div className="charts-grid">
+            {renderChart("자산 구성 (주식/현금)", assetData)}
             {renderChart("보유 종목 비중 (Top 5)", stockData)}
             {renderChart("섹터별 비중", sectorData)}
         </div>

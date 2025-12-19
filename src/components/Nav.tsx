@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { searchStocksFromDB } from "../api/stockApi";
-import type { StockSearchResult } from "../api/stockApi"// 추가된 API import
+import { searchStocks } from "../api/stocksApi";
+import type { StockSearchResult } from "../api/stockApi";
 import "../assets/Nav.css";
 
 interface NavProps {
@@ -24,7 +24,7 @@ const Nav: React.FC<NavProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (q.trim().length > 0) {
-        const results = await searchStocksFromDB(q);
+        const results = await searchStocks(q);
         setSearchResults(results);
         setShowDropdown(true);
       } else {

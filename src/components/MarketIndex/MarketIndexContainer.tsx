@@ -1,209 +1,108 @@
 import { useEffect, useState } from "react";
-import { MarketIndexCard } from "../MarketIndex/MarketIndexCard";
-import MarketIndexTicker from "../MarketIndex/MarketIndexTicker";
-
+import { Box, Stack } from "@mui/material";
+import { MarketIndexCard } from "./MarketIndexCard";
+import MarketIndexTicker from "./MarketIndexTicker";
 import { fetchKoreaIndex, fetchForeignIndex } from "../../api/indexApi";
 
-interface Props {
-  showTickerOnly?: boolean;
-  showCardsOnly?: boolean;
+interface IndexData {
+  current: number;
+  change: number;
+  rate: number;
+  volume?: number;
+  miniChartData?: number[];
 }
 
-export default function MarketIndexContainer({
-  showTickerOnly = false,
-  showCardsOnly = false
-}: Props) {
-  // 국내 지수
-  const [kospi, setKospi] = useState<any>(null);
-  const [kosdaq, setKosdaq] = useState<any>(null);
+export default function MarketIndexContainer({ showTickerOnly = false, showCardsOnly = false }) {
+  const [indices, setIndices] = useState<{ [key: string]: IndexData | undefined }>({});
+  const [loading, setLoading] = useState(true);
 
-  // 해외 지수
-  const [sp500, setSP500] = useState<any>(null);
-  const [nasdaq, setNasdaq] = useState<any>(null);
-  const [dow, setDow] = useState<any>(null);
-  const [wti, setWTI] = useState<any>(null);
+  const loadData = async () => {
+    try {
+      const [kp, kd, sp, nd, dow, cl] = await Promise.all([
+        fetchKoreaIndex("0001") as Promise<IndexData>,
+        fetchKoreaIndex("1001") as Promise<IndexData>,
+        fetchForeignIndex("SPX") as Promise<IndexData>,
+        fetchForeignIndex("NDX") as Promise<IndexData>,
+        fetchForeignIndex("DOW") as Promise<IndexData>,
+        fetchForeignIndex("CL") as Promise<IndexData>
+      ]);
+
+      
+
+      // KOSPI/KOSDAQ 전용 미니차트 데이터 생성 로직 복구
+      if (kp && !kp.miniChartData) {
+        kp.miniChartData = [kp.current - 6, kp.current - 4, kp.current - 5, kp.current - 2, kp.current];
+      }
+      if (kd && !kd.miniChartData) {
+        kd.miniChartData = [kd.current - 3, kd.current - 2, kd.current - 1, kd.current + 0.5, kd.current];
+      }
+
+      setIndices({ 
+        KOSPI: kp, 
+        KOSDAQ: kd, 
+        "S&P 500": sp, 
+        NASDAQ: nd, 
+        DOW: dow, 
+        WTI: cl 
+      });
+    } catch (err) {
+      console.error("Failed to load index data:", err);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const kospiData = await fetchKoreaIndex("0001");
-        const kosdaqData = await fetchKoreaIndex("1001");
-
-        const sp = await fetchForeignIndex("SPX");
-        const nd = await fetchForeignIndex("NDX");
-        const dw = await fetchForeignIndex("DOW");
-        const wt = await fetchForeignIndex("CL");
-
-        if (kospiData) setKospi(kospiData);
-        if (kosdaqData) setKosdaq(kosdaqData);
-
-        if(sp) setSP500(sp);
-        if(nd) setNasdaq(nd);
-        if(dw) setDow(dw);
-        if(wt) setWTI(wt);
-      } catch (err) {
-        console.error("Index load failed:", err);
-      }
+    const fetchData = async () => {
+      setLoading(true);
+      await loadData();
+      setLoading(false);
     };
 
-    load();
-    const interval = setInterval(load, 60_000);
-    return () => clearInterval(interval);
-  }, []);
+    fetchData(); // 초기 데이터 로드
 
-  // ----------------------------------------------------
-  // 🇰🇷 KOSPI/KOSDAQ 미니차트 데이터(임시/옵션)
-  // ----------------------------------------------------
-  const kospiMiniChart: number[] | undefined = kospi
-    ? kospi.miniChartData ?? [
-      kospi.current - 6,
-      kospi.current - 4,
-      kospi.current - 5,
-      kospi.current - 2,
-      kospi.current
-    ]
-    : undefined;
-
-  const kosdaqMiniChart: number[] | undefined = kosdaq
-    ? kosdaq.miniChartData ?? [
-      kosdaq.current - 3,
-      kosdaq.current - 2,
-      kosdaq.current - 1,
-      kosdaq.current + 0.5,
-      kosdaq.current
-    ]
-    : undefined;
-
-  // ----------------------------------------------------
-  // 🔹 ticker 데이터
-  // ----------------------------------------------------
-  const tickerData: any[] = [];
-
-  if (kospi)
-    tickerData.push({
-      name: "KOSPI",
-      value: kospi.current.toFixed(2),
-      percent: `${kospi.rate.toFixed(2)}%`,
-      isUp: kospi.change >= 0
-    });
-
-  if (kosdaq)
-    tickerData.push({
-      name: "KOSDAQ",
-      value: kosdaq.current.toFixed(2),
-      percent: `${kosdaq.rate.toFixed(2)}%`,
-      isUp: kosdaq.change >= 0
-    });
-
-  if (sp500)
-    tickerData.push({
-      name: "S&P500",
-      value: sp500.current.toFixed(2),
-      percent: `${sp500.rate.toFixed(2)}%`,
-      isUp: sp500.change >= 0
-    });
-
-  if (nasdaq)
-    tickerData.push({
-      name: "NASDAQ100",
-      value: nasdaq.current.toFixed(2),
-      percent: `${nasdaq.rate.toFixed(2)}%`,
-      isUp: nasdaq.change >= 0
-    });
-
-  if (dow)
-    tickerData.push({
-      name: "DOWJONES",
-      value: dow.current.toFixed(2),
-      percent: `${dow.rate.toFixed(2)}%`,
-      isUp: dow.change >= 0
-    });
-
-  if (wti)
-    tickerData.push({
-      name: "WTI",
-      value: wti.current.toFixed(2),
-      percent: `${wti.rate.toFixed(2)}%`,
-      isUp: wti.change >= 0
-    });
-
-  // ----------------------------------------------------
-  // ✅ 렌더 모드 결정
-  // ----------------------------------------------------
-  const renderTicker = !showCardsOnly; // 카드만 모드면 티커 숨김
-  const renderCards = !showTickerOnly; // 티커만 모드면 카드 숨김
+    const timer = setInterval(loadData, 60000); // 1분마다 데이터 갱신
+    return () => clearInterval(timer); // 컴포넌트 언마운트 시 타이머 정리
+  }, []); // 마운트 시 한 번만 실행
 
   return (
-    <div>
-      {/* 티커 */}
-      {renderTicker && <MarketIndexTicker indices={tickerData} />}
-
-      {/* 카드 */}
-      {renderCards && (
-        <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-          {kospi && (
-            <MarketIndexCard
-              name="KOSPI"
-              value={kospi.current.toFixed(2)}
-              change={kospi.change.toFixed(2)}
-              percent={`${kospi.rate.toFixed(2)}%`}
-              isUp={kospi.change >= 0}
-              miniChartData={kospiMiniChart}
-            />
-          )}
-
-          {kosdaq && (
-            <MarketIndexCard
-              name="KOSDAQ"
-              value={kosdaq.current.toFixed(2)}
-              change={kosdaq.change.toFixed(2)}
-              percent={`${kosdaq.rate.toFixed(2)}%`}
-              isUp={kosdaq.change >= 0}
-              miniChartData={kosdaqMiniChart}
-            />
-          )}
-
-          {sp500 && (
-            <MarketIndexCard
-              name="S&P500"
-              value={sp500.current.toFixed(2)}
-              change={sp500.change.toFixed(2)}
-              percent={`${sp500.rate.toFixed(2)}%`}
-              isUp={sp500.change >= 0}
-            />
-          )}
-
-          {nasdaq && (
-            <MarketIndexCard
-              name="NASDAQ100"
-              value={nasdaq.current.toFixed(2)}
-              change={nasdaq.change.toFixed(2)}
-              percent={`${nasdaq.rate.toFixed(2)}%`}
-              isUp={nasdaq.change >= 0}
-            />
-          )}
-
-          {dow && (
-            <MarketIndexCard
-              name="DOWJONES"
-              value={dow.current.toFixed(2)}
-              change={dow.change.toFixed(2)}
-              percent={`${dow.rate.toFixed(2)}%`}
-              isUp={dow.change >= 0}
-            />
-          )}
-
-          {wti && (
-            <MarketIndexCard
-              name="WTI"
-              value={wti.current.toFixed(2)}
-              change={wti.change.toFixed(2)}
-              percent={`${wti.rate.toFixed(2)}%`}
-              isUp={wti.change >= 0}
-            />
-          )}
-        </div>
+    <Box sx={{ bgcolor: "#0f0f12", width: "100%" }}>
+      {!showCardsOnly && (
+        <MarketIndexTicker 
+          indices={Object.entries(indices).map(([name, data]) => ({
+            name,
+            value: data?.current?.toFixed(2) || "0.00",
+            percent: `${data?.rate?.toFixed(2) || "0.00"}%`,
+            isUp: (data?.change || 0) >= 0
+          }))} 
+        />
       )}
-    </div>
+
+      {!showTickerOnly && (
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          sx={{ 
+            p: 2, 
+            overflowX: "auto",
+            "&::-webkit-scrollbar": { height: "6px" },
+            "&::-webkit-scrollbar-thumb": { bgcolor: "#333345", borderRadius: "10px" }
+          }}
+        >
+          {loading ? Array.from(new Array(6)).map((_, index) => <MarketIndexCard key={index} loading={true} />) : Object.entries(indices).map(([name, data]) => (
+            data && (
+              <MarketIndexCard
+                key={name}
+                name={name}
+                value={data.current.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                change={data.change.toFixed(2)}
+                percent={`${data.rate?.toFixed(2)}%`}
+                isUp={data.change >= 0}
+                // KOSPI, KOSDAQ은 위에서 생성한 데이터가 전달됨
+                miniChartData={data.miniChartData} 
+              />
+            )
+          ))}
+        </Stack>
+      )}
+    </Box>
   );
 }

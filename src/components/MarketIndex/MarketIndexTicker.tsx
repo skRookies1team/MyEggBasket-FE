@@ -1,4 +1,10 @@
-import "../../assets/MarketIndex/MarketIndexTicker.css";
+import { Box, Typography } from '@mui/material';
+import { keyframes } from '@mui/system';
+
+const tickerScroll = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
 
 interface MarketIndex {
   name: string;
@@ -12,22 +18,48 @@ interface Props {
 }
 
 export default function MarketIndexTicker({ indices }: Props) {
-  // 리스트를 2번 복제 → 무한 롤링 효과
   const data = [...indices, ...indices];
 
   return (
-    <div className="ticker-container">
-      <div className="ticker-track">
+    <Box
+      sx={{
+        width: "100%",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        background: "#16161e",
+        borderBottom: "1px solid #2a2a35",
+        py: 1.2,
+        position: "relative",
+      }}
+    >
+      <Box
+        sx={{
+          display: "inline-flex",
+          gap: 6,
+          animation: `${tickerScroll} 25s linear infinite`,
+          "&:hover": { animationPlayState: "paused" },
+        }}
+      >
         {data.map((item, i) => (
-          <div key={i} className="ticker-item">
-            <span className="ticker-name">{item.name}</span>
-            <span className="ticker-value">{item.value}</span>
-            <span className={`ticker-percent ${item.isUp ? "up" : "down"}`}>
+          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.85rem" }}>
+              {item.name}
+            </Typography>
+            <Typography sx={{ color: "#ffffff", fontSize: "0.85rem", opacity: 0.9 }}>
+              {item.value}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                color: item.isUp ? "#00e676" : "#ff4d6a",
+              }}
+            >
               {item.percent}
-            </span>
-          </div>
+            </Typography>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

@@ -97,7 +97,7 @@ export default function MainPage() {
           // 2) 없다면: 새 항목으로 추가
           const newItem: StockItem = {
             code: updatedStock.stockCode,
-            name: stockData?.name || updatedStock.stockCode, 
+            name: stockData?.name || updatedStock.stockCode,
             price: updatedStock.price,
             percent: updatedStock.diffRate,
             volume: updatedStock.volume,
@@ -128,7 +128,7 @@ export default function MainPage() {
       console.log("[STOMP] MainPage Connected");
       TICKERS.forEach((stockCode) => {
         requestStockSubscription(client, stockCode, (data) => {
-          updateRealtimePrice(data); 
+          updateRealtimePrice(data);
         });
       });
     };

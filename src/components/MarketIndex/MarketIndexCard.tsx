@@ -1,11 +1,6 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  YAxis,
-  XAxis,
-} from "recharts";
+import { Card, CardContent, Typography, Box } from '@mui/material';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 
 interface MarketIndexCardProps {
   name: string;
@@ -13,7 +8,7 @@ interface MarketIndexCardProps {
   change: string;
   percent: string;
   isUp: boolean;
-  miniChartData?: number[]; // optional
+  miniChartData?: number[]; // 이 데이터가 중요합니다!
 }
 
 export function MarketIndexCard({
@@ -22,103 +17,77 @@ export function MarketIndexCard({
   change,
   percent,
   isUp,
-  miniChartData,
+  miniChartData = [],
 }: MarketIndexCardProps) {
+  // 데이터가 없을 경우를 대비한 가짜 데이터 (테스트용으로 살려두려면 사용)
+  const displayData = miniChartData.length > 0 ? miniChartData : [10, 15, 8, 12, 20, 18, 25];
+  
+  const max = Math.max(...displayData);
+  const min = Math.min(...displayData);
+  const range = max - min || 1;
 
-  // miniChartData 존재 여부
-  const hasData = Array.isArray(miniChartData) && miniChartData.length > 1;
+  // SVG 좌표 계산
+  const points = displayData
+    .map((val, i) => {
+      const x = (i / (displayData.length - 1)) * 100;
+      const y = 40 - ((val - min) / range) * 35; // 높이 40px 기준
+      return `${x},${y}`;
+    })
+    .join(" ");
 
-  // -----------------------------
-  // 1) 데이터 없는 경우 placeholder
-  // -----------------------------
-  if (!hasData) {
-    return (
-      <div
-        style={{
-          border: "1px solid #e8e8e8",
-          padding: "12px",
-          borderRadius: "8px",
-          background: "#fff",
-          width: "180px",
-        }}
-      >
-        <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
-          {name}
-        </div>
-
-        <div style={{ fontSize: "24px", fontWeight: 600, marginBottom: "6px" }}>
-          {value}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
-          <span style={{ fontSize: "13px", color: isUp ? "#ff383c" : "#0066ff" }}>
-            {change} ({percent})
-          </span>
-          {isUp ? (
-            <TrendingUp size={14} color="#ff383c" style={{ marginLeft: "4px" }} />
-          ) : (
-            <TrendingDown size={14} color="#0066ff" style={{ marginLeft: "4px" }} />
-          )}
-        </div>
-
-      </div>
-    );
-  }
-
-  // -----------------------------
-  // 2) 실제 Sparkline 데이터 변환
-  // -----------------------------
-  const base = miniChartData[0];
-  const normalizedData = miniChartData.map((v, i) => ({
-    x: i,
-    y: v - base,
-  }));
+  const areaPoints = `0,40 ${points} 100,40`;
 
   return (
-    <div
-      style={{
-        border: "1px solid #e8e8e8",
-        padding: "12px",
-        borderRadius: "8px",
-        background: "#fff",
-        width: "180px",
+    <Card
+      sx={{
+        background: "linear-gradient(135deg, #1a1a24 0%, #232332 100%)",
+        border: "1px solid #2a2a35",
+        minWidth: "200px",
+        flex: 1,
+        transition: "all 0.3s ease",
+        position: "relative",
+        overflow: "hidden",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          borderColor: "#7c3aed",
+        },
       }}
     >
-      <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
-        {name}
-      </div>
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        <Typography variant="caption" sx={{ color: "#a8a8b8", fontWeight: 600, display: "block", mb: 0.5 }}>
+          {name}
+        </Typography>
+        <Typography variant="h5" sx={{ mb: 0.5, fontWeight: 700, color: "#ffffff" }}>
+          {value}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.5 }}>
+          {isUp ? <TrendingUpIcon sx={{ fontSize: 16, color: "#00e676" }} /> : <TrendingDownIcon sx={{ fontSize: 16, color: "#ff4d6a" }} />}
+          <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: isUp ? "#00e676" : "#ff4d6a" }}>
+            {change} ({percent})
+          </Typography>
+        </Box>
 
-      <div style={{ fontSize: "24px", fontWeight: 600, marginBottom: "6px" }}>
-        {value}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
-        <span style={{ fontSize: "13px", color: isUp ? "#ff383c" : "#0066ff" }}>
-          {change} ({percent})
-        </span>
-        {isUp ? (
-          <TrendingUp size={14} color="#ff383c" style={{ marginLeft: "4px" }} />
-        ) : (
-          <TrendingDown size={14} color="#0066ff" style={{ marginLeft: "4px" }} />
-        )}
-      </div>
-
-      {/* Sparkline */}
-      <div style={{ width: "100%", height: "90px", minHeight: "90px" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={normalizedData}>
-            <XAxis dataKey="x" hide />
-            <YAxis hide domain={["auto", "auto"]} />
-            <Line
-              type="monotone"
-              dataKey="y"
-              stroke={isUp ? "#ff383c" : "#0066ff"}
-              strokeWidth={2}
-              dot={false}
+        {/* 그래프 영역: 확실히 보이도록 svg 높이와 여백 조절 */}
+        <Box sx={{ mt: 1, width: '100%', height: 40 }}>
+          <svg width="100%" height="40" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ overflow: "visible" }}>
+            <defs>
+              <linearGradient id={`grad-${name}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={isUp ? "#00e676" : "#ff4d6a"} stopOpacity="0.4" />
+                <stop offset="100%" stopColor={isUp ? "#00e676" : "#ff4d6a"} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon points={areaPoints} fill={`url(#grad-${name})`} />
+            <polyline
+              points={points}
+              fill="none"
+              stroke={isUp ? "#00e676" : "#ff4d6a"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+          </svg>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }

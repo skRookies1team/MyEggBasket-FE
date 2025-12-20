@@ -26,6 +26,53 @@ export default function MarketIndexContainer({
   useEffect(() => {
     const load = async () => {
       try {
+        // [수정] Promise.all 대신 순차적으로 실행하고, 중간에 딜레이를 줍니다.
+        // 모의투자 TPS 제한(초당 2건)을 피하기 위해 하나씩 천천히 호출합니다.
+
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 1. 코스피
+        const kospiData = await fetchKoreaIndex("0001");
+        if (kospiData) setKospi(kospiData);
+        await delay(300); // 0.3초 대기
+
+        // 2. 코스닥
+        const kosdaqData = await fetchKoreaIndex("1001");
+        if (kosdaqData) setKosdaq(kosdaqData);
+        await delay(300);
+
+        // 3. S&P500
+        const sp = await fetchForeignIndex("SPX");
+        if (sp) setSP500(sp);
+        await delay(300);
+
+        // 4. 나스닥
+        const nd = await fetchForeignIndex("NDX");
+        if (nd) setNasdaq(nd);
+        await delay(300);
+
+        // 5. 다우존스
+        const dw = await fetchForeignIndex("DOW");
+        if (dw) setDow(dw);
+        await delay(300);
+
+        // 6. WTI
+        const wt = await fetchForeignIndex("CL");
+        if (wt) setWTI(wt);
+
+      } catch (err) {
+        console.error("Index load failed:", err);
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 60_000); // 1분마다 갱신
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
         const kospiData = await fetchKoreaIndex("0001");
         const kosdaqData = await fetchKoreaIndex("1001");
 

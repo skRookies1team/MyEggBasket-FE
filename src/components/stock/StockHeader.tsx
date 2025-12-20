@@ -1,4 +1,4 @@
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 
 interface StockHeaderProps {
   stockName: string;
@@ -28,55 +28,96 @@ export function StockHeader({
   acmlVol,
 }: StockHeaderProps) {
   const safeNum = (v?: number) =>
-    typeof v === 'number' && Number.isFinite(v) ? v : 0;
+    typeof v === "number" && Number.isFinite(v) ? v : 0;
 
   const isPositive = safeNum(changeAmount) >= 0;
   const ColorIcon = isPositive ? TrendingUp : TrendingDown;
-  const colorClass = isPositive ? 'text-[#ff383c]' : 'text-[#0066ff]';
+  const colorClass = isPositive ? "text-red-400" : "text-blue-400";
 
   return (
-    <div className="bg-white border-b border-[#d9d9d9] p-6">
-      <div className="max-w-[1600px] mx-auto flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-[#f3edf7] rounded-lg">
-          <ArrowLeft className="size-5" />
-        </button>
+    <header className="border-b border-[#232332] bg-gradient-to-b from-[#14141c] to-[#0a0a0f]">
+      <div className="mx-auto max-w-[1600px] px-4 py-6">
+        <div className="flex items-start gap-4">
+          {/* ===================== */}
+          {/* Back Button */}
+          {/* ===================== */}
+          <button
+            onClick={onBack}
+            className="mt-1 rounded-lg p-2 text-gray-400 transition hover:bg-[#1f1f2e] hover:text-gray-200"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
 
-        <div className="flex-1">
-          <h1 className="text-[#1e1e1e] mb-2">{stockName}</h1>
+          {/* ===================== */}
+          {/* Main Info */}
+          {/* ===================== */}
+          {/* ⬇️ Nav에 가려지지 않도록 margin-top 추가 */}
+          <div className="flex-1 mt-14 md:mt-3">
+            {/* Stock Name */}
+            <h1 className="mb-2 text-xl font-semibold text-gray-100">
+              {stockName}
+            </h1>
 
-          <div className="flex items-center gap-4">
-            <p className="text-[24px]">₩{safeNum(currentPrice).toLocaleString()}</p>
+            {/* Price & Change */}
+            <div className="flex flex-wrap items-center gap-4">
+              <p className="text-2xl font-bold text-gray-100 tabular-nums">
+                ₩{safeNum(currentPrice).toLocaleString()}
+              </p>
 
-            <div className="flex items-center gap-2">
-              <ColorIcon className={`size-5 ${colorClass}`} />
-              <span className={colorClass}>
-                {isPositive ? '+' : ''}
-                {safeNum(changeAmount).toLocaleString()} (
-                {isPositive ? '+' : ''}
-                {safeNum(changeRate)}%)
-              </span>
+              <div className={`flex items-center gap-2 ${colorClass}`}>
+                <ColorIcon className="h-5 w-5" />
+                <span className="font-medium tabular-nums">
+                  {isPositive ? "+" : ""}
+                  {safeNum(changeAmount).toLocaleString()} (
+                  {isPositive ? "+" : ""}
+                  {safeNum(changeRate)}%)
+                </span>
+              </div>
+
+              {/* LIVE */}
+              {isLive && (
+                <div className="ml-2 flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-sm text-red-400">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                  LIVE
+                  {lastUpdate && (
+                    <span className="ml-1 text-xs text-gray-400">
+                      {new Date(lastUpdate).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            {isLive && (
-              <div className="ml-4 flex items-center gap-2 text-sm text-[#4f378a]">
-                <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
-                LIVE
-                {lastUpdate && (
-                  <span className="text-[12px] text-[#666]">
-                    {new Date(lastUpdate).toLocaleTimeString()}
+            {/* Extra Info */}
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-400">
+              {askp1 !== undefined && (
+                <span>
+                  매도1:{" "}
+                  <span className="tabular-nums text-gray-300">
+                    ₩{safeNum(askp1).toLocaleString()}
                   </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-2 flex gap-4 text-[13px] text-[#49454f]">
-            {askp1 !== undefined && <span>매도1: ₩{safeNum(askp1).toLocaleString()}</span>}
-            {bidp1 !== undefined && <span>매수1: ₩{safeNum(bidp1).toLocaleString()}</span>}
-            {acmlVol !== undefined && <span>누적거래량: {safeNum(acmlVol).toLocaleString()}</span>}
+                </span>
+              )}
+              {bidp1 !== undefined && (
+                <span>
+                  매수1:{" "}
+                  <span className="tabular-nums text-gray-300">
+                    ₩{safeNum(bidp1).toLocaleString()}
+                  </span>
+                </span>
+              )}
+              {acmlVol !== undefined && (
+                <span>
+                  누적거래량:{" "}
+                  <span className="tabular-nums text-gray-300">
+                    {safeNum(acmlVol).toLocaleString()}
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

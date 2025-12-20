@@ -1,11 +1,20 @@
 import { useState } from "react";
+import {
+  Box,
+  Typography,
+  Stack,
+  Card,
+  Divider,
+} from "@mui/material";
+
 import LiveStockTabs from "../LiveStock/LiveStockTabs";
 import LiveStockTable from "../LiveStock/LiveStockTable";
 import { useFavoriteStore } from "../../store/favoriteStore";
-import Basket1 from "../../assets/icons/basket1.png"
+
+import Basket1 from "../../assets/icons/basket1.png";
 import Basket2 from "../../assets/icons/basket3.png";
 
-import type { StockItem } from "../../types/stock.ts";
+import type { StockItem } from "../../types/stock";
 
 interface Props {
   data: {
@@ -16,11 +25,12 @@ interface Props {
   };
 }
 
-export default function LiveStockPanel({data}: Props) {
-  const [category, setCategory] = useState<"volume" | "amount" | "rise" | "fall">("volume");
+export default function LiveStockPanel({ data }: Props) {
+  const [category, setCategory] =
+    useState<"volume" | "amount" | "rise" | "fall">("volume");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
-  // 관심종목
+  /* 관심종목 */
   const favorites = useFavoriteStore((s) => s.favorites);
   const favoriteCodes = favorites.map((f) => f.stockCode);
 
@@ -37,59 +47,85 @@ export default function LiveStockPanel({data}: Props) {
   const noFavorites = onlyFavorites && favoriteCodes.length === 0;
 
   return (
-    <div style={{ marginTop: "28px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h2 style={{ marginBottom: "12px" }}>실시간 종목 주가</h2>
-
-        {/* 이미지 토글 버튼 */}
-        <div
-          onClick={() => setOnlyFavorites(!onlyFavorites)}
-          style={{
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
+    <Card
+      sx={{
+        bgcolor: "#1a1a24",
+        border: "1px solid #2a2a35",
+      }}
+    >
+      <Box sx={{ p: 3 }}>
+        {/* 헤더 */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 2 }}
         >
-          <img
-            src={onlyFavorites ? Basket2 : Basket1}
-            alt="favorites toggle"
-            style={{
-              width: "40px",
-              height: "40px",
-              transition: "transform 0.2s",
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            실시간 종목 주가
+          </Typography>
+
+          {/* 관심종목 토글 */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{
+              cursor: "pointer",
+              userSelect: "none",
             }}
-          />
-          <span style={{ fontSize: "13px" }}>
-            {onlyFavorites ? "관심종목만 보는 중" : "전체 종목 보기"}
-          </span>
-        </div>
-      </div>
+            onClick={() => setOnlyFavorites(!onlyFavorites)}
+          >
+            <Box
+              component="img"
+              src={onlyFavorites ? Basket2 : Basket1}
+              alt="favorites toggle"
+              sx={{
+                width: 36,
+                height: 36,
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ color: "#b5b5c5", fontSize: "0.8rem" }}
+            >
+              {onlyFavorites
+                ? "관심종목만 보는 중"
+                : "전체 종목 보기"}
+            </Typography>
+          </Stack>
+        </Stack>
 
-      {/* 정렬 탭 */}
-      <LiveStockTabs selected={category} onChange={setCategory} />
+        <Divider sx={{ borderColor: "#2a2a35", mb: 2 }} />
 
-      {/* 관심종목 없음 텍스트 */}
-      {noFavorites ? (
-        <div
-          style={{
-            padding: "20px 0",
-            color: "#666",
-            fontSize: "14px",
-            textAlign: "center",
-          }}
-        >
-          관심종목이 없습니다. 관심종목을 추가해주세요.
-        </div>
-      ) : (
-        <LiveStockTable stocks={finalData[category]} category={category} />
-      )}
-    </div>
+        {/* 정렬 탭 */}
+        <LiveStockTabs selected={category} onChange={setCategory} />
+
+        {/* 내용 */}
+        <Box sx={{ mt: 2 }}>
+          {noFavorites ? (
+            <Box
+              sx={{
+                py: 4,
+                textAlign: "center",
+                color: "#b5b5c5",
+                fontSize: "0.9rem",
+              }}
+            >
+              관심종목이 없습니다. 관심종목을 추가해주세요.
+            </Box>
+          ) : (
+            <LiveStockTable
+              stocks={finalData[category]}
+              category={category}
+            />
+          )}
+        </Box>
+      </Box>
+    </Card>
   );
 }

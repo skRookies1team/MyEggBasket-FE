@@ -10,8 +10,6 @@ import type {
   OrderType,
 } from "../../../types/trade";
 
-import "../../../assets/Stock/OrderPanel.css";
-
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
@@ -19,7 +17,6 @@ interface OrderPanelProps {
   stockCode: string;
   currentPrice: number;
   orderBook: OrderBookData | null;
-
   virtual?: boolean; // 모의/실전
 }
 
@@ -51,10 +48,10 @@ export function OrderPanel({
 
     const payload: KisStockOrderRequest = {
       stockCode,
-      orderType,              //  BUY | SELL
+      orderType,
       quantity,
       price,
-      triggerSource: "MANUAL", //  필수 필드
+      triggerSource: "MANUAL",
     };
 
     try {
@@ -74,9 +71,9 @@ export function OrderPanel({
 
   /* ------------------ render ------------------ */
   return (
-    <div className="order-panel">
+    <div className="flex h-full flex-col gap-4">
       {/* ===================== */}
-      {/* 호가 UI */}
+      {/* OrderBook */}
       {/* ===================== */}
       {orderBook ? (
         <StockOrderBook
@@ -86,61 +83,106 @@ export function OrderPanel({
           onSelectPrice={setPrice}
         />
       ) : (
-        <div className="orderbook-empty">
+        <div className="flex h-[300px] items-center justify-center rounded-xl bg-[#0f0f17] text-sm text-gray-400">
           호가 데이터를 불러오는 중입니다.
         </div>
       )}
 
       {/* ===================== */}
-      {/* 주문 컨트롤 */}
+      {/* Order Controls */}
       {/* ===================== */}
-      <div className="order-controls">
-        <div className="order-side">
+      <div className="rounded-xl bg-[#0f0f17] p-4">
+        {/* Buy / Sell Toggle */}
+        <div className="mb-4 flex rounded-lg bg-black/30 p-1">
           <button
-            className={orderType === "BUY" ? "active buy" : ""}
             onClick={() => setOrderType("BUY")}
+            className={`
+              flex-1 rounded-md py-1.5 text-sm font-semibold transition
+              ${
+                orderType === "BUY"
+                  ? "bg-blue-500/20 text-blue-300"
+                  : "text-gray-400 hover:text-gray-200"
+              }
+            `}
           >
             매수
           </button>
           <button
-            className={orderType === "SELL" ? "active sell" : ""}
             onClick={() => setOrderType("SELL")}
+            className={`
+              flex-1 rounded-md py-1.5 text-sm font-semibold transition
+              ${
+                orderType === "SELL"
+                  ? "bg-red-500/20 text-red-300"
+                  : "text-gray-400 hover:text-gray-200"
+              }
+            `}
           >
             매도
           </button>
         </div>
 
-        <div className="order-input">
-          <label>가격</label>
+        {/* Price */}
+        <div className="mb-3">
+          <label className="mb-1 block text-xs text-gray-400">가격</label>
           <input
             type="number"
             value={price}
             onChange={(e) => setPrice(Number(e.target.value))}
+            className="
+              w-full rounded-md bg-black/30
+              px-3 py-2 text-sm text-gray-100
+              outline-none ring-1 ring-[#232332]
+              focus:ring-indigo-500
+            "
           />
         </div>
 
-        <div className="order-input">
-          <label>수량</label>
+        {/* Quantity */}
+        <div className="mb-3">
+          <label className="mb-1 block text-xs text-gray-400">수량</label>
           <input
             type="number"
             min={1}
             value={quantity}
             onChange={(e) => setQuantity(Number(e.target.value))}
+            className="
+              w-full rounded-md bg-black/30
+              px-3 py-2 text-sm text-gray-100
+              outline-none ring-1 ring-[#232332]
+              focus:ring-indigo-500
+            "
           />
         </div>
 
-        <div className="order-summary">
-          총 금액: {(price * quantity).toLocaleString()} 원
+        {/* Summary */}
+        <div className="mb-3 text-right text-sm text-gray-300">
+          총 금액:{" "}
+          <span className="font-semibold text-gray-100">
+            {(price * quantity).toLocaleString()}원
+          </span>
         </div>
 
-        {error && <div className="order-error">{error}</div>}
+        {/* Error */}
+        {error && (
+          <div className="mb-3 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+            {error}
+          </div>
+        )}
 
+        {/* Submit */}
         <button
-          className={`order-submit ${
-            orderType === "BUY" ? "buy" : "sell"
-          }`}
           onClick={handleOrder}
           disabled={loading}
+          className={`
+            w-full rounded-lg py-2.5 text-sm font-semibold transition
+            ${
+              orderType === "BUY"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-red-500 text-white hover:bg-red-600"
+            }
+            disabled:opacity-60
+          `}
         >
           {loading
             ? "주문 처리 중..."

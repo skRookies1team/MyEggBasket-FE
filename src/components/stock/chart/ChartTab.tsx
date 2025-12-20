@@ -30,14 +30,29 @@ export function ChartTab({
   });
 
   return (
-    <section className="chart-tab">
-      <ChartToolbar
-        period={period}
-        onPeriodChange={setPeriod}
-        indicators={indicators}
-        onIndicatorChange={setIndicators}
-      />
+    <section className="flex flex-col gap-4">
+      {/* ===================== */}
+      {/* Chart Toolbar */}
+      {/* ===================== */}
+      <div
+        className="
+          sticky top-0 z-20
+          rounded-2xl
+          bg-gradient-to-b from-[#1a1a24] to-[#14141c]
+          p-4 shadow
+        "
+      >
+        <ChartToolbar
+          period={period}
+          onPeriodChange={setPeriod}
+          indicators={indicators}
+          onIndicatorChange={setIndicators}
+        />
+      </div>
 
+      {/* ===================== */}
+      {/* Chart + Order Layout */}
+      {/* ===================== */}
       <ChartLayout
         period={period}
         indicators={indicators}

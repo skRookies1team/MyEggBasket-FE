@@ -1,25 +1,34 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import "../assets/LoginPage.css";
-import { useAuthStore } from "../store/authStore";  
 import axios from "axios";
+
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Stack,
+} from "@mui/material";
+
+import { useAuthStore } from "../store/authStore";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-
-  // Zustand에서 signup 함수 가져오기
   const signup = useAuthStore((state) => state.signup);
 
   const [formData, setFormData] = useState({
     email: "",
+    username: "",
     password: "",
     confirmPassword: "",
-    username: "",
     appkey: "",
     appsecret: "",
-    account: ""
+    account: "",
   });
 
+  /* ---------------- handlers ---------------- */
   const handleChange =
     (field: keyof typeof formData) =>
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -31,124 +40,156 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     if (formData.password !== formData.confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다!");
+      alert("비밀번호가 일치하지 않습니다.");
       return;
     }
 
     try {
-      console.log("회원가입 요청:", formData);
-
-      // ⭐ Zustand signup API 호출
-      await signup({
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        username: formData.username,
-        appkey: formData.appkey,
-        appsecret: formData.appsecret,
-        account: formData.account
-      });
-
-      alert("회원가입 완료!");
+      await signup(formData);
       navigate("/login");
-
     } catch (err: unknown) {
-      console.error(err);
-
       if (axios.isAxiosError(err)) {
-        const msg =
+        alert(
           err.response?.data?.message ??
-          "회원가입 중 오류가 발생했습니다.";
-
-        alert(msg);
+            "회원가입 중 오류가 발생했습니다."
+        );
       } else {
         alert("알 수 없는 오류가 발생했습니다.");
       }
     }
   };
 
+  /* ---------------- 공통 input 스타일 ---------------- */
+  const inputStyle = {
+    input: { color: "#ffffff" },
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: "#2a2a35" },
+      "&:hover fieldset": { borderColor: "#7c3aed" },
+      "&.Mui-focused fieldset": { borderColor: "#7c3aed" },
+    },
+  };
+
   return (
-    <div className="login-container">
-      <h2 className="login-title">회원가입</h2>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#0a0a0f",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* 🔹 회원가입 카드 */}
+      <Card
+        sx={{
+          width: 460,
+          bgcolor: "#1a1a24",
+          border: "1px solid #2a2a35",
+        }}
+      >
+        <CardContent sx={{ p: 4 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "#ffffff",
+              fontWeight: 700,
+              mb: 3,
+              textAlign: "center",
+            }}
+          >
+            회원가입
+          </Typography>
 
-      <div className="input-group">
-        <label>이메일</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={handleChange("email")}
-          placeholder="이메일을 입력하세요"
-        />
-      </div>
+          <Stack spacing={2}>
+            <TextField
+              label="이메일"
+              value={formData.email}
+              onChange={handleChange("email")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <div className="input-group">
-        <label>이름</label>
-        <input
-          type="text"
-          value={formData.username}
-          onChange={handleChange("username")}
-          placeholder="이름을 입력하세요"
-        />
-      </div>
+            <TextField
+              label="이름"
+              value={formData.username}
+              onChange={handleChange("username")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <div className="input-group">
-        <label>비밀번호</label>
-        <input
-          type="password"
-          value={formData.password}
-          onChange={handleChange("password")}
-          placeholder="비밀번호를 입력하세요"
-        />
-      </div>
+            <TextField
+              label="비밀번호"
+              type="password"
+              value={formData.password}
+              onChange={handleChange("password")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <div className="input-group">
-        <label>비밀번호 확인</label>
-        <input
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange("confirmPassword")}
-          placeholder="비밀번호를 다시 입력하세요"
-        />
-      </div>
+            <TextField
+              label="비밀번호 확인"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange("confirmPassword")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <div className="input-group">
-        <label>APP KEY</label>
-        <input
-          type="text"
-          value={formData.appkey}
-          onChange={handleChange("appkey")}
-          placeholder="한국투자증권 APP_KEY"
-        />
-      </div>
+            <TextField
+              label="APP KEY (한국투자증권)"
+              value={formData.appkey}
+              onChange={handleChange("appkey")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <div className="input-group">
-        <label>APP SECRET</label>
-        <input
-          type="password"
-          value={formData.appsecret}
-          onChange={handleChange("appsecret")}
-          placeholder="한국투자증권 APP_SECRET"
-        />
-      </div>
+            <TextField
+              label="APP SECRET (한국투자증권)"
+              type="password"
+              value={formData.appsecret}
+              onChange={handleChange("appsecret")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      
-      <div className="input-group">
-        <label>계좌번호</label>
-        <input
-          type="text"
-          value={formData.account}
-          onChange={handleChange("account")}
-          placeholder="한국투자증권 계좌번호"
-        />
-      </div>
+            <TextField
+              label="계좌번호"
+              value={formData.account}
+              onChange={handleChange("account")}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={inputStyle}
+            />
 
-      <button className="login-btn" onClick={handleSignup}>
-        회원가입
-      </button>
+            <Button
+              variant="contained"
+              onClick={handleSignup}
+              sx={{
+                mt: 1,
+                bgcolor: "#7c3aed",
+                fontWeight: 600,
+                "&:hover": { bgcolor: "#6d28d9" },
+              }}
+            >
+              회원가입
+            </Button>
 
-      <button className="link-btn" onClick={() => navigate("/login")}>
-        이미 계정이 있으신가요? 로그인하기
-      </button>
-    </div>
+            <Button
+              variant="text"
+              sx={{ color: "#b5b5c5" }}
+              onClick={() => navigate("/login")}
+            >
+              이미 계정이 있으신가요? 로그인하기
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }

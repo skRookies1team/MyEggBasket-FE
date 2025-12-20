@@ -1,159 +1,138 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import "../assets/LoginPage.css";
 import axios from "axios";
-import { useAuthStore } from "../store/authStore"; 
+
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Stack
+} from "@mui/material";
+
+import { useAuthStore } from "../store/authStore";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-
-  // Zustand login 함수 가져오기
   const login = useAuthStore((state) => state.login);
-
-  const [showFindPassword, setShowFindPassword] = useState(false);
 
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
 
-  const [findPasswordData, setFindPasswordData] = useState({
-    userId: "",
-    email: "",
-  });
-
-  // 로그인 input 핸들러
+  /* ---------------- handlers ---------------- */
   const handleLoginChange =
     (field: keyof typeof loginData) =>
     (e: ChangeEvent<HTMLInputElement>) => {
       setLoginData({ ...loginData, [field]: e.target.value });
     };
 
-  // 비밀번호 찾기 input 핸들러
-  const handleFindPasswordChange =
-    (field: keyof typeof findPasswordData) =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setFindPasswordData({ ...findPasswordData, [field]: e.target.value });
-    };
-
-  // Enter 키 입력 시 로그인 처리
   const handleEnter = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    if (e.key === "Enter") handleLogin();
   };
 
   const handleLogin = async () => {
     try {
-      console.log("로그인 요청:", loginData);
-
-      await login({
-        email: loginData.email,
-        password: loginData.password,
-      });
-
-      alert("로그인 성공!");
+      await login(loginData);
       navigate("/");
-
-        } catch (err: unknown) {
-            console.error(err);
-
-            if (axios.isAxiosError(err)) {
-                const msg =
-                    err.response?.data?.message ??
-                    "로그인 중 오류가 발생했습니다.";
-                alert(msg);
-            } else {
-                alert("알 수 없는 오류가 발생했습니다.");
-            }
-        }
-  };
-
-  const handleFindPassword = () => {
-    console.log("비밀번호 찾기 요청:", findPasswordData);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        alert(err.response?.data?.message ?? "로그인 실패");
+      } else {
+        alert("알 수 없는 오류가 발생했습니다.");
+      }
+    }
   };
 
   return (
-    <div className="login-container">
-      <h2 className="login-title">로그인</h2>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#0a0a0f",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* 로그인 카드 */}
+      <Card
+        sx={{
+          width: 420,
+          bgcolor: "#1a1a24",
+          border: "1px solid #2a2a35",
+        }}
+      >
+        <CardContent sx={{ p: 4 }}>
+          <Typography
+            variant="h5"
+            sx={{ color: "#ffffff", fontWeight: 700, mb: 3, textAlign: "center" }}
+          >
+            로그인
+          </Typography>
 
-      {/* 이메일 */}
-      <div className="input-group">
-        <label>이메일</label>
-        <input
-          type="text"
-          value={loginData.email}
-          onChange={handleLoginChange("email")}
-          placeholder="이메일을 입력하세요"
-          onKeyDown={handleEnter} // Enter 키 이벤트 핸들러 추가
-        />
-      </div>
+          <Stack spacing={2}>
+            <TextField
+              label="이메일"
+              value={loginData.email}
+              onChange={handleLoginChange("email")}
+              onKeyDown={handleEnter}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={{
+                input: { color: "#ffffff" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#2a2a35" },
+                  "&:hover fieldset": { borderColor: "#7c3aed" },
+                  "&.Mui-focused fieldset": { borderColor: "#7c3aed" },
+                },
+              }}
+            />
 
-      {/* 비밀번호 */}
-      <div className="input-group">
-        <label>비밀번호</label>
-        <input
-          type="password"
-          value={loginData.password}
-          onChange={handleLoginChange("password")}
-          placeholder="비밀번호를 입력하세요"
-          onKeyDown={handleEnter} // Enter 키 이벤트 핸들러 추가
-        />
-      </div>
+            <TextField
+              label="비밀번호"
+              type="password"
+              value={loginData.password}
+              onChange={handleLoginChange("password")}
+              onKeyDown={handleEnter}
+              fullWidth
+              InputLabelProps={{ style: { color: "#ffffff" } }}
+              sx={{
+                input: { color: "#ffffff" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#2a2a35" },
+                  "&:hover fieldset": { borderColor: "#7c3aed" },
+                  "&.Mui-focused fieldset": { borderColor: "#7c3aed" },
+                },
+              }}
+            />
 
-      {/* 로그인 버튼 */}
-      <button className="login-btn" onClick={handleLogin}>
-        로그인
-      </button>
+            <Button
+              variant="contained"
+              onClick={handleLogin}
+              sx={{
+                mt: 1,
+                bgcolor: "#7c3aed",
+                fontWeight: 600,
+                "&:hover": { bgcolor: "#6d28d9" },
+              }}
+            >
+              로그인
+            </Button>
 
-      <button className="link-btn" onClick={() => setShowFindPassword(true)}>
-        비밀번호 찾기
-      </button>
+            <Button
+              variant="text"
+              sx={{ color: "#b5b5c5" }}
+              onClick={() => navigate("/signup")}
+            >
+              아직 회원이 아닌가요? 가입하기
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <button className="link-btn" onClick={() => navigate("/signup")}>
-        아직 회원이 아닌가요? 가입하기
-      </button>
-
-      {/* 비밀번호 찾기 모달 */}
-      {showFindPassword && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2>비밀번호 찾기</h2>
-
-            <div className="input-group">
-              <label>아이디</label>
-              <input
-                type="text"
-                value={findPasswordData.userId}
-                onChange={handleFindPasswordChange("userId")}
-                placeholder="아이디를 입력하세요"
-              />
-            </div>
-
-            <div className="input-group">
-              <label>이메일</label>
-              <input
-                type="email"
-                value={findPasswordData.email}
-                onChange={handleFindPasswordChange("email")}
-                placeholder="이메일을 입력하세요"
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="modal-btn cancel"
-                onClick={() => setShowFindPassword(false)}
-              >
-                취소
-              </button>
-              <button className="modal-btn ok" onClick={handleFindPassword}>
-                찾기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 }

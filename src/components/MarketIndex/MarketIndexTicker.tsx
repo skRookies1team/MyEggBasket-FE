@@ -1,4 +1,12 @@
-import "../../assets/MarketIndex/MarketIndexTicker.css";
+import { Box, Typography } from "@mui/material";
+import { keyframes } from "@mui/system";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+
+const tickerScroll = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
 
 interface MarketIndex {
   name: string;
@@ -12,22 +20,79 @@ interface Props {
 }
 
 export default function MarketIndexTicker({ indices }: Props) {
-  // 리스트를 2번 복제 → 무한 롤링 효과
+  if (!indices || indices.length === 0) return null;
+
   const data = [...indices, ...indices];
 
   return (
-    <div className="ticker-container">
-      <div className="ticker-track">
-        {data.map((item, i) => (
-          <div key={i} className="ticker-item">
-            <span className="ticker-name">{item.name}</span>
-            <span className="ticker-value">{item.value}</span>
-            <span className={`ticker-percent ${item.isUp ? "up" : "down"}`}>
-              {item.percent}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: "fixed",
+        top: "64px",
+        left: 0,
+        width: "100%",
+        zIndex: 1100,
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        background: "#16161e",
+        borderBottom: "1px solid #2a2a35",
+        py: 1.2,
+      }}
+    >
+      <Box
+        sx={{
+          display: "inline-flex",
+          gap: 6,
+          minWidth: "200%",
+          animation: `${tickerScroll} 25s linear infinite`,
+          "&:hover": { animationPlayState: "paused" },
+        }}
+      >
+        {data.map((item, i) => {
+          const color = item.isUp ? "#ff4d6a" : "#00e676";
+
+          return (
+            <Box
+              key={i}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                minWidth: "max-content",
+              }}
+            >
+              {/* 지수명 */}
+              <Typography sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.85rem" }}>
+                {item.name}
+              </Typography>
+
+              {/* 현재가 */}
+              <Typography sx={{ color: "#ffffff", fontSize: "0.85rem", opacity: 0.9 }}>
+                {item.value}
+              </Typography>
+
+              {/*상승 / 하락 아이콘 + 퍼센트 */}
+              <Box sx={{ display: "flex", alignItems: "center", color }}>
+                {item.isUp ? (
+                  <ArrowDropUpIcon sx={{ fontSize: 20, mt: "-2px" }} />
+                ) : (
+                  <ArrowDropDownIcon sx={{ fontSize: 20, mt: "-2px" }} />
+                )}
+
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    color,
+                  }}
+                >
+                  {item.percent}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
   );
 }

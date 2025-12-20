@@ -13,11 +13,9 @@ import { useHoldingStore, usePortfolioStore } from "../store/historyStore";
 
 import { ProtfolioSummary } from "../components/Portfolio/PortfolioSummary";
 import { PortfolioCharts } from "../components/Portfolio/PortfolioCharts";
-import  StockTrendCard  from "../components/Portfolio/ProtfolioStockTrendCard";
+import StockTrendCard from "../components/Portfolio/ProtfolioStockTrendCard";
 import { PortfolioStockList } from "../components/Portfolio/PortfolioStockList";
 import { AddPortfolioModal } from "../components/Portfolio/AddPortfolioModal";
-
-import "../assets/PortfolioPage.css";
 
 export function PortfolioPage() {
   /* =========================
@@ -113,13 +111,12 @@ export function PortfolioPage() {
   }, [balanceData, holdings]);
 
   /* =========================
-     차트 데이터
+     종목 비중 차트
   ========================= */
-  
   const stockCompositionData = useMemo(() => {
-    if (!holdings) return [];
-
     const valid = holdings.filter((h) => h.quantity > 0);
+    if (valid.length === 0) return [];
+
     const sorted = [...valid].sort(
       (a, b) => b.avgPrice * b.quantity - a.avgPrice * a.quantity
     );
@@ -129,14 +126,16 @@ export function PortfolioPage() {
       .slice(4)
       .reduce((sum, h) => sum + h.avgPrice * h.quantity, 0);
 
+    const COLORS = ["#ff383c", "#4f378a", "#00b050", "#ffa500"];
+
     const data = top.map((h, i) => ({
       name: h.stock.name,
       value: h.avgPrice * h.quantity,
-      color: ["#ff383c", "#4f378a", "#00b050", "#ffa500"][i % 4],
+      color: COLORS[i % COLORS.length],
     }));
 
     if (otherValue > 0) {
-      data.push({ name: "기타", value: otherValue, color: "#d9d9d9" });
+      data.push({ name: "기타", value: otherValue, color: "#9ca3af" });
     }
 
     return data;
@@ -177,7 +176,7 @@ export function PortfolioPage() {
         Object.entries(sectorMap).map(([name, value], i) => ({
           name,
           value,
-          color: name === "기타" ? "#d9d9d9" : COLORS[i % COLORS.length],
+          color: name === "기타" ? "#9ca3af" : COLORS[i % COLORS.length],
         }))
       );
     };
@@ -186,7 +185,7 @@ export function PortfolioPage() {
   }, [holdings]);
 
   /* =========================
-     포트폴리오 추가
+     포트폴리오 추가 / 삭제
   ========================= */
   const addNewPortfolio = async (data: {
     name: string;
@@ -237,48 +236,66 @@ export function PortfolioPage() {
      Render
   ========================= */
   return (
-    <div className="portfolio-container">
-      <div className="portfolio-wrapper">
-        {/* Header */}
-        <div className="portfolio-header">
-          <h1 className="portfolio-title">AI 추천 포트폴리오</h1>
+    <div className="min-h-screen bg-[#0a0a0f] px-4 pt-16 pb-6">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="flex flex-col gap-3 rounded-2xl
+                        bg-gradient-to-b from-[#1a1a24] to-[#14141c]
+                        p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]
+                        sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-lg font-semibold tracking-wide text-indigo-300">
+            AI 추천 포트폴리오
+          </h1>
+
           <button
             onClick={() => setShowAddPortfolio(true)}
-            className="btn-add-portfolio"
+            className="flex items-center justify-center gap-2
+                       rounded-lg bg-indigo-500 px-4 py-2
+                       text-sm font-semibold text-white
+                       hover:bg-indigo-600 transition"
           >
-            <Plus size={16} /> 새 포트폴리오 추가
+            <Plus size={16} />
+            포트폴리오 추가
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="portfolio-tabs">
+        <div className="flex flex-wrap gap-2">
           {portfolios.map((p) => (
-            <div key={p.portfolioId} className="tab-item">
+            <div
+              key={p.portfolioId}
+              className="flex items-center gap-1 rounded-lg
+                         bg-[#14141c] px-2 py-1"
+            >
               <button
-                className={`btn-tab ${
-                  activePortfolioId === p.portfolioId ? "active" : ""
-                }`}
                 onClick={async () => {
                   setActivePortfolioId(p.portfolioId);
                   await fetchHoldings(p.portfolioId);
                 }}
+                className={`rounded-md px-3 py-1 text-sm transition
+                  ${
+                    activePortfolioId === p.portfolioId
+                      ? "bg-indigo-500/20 text-indigo-300"
+                      : "text-gray-400 hover:text-gray-200"
+                  }`}
               >
                 {p.name}
               </button>
+
               {portfolios.length > 1 && (
                 <button
-                  className="btn-remove-tab"
                   onClick={() => removePortfolio(p.portfolioId)}
+                  className="rounded-md p-1 hover:bg-red-500/10"
                 >
-                  <X size={12} color="#ff383c" />
+                  <X size={12} className="text-red-400" />
                 </button>
               )}
             </div>
           ))}
         </div>
 
+        {/* Content */}
         {activePortfolio && (
-          <div className="animate-in">
+          <div className="space-y-8">
             <ProtfolioSummary assetData={myAssets} loading={loading} />
 
             <PortfolioCharts
@@ -286,19 +303,19 @@ export function PortfolioPage() {
               sectorData={sectorCompositionData}
             />
 
-            <div className="section-card">
-              <div className="section-header">
-                <TrendingUp size={18} />
-                <h3 className="section-title">내 보유 주식 추이</h3>
+            <div className="rounded-2xl bg-gradient-to-b
+                            from-[#1a1a24] to-[#14141c]
+                            p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+              <div className="mb-5 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-indigo-400" />
+                <h3 className="text-sm font-semibold tracking-wide text-indigo-300">
+                  내 보유 주식 추이
+                </h3>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                  gap: "24px",
-                }}
-              >
+              <div className="grid grid-cols-1 gap-6
+                              sm:grid-cols-2
+                              lg:grid-cols-3">
                 {holdings
                   .filter((h) => h.quantity > 0)
                   .map((h) => (

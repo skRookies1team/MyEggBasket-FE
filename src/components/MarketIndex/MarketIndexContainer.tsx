@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { Box, Stack } from "@mui/material";
 import { MarketIndexCard } from "../MarketIndex/MarketIndexCard";
 import MarketIndexTicker from "../MarketIndex/MarketIndexTicker";
-
 import { fetchKoreaIndex, fetchForeignIndex } from "../../api/indexApi";
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 
 export default function MarketIndexContainer({
   showTickerOnly = false,
-  showCardsOnly = false
+  showCardsOnly = false,
 }: Props) {
   // 국내 지수
   const [kospi, setKospi] = useState<any>(null);
@@ -36,11 +36,10 @@ export default function MarketIndexContainer({
 
         if (kospiData) setKospi(kospiData);
         if (kosdaqData) setKosdaq(kosdaqData);
-
-        if(sp) setSP500(sp);
-        if(nd) setNasdaq(nd);
-        if(dw) setDow(dw);
-        if(wt) setWTI(wt);
+        if (sp) setSP500(sp);
+        if (nd) setNasdaq(nd);
+        if (dw) setDow(dw);
+        if (wt) setWTI(wt);
       } catch (err) {
         console.error("Index load failed:", err);
       }
@@ -51,96 +50,95 @@ export default function MarketIndexContainer({
     return () => clearInterval(interval);
   }, []);
 
-  // ----------------------------------------------------
-  // 🇰🇷 KOSPI/KOSDAQ 미니차트 데이터(임시/옵션)
-  // ----------------------------------------------------
-  const kospiMiniChart: number[] | undefined = kospi
+  /* 🇰🇷 KOSPI / KOSDAQ 미니 차트 */
+  const kospiMiniChart = kospi
     ? kospi.miniChartData ?? [
-      kospi.current - 6,
-      kospi.current - 4,
-      kospi.current - 5,
-      kospi.current - 2,
-      kospi.current
-    ]
+        kospi.current - 6,
+        kospi.current - 4,
+        kospi.current - 5,
+        kospi.current - 2,
+        kospi.current,
+      ]
     : undefined;
 
-  const kosdaqMiniChart: number[] | undefined = kosdaq
+  const kosdaqMiniChart = kosdaq
     ? kosdaq.miniChartData ?? [
-      kosdaq.current - 3,
-      kosdaq.current - 2,
-      kosdaq.current - 1,
-      kosdaq.current + 0.5,
-      kosdaq.current
-    ]
+        kosdaq.current - 3,
+        kosdaq.current - 2,
+        kosdaq.current - 1,
+        kosdaq.current + 0.5,
+        kosdaq.current,
+      ]
     : undefined;
 
-  // ----------------------------------------------------
-  // 🔹 ticker 데이터
-  // ----------------------------------------------------
-  const tickerData: any[] = [];
-
-  if (kospi)
-    tickerData.push({
+  /* ticker 데이터 */
+  const tickerData = [
+    kospi && {
       name: "KOSPI",
       value: kospi.current.toFixed(2),
       percent: `${kospi.rate.toFixed(2)}%`,
-      isUp: kospi.change >= 0
-    });
-
-  if (kosdaq)
-    tickerData.push({
+      isUp: kospi.change >= 0,
+    },
+    kosdaq && {
       name: "KOSDAQ",
       value: kosdaq.current.toFixed(2),
       percent: `${kosdaq.rate.toFixed(2)}%`,
-      isUp: kosdaq.change >= 0
-    });
-
-  if (sp500)
-    tickerData.push({
+      isUp: kosdaq.change >= 0,
+    },
+    sp500 && {
       name: "S&P500",
       value: sp500.current.toFixed(2),
       percent: `${sp500.rate.toFixed(2)}%`,
-      isUp: sp500.change >= 0
-    });
-
-  if (nasdaq)
-    tickerData.push({
+      isUp: sp500.change >= 0,
+    },
+    nasdaq && {
       name: "NASDAQ100",
       value: nasdaq.current.toFixed(2),
       percent: `${nasdaq.rate.toFixed(2)}%`,
-      isUp: nasdaq.change >= 0
-    });
-
-  if (dow)
-    tickerData.push({
+      isUp: nasdaq.change >= 0,
+    },
+    dow && {
       name: "DOWJONES",
       value: dow.current.toFixed(2),
       percent: `${dow.rate.toFixed(2)}%`,
-      isUp: dow.change >= 0
-    });
-
-  if (wti)
-    tickerData.push({
+      isUp: dow.change >= 0,
+    },
+    wti && {
       name: "WTI",
       value: wti.current.toFixed(2),
       percent: `${wti.rate.toFixed(2)}%`,
-      isUp: wti.change >= 0
-    });
+      isUp: wti.change >= 0,
+    },
+  ].filter(Boolean) as any[];
 
-  // ----------------------------------------------------
-  // ✅ 렌더 모드 결정
-  // ----------------------------------------------------
-  const renderTicker = !showCardsOnly; // 카드만 모드면 티커 숨김
-  const renderCards = !showTickerOnly; // 티커만 모드면 카드 숨김
+  const renderTicker = !showCardsOnly;
+  const renderCards = !showTickerOnly;
 
   return (
-    <div>
-      {/* 티커 */}
+    <Box sx={{ width: "100%" }}>
+      {/* 🔹 Ticker */}
       {renderTicker && <MarketIndexTicker indices={tickerData} />}
 
-      {/* 카드 */}
+      {/* 🔹 Cards */}
       {renderCards && (
-        <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            mt: 2,
+            p: 2,
+            bgcolor: "#0a0a0f",
+            overflowX: "auto",
+
+            "&::-webkit-scrollbar": {
+              height: "6px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              bgcolor: "#2a2a35",
+              borderRadius: "10px",
+            },
+          }}
+        >
           {kospi && (
             <MarketIndexCard
               name="KOSPI"
@@ -202,8 +200,8 @@ export default function MarketIndexContainer({
               isUp={wti.change >= 0}
             />
           )}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Box>
   );
 }

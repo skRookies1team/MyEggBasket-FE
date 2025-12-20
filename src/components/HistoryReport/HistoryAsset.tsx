@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useHistoryStore, useHoldingStore, usePortfolioStore } from '../../store/historyStore';
+import { useEffect, useState } from "react";
+import {
+  useHistoryStore,
+  useHoldingStore,
+  usePortfolioStore,
+} from "../../store/historyStore";
 
 import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
 
-import HistoryReport from './HistoryReport';
-import { DollarSign } from 'lucide-react';
-import type { Portfolio } from '../../types/portfolios';
-import { fetchStockCurrentPrice } from '../../api/liveStockApi';
+import HistoryReport from "./HistoryReport";
+import { DollarSign } from "lucide-react";
+import type { Portfolio } from "../../types/portfolios";
+import { fetchStockCurrentPrice } from "../../api/liveStockApi";
 
 interface Props {
   portfolioId: number | null;
@@ -17,6 +21,9 @@ interface HoldingStockRowProps {
   holdingStock: any;
 }
 
+/* =========================
+   개별 종목 Row
+========================= */
 function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
   const [stockData, setStockData] = useState<{
     currentPrice: number;
@@ -26,58 +33,99 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
 
   useEffect(() => {
     async function getStockData() {
-      const data = await fetchStockCurrentPrice(holdingStock.stock.stockCode);
+      const data = await fetchStockCurrentPrice(
+        holdingStock.stock.stockCode
+      );
       if (data) {
         const currentPrice = data.currentPrice;
-        const profit = (currentPrice - holdingStock.avgPrice) * holdingStock.quantity;
-        const rate = holdingStock.avgPrice > 0 ? ((currentPrice - holdingStock.avgPrice) / holdingStock.avgPrice) * 100 : 0;
+        const profit =
+          (currentPrice - holdingStock.avgPrice) *
+          holdingStock.quantity;
+        const rate =
+          holdingStock.avgPrice > 0
+            ? ((currentPrice - holdingStock.avgPrice) /
+                holdingStock.avgPrice) *
+              100
+            : 0;
         setStockData({ currentPrice, profit, rate });
       }
     }
+
     getStockData();
-
-    const intervalId = setInterval(getStockData, 1000); // 1초마다 데이터 갱신
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    const id = setInterval(getStockData, 1000);
+    return () => clearInterval(id);
   }, [holdingStock]);
 
   if (!stockData) {
     return (
-      <tr className="border-b border-[#f3edf7]">
-        <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
-        <td colSpan={5} className="py-3 px-4 text-center text-gray-500">현재가 불러오는 중...</td>
+      <tr className="border-b border-[#232332]">
+        <td className="px-4 py-3 text-gray-300 whitespace-nowrap">
+          {holdingStock.stock.name}
+        </td>
+        <td
+          colSpan={5}
+          className="px-4 py-3 text-center text-gray-500"
+        >
+          현재가 불러오는 중...
+        </td>
       </tr>
     );
   }
 
   const { currentPrice, profit, rate } = stockData;
+  const color =
+    profit > 0
+      ? "text-red-400"
+      : profit < 0
+      ? "text-green-400"
+      : "text-gray-300";
 
   return (
-    <tr className="border-b border-[#f3edf7] hover:bg-[#f3edf7]/50 transition-colors">
-      <td className="py-3 px-4 text-[#1e1e1e]">{holdingStock.stock.name}</td>
-      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.quantity}</td>
-      <td className="py-3 px-4 text-right text-[#49454f]">{holdingStock.avgPrice.toLocaleString()}원</td>
-      <td className="py-3 px-4 text-right text-[#1e1e1e]">{currentPrice.toLocaleString()}원</td>
-      <td className={`py-3 px-4 text-right font-medium ${profit > 0 ? 'text-red-500' : profit < 0 ? 'text-blue-600' : 'text-gray-800'}`}>{profit > 0 ? '+' : ''}{profit.toLocaleString()}원</td>
-      <td className={`py-3 px-4 text-right font-medium ${rate > 0 ? 'text-red-500' : rate < 0 ? 'text-blue-600' : 'text-gray-800'}`}>{rate > 0 ? '+' : ''}{rate.toFixed(2)}%</td>
+    <tr className="border-b border-[#232332] hover:bg-[#1f1f2e] transition">
+      {/* 종목명 */}
+      <td className="px-4 py-3 text-gray-200 whitespace-nowrap">
+        {holdingStock.stock.name}
+      </td>
+
+      {/* 보유수량 */}
+      <td className="px-4 py-3 text-right text-gray-400 tabular-nums whitespace-nowrap min-w-[80px]">
+        {holdingStock.quantity.toLocaleString()}
+      </td>
+
+      {/* 매입가 */}
+      <td className="px-4 py-3 text-right text-gray-400 tabular-nums whitespace-nowrap min-w-[100px]">
+        {holdingStock.avgPrice.toLocaleString()}원
+      </td>
+
+      {/* 현재가 */}
+      <td className="px-4 py-3 text-right text-gray-200 tabular-nums whitespace-nowrap min-w-[100px]">
+        {currentPrice.toLocaleString()}원
+      </td>
+
+
+      {/* 수익률 */}
+      <td className={`px-4 py-3 text-right font-medium tabular-nums whitespace-nowrap min-w-[90px] ${color}`}>
+        {rate > 0 ? "+" : ""}
+        {rate.toFixed(2)}%
+      </td>
     </tr>
   );
 }
 
+/* =========================
+   메인 컴포넌트
+========================= */
 export default function HistoryAsset({ portfolioId }: Props) {
-
-  const portfolios = usePortfolioStore((state) => state.portfolioList);
+  const portfolios = usePortfolioStore((s) => s.portfolioList);
   const portfolio: Portfolio | undefined = portfolios.find(
     (p) => p.portfolioId === portfolioId
   );
 
-  const history = useHistoryStore((state) => state.historyReport);
-  const fetchHistory = useHistoryStore((state) => state.fetchHistory);
+  const history = useHistoryStore((s) => s.historyReport);
+  const fetchHistory = useHistoryStore((s) => s.fetchHistory);
 
-  const holdings = useHoldingStore((state) => state.holdingList);
-  const fetchHoldings = useHoldingStore((state) => state.fetchHoldings);
+  const holdings = useHoldingStore((s) => s.holdingList);
+  const fetchHoldings = useHoldingStore((s) => s.fetchHoldings);
 
   const [totalStockValue, setTotalStockValue] = useState(0);
 
@@ -89,104 +137,120 @@ export default function HistoryAsset({ portfolioId }: Props) {
   }, [portfolioId, fetchHistory, fetchHoldings]);
 
   useEffect(() => {
-    const calculateTotalValue = async () => {
-      if (holdings.length > 0) {
-        const promises = holdings.map(stock => fetchStockCurrentPrice(stock.stock.stockCode));
-        const results = await Promise.all(promises);
-
-        const totalValue = results.reduce((sum, data, index) => {
-          const currentPrice = data?.currentPrice ?? 0;
-          const quantity = holdings[index].quantity;
-          return sum + (currentPrice * quantity);
-        }, 0);
-
-        setTotalStockValue(totalValue);
-      } else {
+    const calc = async () => {
+      if (holdings.length === 0) {
         setTotalStockValue(0);
+        return;
       }
+
+      const prices = await Promise.all(
+        holdings.map((h) =>
+          fetchStockCurrentPrice(h.stock.stockCode)
+        )
+      );
+
+      const total = prices.reduce((sum, p, i) => {
+        const price = p?.currentPrice ?? 0;
+        return sum + price * holdings[i].quantity;
+      }, 0);
+
+      setTotalStockValue(total);
     };
 
-    calculateTotalValue();
+    calc();
   }, [holdings]);
 
   if (!portfolio) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="rounded-xl bg-[#1a1a24] p-6 text-center text-gray-400">
         포트폴리오 정보를 불러오는 중입니다...
       </div>
     );
   }
 
   const successRate = history?.successRate ?? null;
-
-  let eggIcon = null;
-  if (successRate !== null) {
-    eggIcon =
-      successRate >= 10 ? (
-        <img src={Egg1} alt="Good Egg" className="w-8 h-8 ml-2" />
-      ) : (
-        <img src={Egg2} alt="Bad Egg" className="w-8 h-8 ml-2" />
-      );
-  }
+  const eggIcon =
+    successRate !== null ? (
+      <img
+        src={successRate >= 10 ? Egg1 : Egg2}
+        className="ml-2 h-7 w-7"
+        alt="egg"
+      />
+    ) : null;
 
   return (
-    <div className="flex space-x-4">
-      <div className="w-1/2 text-white">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="border-b pb-4 mb-4">
-            <div className="flex items-center">
-              <h2 className="text-2xl font-bold text-gray-800">{portfolio.name}</h2>
-              {eggIcon}
-            </div>
-            <p className="text-sm text-gray-500 mt-1">
-              위험 수준:{' '}
-              <span className="font-semibold text-blue-600">
-                {portfolio.riskLevel}
-              </span>
-            </p>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* ---------- LEFT ---------- */}
+      <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+        <div className="mb-4 border-b border-[#232332] pb-4">
+          <div className="flex items-center">
+            <h2 className="text-xl font-semibold text-gray-100">
+              {portfolio.name}
+            </h2>
+            {eggIcon}
           </div>
+          <p className="mt-1 text-sm text-gray-400">
+            위험 수준:
+            <span className="ml-1 font-semibold text-indigo-400">
+              {portfolio.riskLevel}
+            </span>
+          </p>
+        </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
-              <p className="text-gray-600">주식 현재 평가 금액</p>
-              <p className="text-lg font-bold text-gray-800">
-                {totalStockValue.toLocaleString()}원
-              </p>
-            </div>
-          </div>
-          <hr className="h-px my-8 bg-gray-300 border-0" />
-          <div className="mt-6">
-            <HistoryReport history={history} />
-          </div>
+        <div className="rounded-lg bg-[#1f1f2e] p-4">
+          <p className="text-sm text-gray-400">
+            주식 현재 평가 금액
+          </p>
+          <p className="mt-1 text-lg font-bold text-gray-100">
+            {totalStockValue.toLocaleString()}원
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <HistoryReport history={history} />
         </div>
       </div>
-      <div className="w-1/2 text-white">
-        {/* RQ-45: 주식 건당 수익 */}
-        <section className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="size-5 text-[#4f378a]" />
-            <h2 className="text-2xl font-bold text-gray-800">종목별 수익 현황</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#e8e8e8]">
-                  <th className="text-left py-3 px-4 text-[#49454f] text-[13px]">종목명</th>
-                  <th className="text-right py-3 px-4 text-[#49454f] text-[13px]">보유수량</th>
-                  <th className="text-right py-3 px-4 text-[#49454f] text-[13px]">매입가</th>
-                  <th className="text-right py-3 px-4 text-[#49454f] text-[13px]">현재가</th>
-                  <th className="text-right py-3 px-4 text-[#49454f] text-[13px]">수익금액</th>
-                  <th className="text-right py-3 px-4 text-[#49454f] text-[13px]">수익률</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holdings.map((holdingStock) => (
-                  <HoldingStockRow key={holdingStock.stock.stockCode} holdingStock={holdingStock} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+
+      {/* ---------- RIGHT ---------- */}
+      <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+        <div className="mb-4 flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-indigo-400" />
+          <h2 className="text-lg font-semibold text-gray-100">
+            종목별 수익 현황
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#232332] text-gray-400">
+                <th className="px-4 py-3 text-left whitespace-nowrap">
+                  종목명
+                </th>
+                <th className="px-4 py-3 text-right min-w-[80px] whitespace-nowrap">
+                  보유수량
+                </th>
+                <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap">
+                  매입가
+                </th>
+                <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap">
+                  현재가
+                </th>
+                <th className="px-4 py-3 text-right min-w-[90px] whitespace-nowrap">
+                  수익률
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {holdings.map((h) => (
+                <HoldingStockRow
+                  key={h.stock.stockCode}
+                  holdingStock={h}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

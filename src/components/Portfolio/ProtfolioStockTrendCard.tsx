@@ -44,21 +44,18 @@ export default function StockTrendCard({
 
         if (!mounted) return;
 
-        /* ---------- 차트 데이터 ---------- */
         if (history && history.length > 0) {
           const normalized = [...history]
-            // 과거 → 최신 정렬
             .sort(
               (a, b) =>
-                new Date(a.time).getTime() - new Date(b.time).getTime()
+                new Date(a.time).getTime() -
+                new Date(b.time).getTime()
             )
-            // 타입 보정
             .map((d) => ({
               ...d,
               time: String(d.time),
-              close: Number(d.close), // ✅ 핵심
+              close: Number(d.close),
             }))
-            // 최근 30일
             .slice(-30);
 
           setChartData(normalized);
@@ -66,7 +63,6 @@ export default function StockTrendCard({
           setChartData([]);
         }
 
-        /* ---------- 현재가 ---------- */
         if (current) {
           setCurrentPrice(current.currentPrice);
           setChangeRate(current.changeRate);
@@ -92,55 +88,33 @@ export default function StockTrendCard({
   const isUp = changeRate >= 0;
   const isProfit = profit >= 0;
 
-  const lineColor = isUp ? "#ff383c" : "#0066ff";
-  const profitColor = isProfit ? "#ff383c" : "#0066ff";
+  const lineColor = isUp ? "#ff383c" : "#00e676";
 
   /* =========================
      렌더링
   ========================= */
   return (
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "16px",
-        border: "1px solid #d9d9d9",
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-    >
+    <div className="flex h-full flex-col justify-between rounded-2xl
+                    bg-gradient-to-b from-[#1a1a24] to-[#14141c]
+                    p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
       {/* ---------- 상단 ---------- */}
-      <div style={{ marginBottom: "12px" }}>
-        <h3
-          style={{
-            fontSize: "16px",
-            fontWeight: "bold",
-            color: "#1e1e1e",
-            marginBottom: "4px",
-          }}
-        >
+      <div className="mb-3">
+        <h3 className="mb-1 text-sm font-semibold text-gray-100">
           {name}
         </h3>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <p
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#1e1e1e",
-            }}
-          >
-            {currentPrice ? `₩${currentPrice.toLocaleString()}` : "-"}
+        <div className="flex items-baseline gap-2">
+          <p className="text-lg font-bold text-white">
+            {currentPrice
+              ? `₩${currentPrice.toLocaleString()}`
+              : "-"}
           </p>
 
           {currentPrice > 0 && (
             <p
-              style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: lineColor,
-              }}
+              className={`text-sm font-semibold ${
+                isUp ? "text-red-400" : "text-green-400"
+              }`}
             >
               {isUp ? "+" : ""}
               {changeRate}%
@@ -150,13 +124,13 @@ export default function StockTrendCard({
       </div>
 
       {/* ---------- 차트 ---------- */}
-      <div style={{ height: "120px", width: "100%", marginBottom: "12px" }}>
+      <div className="mb-3 h-[120px] w-full">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#f0f0f0"
+                stroke="#2e2e44"
                 vertical={false}
               />
 
@@ -164,7 +138,7 @@ export default function StockTrendCard({
                 dataKey="time"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: "#999" }}
+                tick={{ fontSize: 10, fill: "#9ca3af" }}
                 interval="preserveStartEnd"
                 tickFormatter={(val) => {
                   const d = new Date(val);
@@ -187,15 +161,18 @@ export default function StockTrendCard({
                   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
                 }}
                 contentStyle={{
+                  backgroundColor: "#14141c",
                   borderRadius: "8px",
-                  border: "1px solid #eee",
+                  border: "1px solid #2e2e44",
+                  color: "#e5e7eb",
                   fontSize: "12px",
                 }}
+                itemStyle={{ color: "#e5e7eb" }}
               />
 
               <Line
                 type="monotone"
-                dataKey="close" 
+                dataKey="close"
                 stroke={lineColor}
                 strokeWidth={2}
                 dot={false}
@@ -203,38 +180,29 @@ export default function StockTrendCard({
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "12px",
-              color: "#999",
-            }}
-          >
+          <div className="flex h-full items-center justify-center
+                          text-xs text-gray-400">
             데이터 로딩중...
           </div>
         )}
       </div>
 
       {/* ---------- 하단 ---------- */}
-      <div
-        style={{
-          paddingTop: "12px",
-          borderTop: "1px solid #f0f0f0",
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: "12px",
-        }}
-      >
-        <span style={{ color: "#666" }}>
-          {quantity.toLocaleString()}주 (평단 ₩{avgPrice.toLocaleString()})
+      <div className="flex justify-between border-t border-[#2e2e44]
+                      pt-3 text-xs">
+        <span className="text-gray-400">
+          {quantity.toLocaleString()}주 · 평단 ₩
+          {avgPrice.toLocaleString()}
         </span>
 
-        <span style={{ fontWeight: 600, color: profitColor }}>
+        <span
+          className={`font-semibold ${
+            isProfit ? "text-red-400" : "text-green-400"
+          }`}
+        >
           {isProfit ? "+" : ""}
-          ₩{profit.toLocaleString()} ({isProfit ? "+" : ""}
+          ₩{profit.toLocaleString()} (
+          {isProfit ? "+" : ""}
           {profitRate.toFixed(2)}%)
         </span>
       </div>

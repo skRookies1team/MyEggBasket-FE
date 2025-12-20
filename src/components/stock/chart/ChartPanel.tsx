@@ -19,8 +19,6 @@ import { calculateMACD } from "../../../utils/indicators/macd";
 import { calculateBollinger } from "../../../utils/indicators/bollinger";
 import { calculateStochastic } from "../../../utils/indicators/stochastic";
 
-import "../../../assets/Stock/ChartPanel.css";
-
 interface Props {
   period: Period;
   indicators: IndicatorState;
@@ -87,52 +85,37 @@ export function ChartPanel({
   );
 
   if (!candles.length) {
-    return <div className="chart-panel">차트 데이터가 없습니다.</div>;
+    return (
+      <div className="flex h-[420px] items-center justify-center text-sm text-gray-400">
+        차트 데이터가 없습니다.
+      </div>
+    );
   }
 
   return (
-    <div className="chart-panel">
+    <div className="flex flex-col gap-4">
       {/* ===================== */}
       {/* Price Chart + OHLC */}
       {/* ===================== */}
-      <div className="chart-canvas-wrapper">
+      <div className="relative rounded-xl bg-[#0f0f17] p-3">
         {/* OHLC Overlay */}
-        <div className="ohlc-overlay">
+        <div
+          className="
+            absolute left-3 top-3 z-10
+            rounded-lg bg-black/40 px-3 py-1
+            text-xs text-gray-200 backdrop-blur
+          "
+        >
           {hoverOHLC ? (
-            <>
-              <span>
-                <span className="ohlc-label">O</span>
-                <span className="ohlc-value">
-                  {hoverOHLC.open.toLocaleString()}
-                </span>
-              </span>
-              <span>
-                <span className="ohlc-label">H</span>
-                <span className="ohlc-value">
-                  {hoverOHLC.high.toLocaleString()}
-                </span>
-              </span>
-              <span>
-                <span className="ohlc-label">L</span>
-                <span className="ohlc-value">
-                  {hoverOHLC.low.toLocaleString()}
-                </span>
-              </span>
-              <span>
-                <span className="ohlc-label">C</span>
-                <span className="ohlc-value">
-                  {hoverOHLC.close.toLocaleString()}
-                </span>
-              </span>
-              <span>
-                <span className="ohlc-label">V</span>
-                <span className="ohlc-value">
-                  {hoverOHLC.volume.toLocaleString()}
-                </span>
-              </span>
-            </>
+            <div className="flex gap-3">
+              <OhlcItem label="O" value={hoverOHLC.open} />
+              <OhlcItem label="H" value={hoverOHLC.high} />
+              <OhlcItem label="L" value={hoverOHLC.low} />
+              <OhlcItem label="C" value={hoverOHLC.close} />
+              <OhlcItem label="V" value={hoverOHLC.volume} />
+            </div>
           ) : (
-            <span className="ohlc-placeholder">
+            <span className="text-gray-400">
               차트에 마우스를 올리면 OHLC 표시
             </span>
           )}
@@ -155,22 +138,46 @@ export function ChartPanel({
       {/* RSI */}
       {/* ===================== */}
       {indicators.rsi && rsi && (
-        <RSIChart indicator={rsi} height={140} />
+        <div className="rounded-xl bg-[#0f0f17] p-2">
+          <RSIChart indicator={rsi} height={140} />
+        </div>
       )}
 
       {/* ===================== */}
       {/* MACD */}
       {/* ===================== */}
       {indicators.macd && macd && (
-        <MACDChart indicator={macd} height={160} />
+        <div className="rounded-xl bg-[#0f0f17] p-2">
+          <MACDChart indicator={macd} height={160} />
+        </div>
       )}
 
       {/* ===================== */}
       {/* Stochastic */}
       {/* ===================== */}
       {indicators.stochastic && stochastic && (
-        <StochasticChart indicator={stochastic} height={140} />
+        <div className="rounded-xl bg-[#0f0f17] p-2">
+          <StochasticChart indicator={stochastic} height={140} />
+        </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* OHLC Item */
+/* ------------------------------------------------------------------ */
+function OhlcItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <span className="flex gap-1">
+      <span className="text-indigo-400">{label}</span>
+      <span>{value.toLocaleString()}</span>
+    </span>
   );
 }

@@ -1,8 +1,8 @@
-import { useFavoriteStore } from "../../store/favoriteStore";
+import { Box, Stack, Typography, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useFavoriteStore } from "../../store/favoriteStore";
 import type { StockItem } from "../../types/stock";
-import "../../assets/LiveStock/LiveStockTable.css";
-// import Egg1 from "../../assets/icons/egg1.png";
+
 import Egg2 from "../../assets/icons/egg2.png";
 import Egg3 from "../../assets/icons/egg3.png";
 
@@ -16,84 +16,160 @@ export default function LiveStockTable({ stocks, category }: Props) {
   const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
   const navigate = useNavigate();
 
-  function formatToEok(amount: number) {
-    return (amount / 100_000_000).toFixed(1);
-  }
+  const isFavorite = (code: string) =>
+    favorites.some((f) => f.stockCode === code);
+
+  const formatToEok = (amount: number) =>
+    (amount / 100_000_000).toFixed(1);
 
   return (
-    <table className="live-stock-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>순위</th>
-          <th>종목명</th>
-          <th>현재가</th>
-          <th>등락률</th>
+    <Box>
+      {/* 🔹 헤더 (레이블) */}
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          px: 2,
+          py: 1,
+          mb: 1,
+          color: "#ffffff", // 🔥 레이블 흰색
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          borderBottom: "1px solid #2a2a35",
+        }}
+      >
+        <Box sx={{ width: 36 }} />
+        <Box sx={{ width: 36, textAlign: "right" }}>순위</Box>
+        <Box sx={{ flex: 1 }}>종목</Box>
+        <Box sx={{ width: 100, textAlign: "right" }}>현재가</Box>
+        <Box sx={{ width: 90, textAlign: "right" }}>등락률</Box>
+        {category === "volume" && (
+          <Box sx={{ width: 100, textAlign: "right" }}>거래량</Box>
+        )}
+        {category === "amount" && (
+          <Box sx={{ width: 100, textAlign: "right" }}>거래대금</Box>
+        )}
+      </Stack>
 
-          {category === "volume" && <th>거래량</th>}
-          {category === "amount" && <th>거래대금</th>}
-        </tr>
-      </thead>
-
-      <tbody>
+      {/* 🔹 행 */}
+      <Stack spacing={0.5}>
         {stocks.map((s, idx) => {
-          const isFav = favorites.some((item) => item.stockCode === s.code);
+          const up = s.change >= 0;
+          const fav = isFavorite(s.code);
 
           return (
-            <tr
+            <Stack
               key={s.code}
-              className="clickable-row"
+              direction="row"
+              spacing={2}
+              alignItems="center"
               onClick={() => navigate(`/stock/${s.code}`)}
+              sx={{
+                px: 2,
+                py: 1.2,
+                borderRadius: 1,
+                cursor: "pointer",
+                bgcolor: "#1a1a24",
+                transition: "all 0.15s ease",
+                "&:hover": {
+                  bgcolor: "#232332",
+                },
+              }}
             >
               {/* 관심종목 */}
-              <td className="fav-col">
-                <button
-                  className={`fav-btn ${isFav ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(s.code);
-                  }}
-                >
-                  <img
-                    src={isFav ? Egg3 : Egg2}
-                    alt="fav-egg"
-                    className="fav-egg-icon"
-                  />
-                </button>
-              </td>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(s.code);
+                }}
+              >
+                <Box
+                  component="img"
+                  src={fav ? Egg3 : Egg2}
+                  alt="fav"
+                  sx={{ width: 20, height: 20 }}
+                />
+              </IconButton>
 
-              {/* 순번 */}
-              <td>{idx + 1}</td>
+              {/* 순위 */}
+              <Typography
+                sx={{
+                  width: 36,
+                  textAlign: "right",
+                  color: "#b5b5c5",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {idx + 1}
+              </Typography>
 
               {/* 종목명 */}
-              <td>
-                <div className="name">
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontWeight: 500, color: "#ffffff" }}>
                   {s.name}
-                  <span className="code">{s.code}</span>
-                </div>
-              </td>
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#7b7b8b" }}
+                >
+                  {s.code}
+                </Typography>
+              </Box>
 
               {/* 현재가 */}
-              <td className={s.change >= 0 ? "up" : "down"}>
-                {s.price.toLocaleString()} 원
-              </td>
+              <Typography
+                sx={{
+                  width: 100,
+                  textAlign: "right",
+                  fontWeight: 600,
+                  color: up ? "#00e676" : "#ff4d6a",
+                }}
+              >
+                {s.price.toLocaleString()}원
+              </Typography>
 
               {/* 등락률 */}
-              <td className={s.change >= 0 ? "up" : "down"}>
+              <Typography
+                sx={{
+                  width: 90,
+                  textAlign: "right",
+                  fontWeight: 600,
+                  color: up ? "#00e676" : "#ff4d6a",
+                }}
+              >
                 {s.percent}%
-              </td>
+              </Typography>
 
+              {/* 거래량 */}
               {category === "volume" && (
-                <td>{s.volume.toLocaleString()} 주</td>
+                <Typography
+                  sx={{
+                    width: 100,
+                    textAlign: "right",
+                    color: "#d0d0dd",
+                  }}
+                >
+                  {s.volume.toLocaleString()}
+                </Typography>
               )}
 
+              {/* 거래대금 */}
               {category === "amount" && (
-                <td>{formatToEok(s.amount)} 억</td>
+                <Typography
+                  sx={{
+                    width: 100,
+                    textAlign: "right",
+                    color: "#d0d0dd",
+                  }}
+                >
+                  {formatToEok(s.amount)}억
+                </Typography>
               )}
-            </tr>
+            </Stack>
           );
         })}
-      </tbody>
-    </table>
+      </Stack>
+    </Box>
   );
 }

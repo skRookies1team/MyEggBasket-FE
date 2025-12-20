@@ -55,6 +55,7 @@ export default function StockTrendCard({
               ...d,
               time: String(d.time),
               close: Number(d.close),
+              price: Number(d.close)
             }))
             .slice(-30);
 

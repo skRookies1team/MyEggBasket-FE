@@ -20,7 +20,8 @@ export interface Holding {
     quantity: number,
     avgPrice: number,
     currentWeight: number,
-    targetWeight: number
+    targetWeight: number,
+    profitRate: number
 }
 
 export interface HistoryReport {

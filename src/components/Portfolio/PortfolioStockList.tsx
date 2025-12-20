@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { Holding } from "../../types/portfolios";
-import type { stock } from "../../types/stock";
 
 interface PortfolioStockListProps {
   stocks?: Holding[] | null;
@@ -33,15 +32,13 @@ export function PortfolioStockList({
         {title}
       </h3>
 
-      {stocks.map(stock => {
-        const isExpanded = expandedCode === stock.stockCode;
+      {stocks.map((holding) => {
+        const isExpanded = expandedCode === holding.stock.stockCode; // stock.stockCode로 접근
 
         return (
-          <div key={stock.stockCode} className="stock-card">
-            {/* === 요약 영역 === */}
-            <div
-              className="stock-summary"
-              onClick={() => toggleExpand(stock.stockCode)}
+            <div key={holding.stock.stockCode} className="stock-card">
+              <div
+                  onClick={() => toggleExpand(holding.stock.stockCode)}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -49,9 +46,9 @@ export function PortfolioStockList({
               }}
             >
               <div>
-                <strong>{stock.stockName}</strong>
+                <strong>{holding.stock.name}</strong> {/* stockName 대신 stock.name */}
                 <span style={{ marginLeft: 8, color: "#888" }}>
-                  {stock.stockCode}
+                  {holding.stock.stockCode}
                 </span>
               </div>
 
@@ -71,15 +68,15 @@ export function PortfolioStockList({
                   borderRadius: "6px",
                 }}
               >
-                <div>보유 수량: {stock.quantity}주</div>
-                <div>평균 단가: {stock.avgPrice.toLocaleString()}원</div>
-                <div>평가 금액: {stock.evalAmount.toLocaleString()}원</div>
+                <div>보유 수량: {holding.quantity}주</div>
+                <div>평균 단가: {holding.avgPrice.toLocaleString()}원</div>
+                <div>평가 금액: {(holding.quantity * holding.avgPrice).toLocaleString()}원</div>
                 <div
                   style={{
-                    color: stock.profitRate >= 0 ? "#d4380d" : "#00e676",
+                    color: holding.profitRate >= 0 ? "#d4380d" : "#00e676",
                   }}
                 >
-                  수익률: {(stock.profitRate * 100).toFixed(2)}%
+                  수익률: {(holding.profitRate * 100).toFixed(2)}%
                 </div>
 
                 {/* 🔜 여기 아래에 AI 리밸런싱 정보 붙이기 좋음 */}

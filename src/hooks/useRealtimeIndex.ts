@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { WS_URL, TR_ID2 } from "../config/api";
+import { BACKEND_WS_URL as WS_URL, TR_ID2 } from "../config/api";
+import { useAuthStore } from "../store/authStore";
 
 /* =======================================================
    🔵 2) 국내 지수 실시간 체결 훅 (H0UPCNT0)
@@ -12,7 +13,11 @@ export interface IndexRealtimeData {
   rate: number;
   volume: number;
 }
-
+export interface UseRealtimeResult<T> {
+  data: T | null;
+  connected: boolean;
+  loading: boolean;
+}
 function parseIndexMessage(raw: string): IndexRealtimeData | null {
   if (!raw.startsWith("0|H0UPCNT0")) return null;
 
@@ -94,4 +99,20 @@ export function useRealtimeIndex(
   }, [indexCode]);
 
   return { data, connected, loading };
+}
+
+// approvalKey를 가져오고 없으면 발급 요청하는 유틸
+async function getApprovalKey(): Promise<string | null> {
+  const s = useAuthStore.getState();
+  if (s.approvalKey) return s.approvalKey;
+
+  // 발급 함수가 없으면 null 반환
+  if (typeof s.issueApprovalKey !== "function") return null;
+
+  try {
+    await s.issueApprovalKey();
+    return useAuthStore.getState().approvalKey;
+  } catch {
+    return null;
+  }
 }

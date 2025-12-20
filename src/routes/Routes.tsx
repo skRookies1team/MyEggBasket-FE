@@ -1,5 +1,5 @@
 // src/routes/Router.tsx
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import MainPage from "../pages/MainPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
@@ -12,7 +12,6 @@ import HistoryPage from "../pages/HistoryPage.tsx";
 import MyAssetPage from "../pages/MyAssetPage.tsx";
 
 export default function Router() {
-  const navigate = useNavigate(); // 네비게이션 함수 생성
 
 
   return (
@@ -25,7 +24,7 @@ export default function Router() {
           <Route path="/" element={<MainPage />} />
           <Route
                     path="/portfolio"
-                    element={<PortfolioPage onNavigateToHistory={() => navigate('/history')} />}
+                    element={<PortfolioPage/>}
                 />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/stock/:code" element={<StockDetailPage />} />

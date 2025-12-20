@@ -8,7 +8,7 @@ import {
   Tab,
   Typography,
 } from "@mui/material";
-import { TrendingUp, Newspaper, Users, Flame } from "lucide-react";
+import { TrendingUp, Newspaper, Users } from "lucide-react";
 import { Client } from "@stomp/stompjs";
 
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";

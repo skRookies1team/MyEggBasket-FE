@@ -29,6 +29,7 @@ export default function StockTrendCard({
   const [currentPrice, setCurrentPrice] = useState(0);
   const [changeRate, setChangeRate] = useState(0);
 
+
   /* =========================
      데이터 로딩
   ========================= */
@@ -54,7 +55,7 @@ export default function StockTrendCard({
             .map((d) => ({
               ...d,
               time: String(d.time),
-              price: Number(d.price),
+              price: d.close,
             }))
             .slice(-30);
 

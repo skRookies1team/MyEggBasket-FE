@@ -71,7 +71,7 @@ export function StockChart({
         <ChartLayout
           period={period}
           indicators={indicators}
-          data={data}
+          data={data.map((item) => ({ ...item, price: item.close }))}
           orderBook={orderBook}
           currentPrice={currentPrice}
           stockCode={stockCode}

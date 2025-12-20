@@ -34,7 +34,7 @@ export default function HistoryReport({ history }: Props) {
           </span>
           <span
             className={`text-xl font-bold tabular-nums ${
-              isPositive ? "text-red-400" : "text-green-400"
+              isPositive ? "text-red-400" : "text-blue-400"
             }`}
           >
             {isPositive ? "+" : ""}

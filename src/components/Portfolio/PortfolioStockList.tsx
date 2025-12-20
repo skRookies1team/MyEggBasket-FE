@@ -73,7 +73,7 @@ export function PortfolioStockList({
                 <div>평가 금액: {(holding.quantity * holding.avgPrice).toLocaleString()}원</div>
                 <div
                   style={{
-                    color: holding.profitRate >= 0 ? "#d4380d" : "#00e676",
+                    color: holding.profitRate >= 0 ? "#d4380d" : "#300beaff",
                   }}
                 >
                   수익률: {(holding.profitRate * 100).toFixed(2)}%

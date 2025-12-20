@@ -84,7 +84,7 @@ export default function MyBalance() {
             className={`mt-1 text-sm ${
               totalProfitLoss >= 0
                 ? "text-red-400"
-                : "text-green-400"
+                : "text-blue-400"
             }`}
           >
             {totalProfitLoss >= 0 ? "+" : ""}

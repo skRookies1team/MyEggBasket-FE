@@ -89,7 +89,7 @@ export default function StockTrendCard({
   const isUp = changeRate >= 0;
   const isProfit = profit >= 0;
 
-  const lineColor = isUp ? "#ff383c" : "#00e676";
+  const lineColor = isUp ? "#ff383c" : "#3ca8ff";
 
   /* =========================
      렌더링

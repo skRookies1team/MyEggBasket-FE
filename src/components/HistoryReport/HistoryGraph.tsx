@@ -106,7 +106,7 @@ export default function HistoryGraph() {
               <Line
                 type="monotone"
                 dataKey="kosdaq"
-                stroke="#0066ff"
+                stroke="#3ca8ff"
                 name="코스닥"
                 strokeWidth={2}
               />

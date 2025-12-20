@@ -77,7 +77,7 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
     profit > 0
       ? "text-red-400"
       : profit < 0
-      ? "text-green-400"
+      ? "text-blue-400"
       : "text-gray-300";
 
   return (

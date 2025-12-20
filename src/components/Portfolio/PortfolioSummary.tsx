@@ -63,7 +63,7 @@ export function ProtfolioSummary({
               className={`text-lg font-semibold ${
                 isPositive
                   ? "text-red-400"
-                  : "text-green-400"
+                  : "text-blue-400"
               }`}
             >
               {isPositive ? "+" : ""}

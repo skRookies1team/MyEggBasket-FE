@@ -55,7 +55,7 @@ export function AssetSummary({ assetData, loading }: AssetSummaryProps) {
           ) : (
             <span
               className={`font-semibold ${
-                isProfit ? "text-red-400" : "text-green-400"
+                isProfit ? "text-red-400" : "text-blue-400"
               }`}
             >
               {isProfit ? "+" : ""}

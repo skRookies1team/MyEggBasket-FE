@@ -97,7 +97,7 @@ export default function InvestorSection({ title, data }: Props) {
                       sx={{
                         fontSize: "0.85rem",
                         fontWeight: 600,
-                        color: up ? "#00e676" : "#ff4d6a",
+                        color: up ? "#ff4d6a" : "#3ca8ff",
                       }}
                     >
                       {up ? `+${item.rate}%` : `${item.rate}%`}

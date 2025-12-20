@@ -1,8 +1,8 @@
-import MyBalance from "../MyBalance";
+import MyBalance from "../Sidebar/MyBalance";
 
 export default function MyAssetsTab() {
   return (
-    <div style={{ padding: "8px" }}>
+    <div className="p-2">
       <MyBalance />
     </div>
   );

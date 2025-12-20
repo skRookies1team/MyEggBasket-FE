@@ -1,39 +1,81 @@
-.stock-table {
+/* =========================================
+   📌 전체 테이블 스타일
+========================================= */
+.live-stock-table {
   width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  background: #fff;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #eee;
-  margin-top: 10px;
+  border: 1px solid #e5e5e5;
 }
 
-/* 헤더 */
-.table-header {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-  padding: 12px 10px;
+/* =========================================
+   📌 테이블 헤더
+========================================= */
+.live-stock-table thead tr {
   background: #fafafa;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.live-stock-table thead th {
+  padding: 12px 10px;
   font-size: 13px;
   color: #777;
   font-weight: 600;
+  text-align: left;
 }
 
-/* 행 */
-.table-row {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-  padding: 12px 10px;
-  border-bottom: 1px solid #f2f2f2;
-  cursor: pointer;
+/* =========================================
+   📌 테이블 행 스타일
+========================================= */
+.live-stock-table tbody tr {
   transition: background 0.15s ease;
+  cursor: pointer;
 }
 
-.table-row:hover {
+.live-stock-table tbody tr:hover {
   background: #f8f8f8;
 }
 
-/* 종목명 + 코드 */
+.live-stock-table td {
+  padding: 12px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid #f2f2f2;
+  vertical-align: middle;
+}
+
+/* =========================================
+   ⭐ 첫 번째 컬럼 - 관심종목 버튼
+========================================= */
+.fav-col {
+  width: 40px;
+  text-align: center;
+}
+
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #bbbbbb;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.fav-btn:hover {
+  color: #888;
+  transform: scale(1.15);
+}
+
+.fav-btn.active {
+  color: gold;
+  transform: scale(1.1);
+}
+
+/* =========================================
+   📌 종목명 + 종목코드
+========================================= */
 .name {
   display: flex;
   flex-direction: column;
@@ -46,6 +88,9 @@
   margin-top: 2px;
 }
 
+/* =========================================
+   📌 상승/하락 색상
+========================================= */
 .up {
   color: #ff383c;
   font-weight: 600;
@@ -56,29 +101,55 @@
   font-weight: 600;
 }
 
-/* 모바일 대응 */
+/* =========================================
+   📱 모바일 반응형
+========================================= */
 @media (max-width: 480px) {
-  .table-header {
+  .live-stock-table thead {
     display: none;
   }
 
-  .table-row {
+  .live-stock-table tbody tr {
+    display: grid;
     grid-template-columns: 1fr 1fr;
-    background: #fff;
+    border: 1px solid #eee;
     border-radius: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    background: #fff;
+    padding: 10px 12px;
   }
 
-  .table-row span:nth-child(2),
-  .table-row span:nth-child(3) {
-    justify-content: flex-end;
+  .live-stock-table td {
+    border-bottom: none;
+    padding: 6px 0;
   }
 
-  .table-row span:nth-child(4),
-  .table-row span:nth-child(5) {
+  /* 첫 번째 컬럼 모바일에서는 전체 너비 사용 */
+  .fav-col {
     grid-column: span 2;
-    margin-top: 6px;
-    color: #777;
-    font-size: 13px;
+    text-align: right;
+    padding-bottom: 2px;
   }
+
+  .fav-btn {
+    font-size: 22px;
+  }
+
+  /* 종목명 */
+  .live-stock-table tr td:nth-child(2) {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* 가격 · 등락 · 거래량 → 오른쪽 정렬 */
+  .live-stock-table td:nth-child(3),
+  .live-stock-table td:nth-child(4),
+  .live-stock-table td:nth-child(5) {
+    text-align: right;
+  }
+}
+.fav-egg-icon {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
 }

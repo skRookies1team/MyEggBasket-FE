@@ -1,161 +1,246 @@
-import { useMemo, useState } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { FinancialData } from '../../types/stock.ts';
+/* StockFinancials.tsx */
+import { useState, useEffect } from "react";
+import {
+  fetchFinancialMetrics,
+  REPRT_CODES,
+  type QuarterType,
+} from "../../api/financialDataApi";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-interface StockFinancialsProps {
-    data: FinancialData;
+export function StockFinancials({ stockCode }: { stockCode: string }) {
+  const [year, setYear] = useState("2024");
+  const [quarter, setQuarter] = useState<QuarterType>("4Q");
+  const [realFinancials, setRealFinancials] = useState<any>(null);
+  const [yearlyData, setYearlyData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isYearlyLoading, setIsYearlyLoading] = useState(false);
+
+  const years = Array.from(
+    { length: 2025 - 2015 + 1 },
+    (_, i) => (2025 - i).toString()
+  );
+
+  const quarters: { label: string; value: QuarterType }[] = [
+    { label: "1분기", value: "1Q" },
+    { label: "2분기", value: "2Q" },
+    { label: "3분기", value: "3Q" },
+    { label: "결산(연간)", value: "4Q" },
+  ];
+
+  /* ---------------- 상세 지표 ---------------- */
+  useEffect(() => {
+    const loadDetail = async () => {
+      setLoading(true);
+      const result = await fetchFinancialMetrics(
+        stockCode,
+        year,
+        REPRT_CODES[quarter]
+      );
+      setRealFinancials(result);
+      setLoading(false);
+    };
+    loadDetail();
+  }, [stockCode, year, quarter]);
+
+  /* ---------------- 연간 트렌드 ---------------- */
+  useEffect(() => {
+    const loadYearlyTrend = async () => {
+      setIsYearlyLoading(true);
+
+      const promises = Object.entries(REPRT_CODES).map(
+        async ([qKey, qCode]) => {
+          const res = await fetchFinancialMetrics(stockCode, year, qCode);
+          return {
+            name: qKey === "4Q" ? "결산" : qKey,
+            revenue: res?.revenue || 0,
+            profit: res?.profit || 0,
+            netProfit: res?.netProfit || 0,
+            liabilities: res?.totalLiabilities || 0,
+          };
+        }
+      );
+
+      setYearlyData(await Promise.all(promises));
+      setIsYearlyLoading(false);
+    };
+    loadYearlyTrend();
+  }, [stockCode, year]);
+
+  /* ---------------- Utils ---------------- */
+  const formatMoney = (v?: number) => {
+    if (!v || isNaN(v)) return "-";
+    const trillion = 1_0000_0000_0000;
+    const hundredMillion = 1_0000_0000;
+    if (Math.abs(v) >= trillion) return `${(v / trillion).toFixed(1)}조`;
+    if (Math.abs(v) >= hundredMillion)
+      return `${(v / hundredMillion).toFixed(1)}억`;
+    return v.toLocaleString();
+  };
+
+  const chartFormatter = (v: number) =>
+    Math.abs(v) >= 1_0000_0000
+      ? `${(v / 1_0000_0000).toFixed(0)}억`
+      : v.toString();
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+        {/* ---------------- Header ---------------- */}
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-100">
+              {year}년 재무 정보
+            </h3>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="rounded-md bg-[#0f0f17] px-2 py-1 text-sm text-gray-200 border border-[#232332]"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}년
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex rounded-lg bg-[#0f0f17] p-1">
+            {quarters.map((q) => (
+              <button
+                key={q.value}
+                onClick={() => setQuarter(q.value)}
+                className={`px-4 py-1.5 text-sm rounded-md transition
+                  ${
+                    quarter === q.value
+                      ? "bg-indigo-500/20 text-indigo-300 font-semibold"
+                      : "text-gray-400 hover:text-gray-200"
+                  }`}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ---------------- Metrics ---------------- */}
+        {loading ? (
+          <div className="py-10 text-center text-gray-400">
+            데이터 로딩 중…
+          </div>
+        ) : !realFinancials || realFinancials.status !== "000" ? (
+          <div className="rounded-xl border border-dashed border-[#232332] py-10 text-center text-gray-400">
+            보고서가 아직 업로드되지 않았습니다.
+          </div>
+        ) : (
+          <div className="mb-8 flex flex-col gap-4">
+            <div className="grid grid-cols-3 gap-4 rounded-xl bg-[#0f0f17] p-5">
+              <MetricBox title="매출액" value={formatMoney(realFinancials.revenue)} />
+              <MetricBox title="영업이익" value={formatMoney(realFinancials.profit)} highlight />
+              <MetricBox title="당기순이익" value={formatMoney(realFinancials.netProfit)} />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 rounded-xl bg-[#0f0f17] p-5">
+              <MetricBox title="부채총계" value={formatMoney(realFinancials.totalLiabilities)} />
+              <MetricBox title="자본총계" value={formatMoney(realFinancials.totalEquity)} />
+              <MetricBox
+                title="부채비율"
+                value={
+                  realFinancials.debtRatio
+                    ? `${realFinancials.debtRatio.toFixed(2)}%`
+                    : "-"
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- Chart ---------------- */}
+        <div className="mt-8">
+          <div className="mb-4 flex items-end justify-between">
+            <h4 className="border-l-4 border-indigo-400 pl-2 text-sm font-semibold text-gray-200">
+              분기별 재무 추이
+            </h4>
+            <span className="text-xs text-gray-500">
+              * 결산은 누적 데이터
+            </span>
+          </div>
+
+          <div className="h-[380px]">
+            {isYearlyLoading ? (
+              <div className="flex h-full items-center justify-center text-gray-500">
+                차트 로딩 중…
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={yearlyData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#232332"
+                  />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  />
+                  <YAxis
+                    tickFormatter={chartFormatter}
+                    tick={{ fill: "#9ca3af", fontSize: 11 }}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => formatMoney(v)}
+                    contentStyle={{
+                      background: "#0f0f17",
+                      border: "1px solid #232332",
+                      borderRadius: 12,
+                      color: "#e5e7eb",
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="revenue" name="매출액" fill="#f59e0b" />
+                  <Bar dataKey="profit" name="영업이익" fill="#10b981" />
+                  <Bar dataKey="netProfit" name="순이익" fill="#6366f1" />
+                  <Bar dataKey="liabilities" name="부채총계" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export function StockFinancials({ data }: StockFinancialsProps) {
-    if (!data || (!data.revenue.length && !data.profit.length)) {
-        return <div className="text-center p-10">재무제표 데이터가 없습니다.</div>;
-    }
-
-    // 모든 연도 목록(매출/이익 합집합) 추출 후 정렬
-    const years = useMemo(() => {
-        const set = new Set<string>();
-        data.revenue.forEach(r => set.add(r.year));
-        data.profit.forEach(p => set.add(p.year));
-        return Array.from(set).sort(); // 오래된 연도 → 최신 연도
-    }, [data]);
-
-    const [selectedYear, setSelectedYear] = useState<string>(() => years[years.length - 1] ?? '');
-
-    const selectedRevenue = useMemo(
-        () => data.revenue.find(r => r.year === selectedYear),
-        [data.revenue, selectedYear],
-    );
-    const selectedProfit = useMemo(
-        () => data.profit.find(p => p.year === selectedYear),
-        [data.profit, selectedYear],
-    );
-    const selectedCapital = useMemo(
-        () => data.capital?.find(i => i.year === selectedYear),
-        [data.capital, selectedYear],
-    );
-    const selectedNetProfit = useMemo(
-        () => data.netProfit?.find(i => i.year === selectedYear),
-        [data.netProfit, selectedYear],
-    );
-    const selectedTotalAssets = useMemo(
-        () => data.totalAssets?.find(i => i.year === selectedYear),
-        [data.totalAssets, selectedYear],
-    );
-    const selectedEquity = useMemo(
-        () => data.equity?.find(i => i.year === selectedYear),
-        [data.equity, selectedYear],
-    );
-    const selectedTotalDebt = useMemo(
-        () => data.totalDebt?.find(i => i.year === selectedYear),
-        [data.totalDebt, selectedYear],
-    );
-    const selectedDebtRatio = useMemo(
-        () => data.debtRatio?.find(i => i.year === selectedYear),
-        [data.debtRatio, selectedYear],
-    );
-    const selectedComprehensiveIncome = useMemo(
-        () => data.comprehensiveIncome?.find(i => i.year === selectedYear),
-        [data.comprehensiveIncome, selectedYear],
-    );
-
-    const formatMoney = (v?: number) => {
-        if (v == null) return '-';
-        // 원 단위 → 조/억 단위 간단 포맷 (예: 30.1조, 5.2억)
-        const trillion = 1_0000_0000_0000; // 10^12
-        const hundredMillion = 1_0000_0000; // 10^8
-        if (Math.abs(v) >= trillion) {
-            return `${(v / trillion).toFixed(1)}조원`;
-        }
-        if (Math.abs(v) >= hundredMillion) {
-            return `${(v / hundredMillion).toFixed(1)}억원`;
-        }
-        return `${v.toLocaleString()}원`;
-    };
-
-    const formatPercent = (v?: number) => {
-        if (v == null) return '-';
-        return `${v.toFixed(2)}%`;
-    };
-
-    return (
-        <div className="bg-white rounded-2xl border border-[#d9d9d9] p-6">
-            <h3 className="text-[#1e1e1e] mb-4">재무제표</h3>
-
-            {/* 받은 데이터 JSON으로 표시 */}
-            <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-                <h4 className="text-sm font-semibold mb-2">수신된 데이터 (Raw JSON)</h4>
-                <pre className="text-xs whitespace-pre-wrap break-all bg-white p-3 rounded">
-                    {JSON.stringify(data, null, 2)}
-                </pre>
-            </div>
-
-            {/* 연도 탭 + 선택 연도 상세 요약 */}
-            <div className="mb-6">
-                <div className="mb-3 flex flex-wrap gap-2">
-                    {years.map((year) => (
-                        <button
-                            key={year}
-                            type="button"
-                            onClick={() => setSelectedYear(year)}
-                            className={`px-3 py-1 rounded-full border text-xs md:text-sm transition-colors ${
-                                year === selectedYear
-                                    ? 'bg-[#4f378a] text-white border-[#4f378a]'
-                                    : 'bg-white text-[#49454f] border-[#d0d0d0] hover:bg-[#f3edf7]'
-                            }`}
-                        >
-                            {year}년
-                        </button>
-                    ))}
-                </div>
-
-                <div className="border rounded-lg p-4 bg-[#f8f8f8] text-xs md:text-sm flex flex-col gap-1">
-                    <div className="font-semibold mb-2">{selectedYear}년 재무 요약</div>
-                    {/* 항목을 한 줄씩 div로 표시 */}
-                    <div className="space-y-1">
-                        <div>매출액: <span className="font-medium">{formatMoney(selectedRevenue?.value)}</span></div>
-                        <div>영업이익: <span className="font-medium">{formatMoney(selectedProfit?.value)}</span></div>
-                        <div>당기순이익: <span className="font-medium">{formatMoney(selectedNetProfit?.value)}</span></div>
-                        <div>자본금: <span className="font-medium">{formatMoney(selectedCapital?.value)}</span></div>
-                        <div>총자산: <span className="font-medium">{formatMoney(selectedTotalAssets?.value)}</span></div>
-                        <div>자기자본: <span className="font-medium">{formatMoney(selectedEquity?.value)}</span></div>
-                        <div>총부채: <span className="font-medium">{formatMoney(selectedTotalDebt?.value)}</span></div>
-                        <div>부채비율: <span className="font-medium">{formatPercent(selectedDebtRatio?.value)}</span></div>
-                        <div>포괄손익: <span className="font-medium">{formatMoney(selectedComprehensiveIncome?.value)}</span></div>
-                    </div>
-                </div>
-            </div>
-
-            {/* 전체 연도 추이 그래프 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h4 className="text-[#1e1e1e] mb-3">매출 추이</h4>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data.revenue}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="year" />
-                                <YAxis tickFormatter={(v) => formatMoney(v as number)} width={80} />
-                                <Tooltip formatter={(v: any) => formatMoney(v as number)} />
-                                <Bar dataKey="value" fill="#4f378a" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-                <div>
-                    <h4 className="text-[#1e1e1e] mb-3">영업이익 추이</h4>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data.profit}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="year" />
-                                <YAxis tickFormatter={(v) => formatMoney(v as number)} width={80} />
-                                <Tooltip formatter={(v: any) => formatMoney(v as number)} />
-                                <Line type="monotone" dataKey="value" stroke="#00b050" strokeWidth={2} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+/* ------------------------------------------------------------------ */
+/* Metric Box */
+/* ------------------------------------------------------------------ */
+function MetricBox({
+  title,
+  value,
+  highlight,
+}: {
+  title: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs text-gray-400">{title}</span>
+      <span
+        className={`mt-1 truncate text-lg font-bold ${
+          highlight ? "text-indigo-400" : "text-gray-100"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }

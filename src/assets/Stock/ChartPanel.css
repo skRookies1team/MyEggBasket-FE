@@ -1,0 +1,153 @@
+/* ============================== */
+/* ChartPanel Root */
+/* ============================== */
+
+.chart-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #0f0f14;
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* ============================== */
+/* Chart Canvas Wrapper */
+/* ============================== */
+
+.chart-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ============================== */
+/* OHLC Overlay (Hover HUD) */
+/* ============================== */
+
+.ohlc-overlay {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+
+  display: flex;
+  gap: 12px;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  z-index: 70;
+  pointer-events: none;
+
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.chart-canvas-wrapper:hover .ohlc-overlay {
+  opacity: 1;
+}
+
+/* 레이블은 항상 흰색 */
+.ohlc-label {
+  color: #ffffff;
+  margin-right: 2px;
+}
+
+/* 값 기본 색  */
+.ohlc-value {
+  color: #e5e7eb;
+}
+
+.ohlc-placeholder {
+  opacity: 0.5;
+}
+
+
+/* ============================== */
+/* Chart Inner Toolbar */
+/* ============================== */
+
+.chart-inner-toolbar {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  z-index: 60;
+  pointer-events: none;
+
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.chart-canvas-wrapper:hover .chart-inner-toolbar {
+  opacity: 1;
+}
+
+/* ============================== */
+/* Indicator Panel (Top Right) */
+/* ============================== */
+
+.indicator-panel-top {
+  position: absolute;
+  top: 40px;        /* 툴바 바로 아래 */
+  right: 10px;
+
+  width: 180px;
+  padding: 10px 12px;
+
+  background: #1e1e1e;
+  border: 1px solid #374151;
+  border-radius: 10px;
+
+  z-index: 65;
+  pointer-events: auto;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* ============================== */
+/* Indicator Panel Content */
+/* ============================== */
+
+.indicator-panel-top label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 12px;
+  color: #d1d5db;
+
+  cursor: pointer;
+}
+
+.indicator-panel-top input[type="checkbox"] {
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+/* ============================== */
+/* Sub Chart Section (RSI, MACD...) */
+/* ============================== */
+
+.chart-sub {
+  margin-top: 8px;
+  background: #0b0b10;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ============================== */
+/* Scroll / Resize Safety */
+/* ============================== */
+
+.chart-panel * {
+  box-sizing: border-box;
+}

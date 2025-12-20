@@ -1,4 +1,12 @@
-import React from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
+  List,
+  ListItem,
+} from "@mui/material";
 import {
   LineChart,
   Line,
@@ -7,7 +15,6 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import "../../assets/AIIssueBubble/AIIssueDetailPanel.css";
 
 interface BubbleItem {
   name: string;
@@ -23,35 +30,39 @@ interface Props {
 }
 
 export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
+  /* ---------------- 안전한 버블 선택 ---------------- */
+  const sortedByMention = [...bubbles].sort(
+    (a, b) => b.mentions - a.mentions
+  );
+  const activeBubble = bubble ?? sortedByMention[0] ?? null;
 
-  // mentions 기준 정렬
-  const sortedByMention = [...bubbles].sort((a, b) => b.mentions - a.mentions);
-
-  // 🔥 props.bubble이 null이면 내부에서 즉시 재정의 (초기 null 화면 방지)
-  const safeBubble = bubble ?? sortedByMention[0] ?? null;
-
-  if (!safeBubble) {
+  if (!activeBubble) {
     return (
-      <div className="empty-panel">
-        <p>표시할 버블 데이터가 없습니다.</p>
-      </div>
+      <Card
+        sx={{
+          bgcolor: "#1a1a24",
+          border: "1px solid #2a2a35",
+          p: 4,
+        }}
+      >
+        <Typography sx={{ color: "#b5b5c5", textAlign: "center" }}>
+          표시할 AI 이슈 데이터가 없습니다.
+        </Typography>
+      </Card>
     );
   }
 
-  const activeBubble = safeBubble;
-  // 🔹 더미 검색 추이 데이터
+  /* ---------------- 더미 데이터 ---------------- */
   const searchTrend = Array.from({ length: 14 }).map((_, i) => ({
     day: `${i + 1}`,
     value: Math.floor(Math.random() * 100) + 20,
   }));
 
-  // 🔹 더미 등락률 데이터
   const priceTrend = Array.from({ length: 14 }).map((_, i) => ({
     day: `${i + 1}`,
     change: Number((Math.sin(i / 3) * 5 + Math.random() * 2).toFixed(2)),
   }));
 
-  // 🔹 관련 뉴스 더미
   const newsSamples = [
     `${activeBubble.name} 관련 이슈가 증가하고 있습니다.`,
     `${activeBubble.name} 업계에서 새로운 동향이 감지됨.`,
@@ -59,65 +70,108 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
   ];
 
   return (
-    <div className="detail-panel">
-      <h2 className="panel-title">
-        <span style={{ color: "#ff8a8a" }}>{activeBubble.name}</span>
-        &nbsp;상세 분석
-      </h2>
+    <Card
+      sx={{
+        bgcolor: "#1a1a24",
+        border: "1px solid #2a2a35",
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        {/* 🔹 타이틀 */}
+        <Typography variant="h6" sx={{ fontWeight: 700, color: "#ffffff", mb: 1 }}>
+          <span style={{ color: "#7c3aed" }}>{activeBubble.name}</span> 상세 분석
+        </Typography>
 
-      {/* 검색 추이 */}
-      <div className="panel-section">
-        <h3>검색 빈도 추이</h3>
-        <div className="chart-box">
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={searchTrend}>
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#4f378a"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+        <Divider sx={{ borderColor: "#2a2a35", mb: 3 }} />
 
-      {/* 등락률 추이 */}
-      <div className="panel-section">
-        <h3>누적 등락률 추이</h3>
-        <div className="chart-box">
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={priceTrend}>
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="change"
-                stroke="#ff383c"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+        {/* 🔹 검색 추이 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
+          >
+            검색 빈도 추이
+          </Typography>
 
-      {/* 관련 뉴스 */}
-      <div className="panel-section">
-        <h3>관련 뉴스</h3>
-        <ul className="news-list">
-          {newsSamples.map((n, i) => (
-            <li key={i} className="news-item">
-              {n}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+          <Box sx={{ width: "100%", height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={searchTrend}>
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#b5b5c5" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#b5b5c5" }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#232332",
+                    border: "1px solid #2a2a35",
+                    color: "#fff",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#7c3aed"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+        </Box>
+
+        {/* 🔹 등락률 추이 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
+          >
+            누적 등락률 추이
+          </Typography>
+
+          <Box sx={{ width: "100%", height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={priceTrend}>
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#b5b5c5" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#b5b5c5" }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#232332",
+                    border: "1px solid #2a2a35",
+                    color: "#fff",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="change"
+                  stroke="#ff4d6a"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+        </Box>
+
+        {/* 🔹 관련 뉴스 */}
+        <Box>
+          <Typography
+            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
+          >
+            관련 뉴스
+          </Typography>
+
+          <List dense>
+            {newsSamples.map((n, i) => (
+              <ListItem
+                key={i}
+                sx={{
+                  color: "#b5b5c5",
+                  fontSize: "0.85rem",
+                  pl: 0,
+                }}
+              >
+                • {n}
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,0 +1,66 @@
+/* ============================== */
+/* Indicator Toggle */
+/* ============================== */
+
+.indicator-toggle {
+  pointer-events: auto;
+}
+
+.indicator-button {
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  background: #1f2937;
+  color: #ffffff;
+
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ============================== */
+/* Popover */
+/* ============================== */
+
+.indicator-popover {
+  position: absolute;
+  right: 0;
+  top: 110%;
+
+  width: 160px;
+  padding: 10px 12px;
+
+  background: #1e1e1e;
+  border: 1px solid #374151;
+  border-radius: 8px;
+
+  z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 보조지표 항목 */
+.indicator-popover label {
+  color: #ffffff;
+  font-size: 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+/* 체크박스 */
+.indicator-popover input[type="checkbox"] {
+  accent-color: #ffffff;
+}
+
+/* hover 효과 */
+.indicator-popover label:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}

@@ -17,7 +17,7 @@ import type {
 } from "../types/stock";
 
 import { useRealtimePrice } from "../hooks/useRealtimeStock";
-import { fetchHistoricalData } from "../api/stocksApi";
+import { fetchHistoricalData, getStockInfoFromDB } from "../api/stocksApi";
 import { fetchStockCurrentPrice } from "../api/liveStockApi";
 import { subscribeRealtimePrice } from "../api/realtimeApi";
 
@@ -132,6 +132,8 @@ function StockDetailView({
 }) {
   const [activeTab, setActiveTab] = useState<TabType>("chart");
   const [historicalData, setHistoricalData] = useState<StockCandle[]>([]);
+  const [stockName, setStockName] = useState<string>("");
+
 
   /* historical chart data */
   useEffect(() => {
@@ -141,6 +143,15 @@ function StockDetailView({
       .then(setHistoricalData)
       .catch(console.error);
   }, [period, stockCode]);
+
+  useEffect(() => {
+    const loadStockInfo = async () => {
+      const data = await getStockInfoFromDB(stockCode);
+      console.log(data);
+      setStockName(data?.name || "");
+    };
+    loadStockInfo();
+  }, [stockCode]);
 
   const displayChartData = useMemo(
     () =>
@@ -161,56 +172,56 @@ function StockDetailView({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
-      {/* Header */}
-      <StockHeader
-        stockName={stockCode}
-        currentPrice={data.currentPrice}
-        changeAmount={data.changeAmount}
-        changeRate={data.changeRate}
-        onBack={onBack}
-        isLive={period === "minute"}
-        acmlVol={0}
-      />
-
-      {/* Tabs */}
-      <div className="border-b border-[#232332] bg-[#0a0a0f]">
-        <StockTabNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+    <div className="min-h-screen bg-[#0a0a0f] pb-24 mt-6">
+        {/* Header */}
+        <StockHeader
+          stockName={stockName || stockCode}
+          currentPrice={data.currentPrice}
+          changeAmount={data.changeAmount}
+          changeRate={data.changeRate}
+          onBack={onBack}
+          isLive={period === "minute"}
+          acmlVol={0}
         />
-      </div>
 
-      {/* Content */}
-      <div className="mx-auto max-w-[1600px] px-4 py-6">
-        {activeTab === "chart" && (
-          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            <StockChart
-              data={displayChartData}
-              period={period}
-              onPeriodChange={onPeriodChange}
-            />
-          </div>
-        )}
+        {/* Tabs */}
+        <div className="border-b border-[#232332] bg-[#0a0a0f]">
+          <StockTabNav
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        </div>
 
-        {activeTab === "news" && (
-          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            <StockNews data={data.news} query={stockCode} />
-          </div>
-        )}
+        {/* Content */}
+        <div className="mx-auto max-w-[1600px] px-4 py-6">
+          {activeTab === "chart" && (
+            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+              <StockChart
+                data={displayChartData}
+                period={period}
+                onPeriodChange={onPeriodChange}
+              />
+            </div>
+          )}
 
-        {activeTab === "info" && (
-          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            <StockFinancials stockCode={stockCode} />
-          </div>
-        )}
+          {activeTab === "news" && (
+            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+              <StockNews data={data.news} query={stockCode} />
+            </div>
+          )}
 
-        {activeTab === "report" && (
-          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            <StockReports data={data.reports} />
-          </div>
-        )}
-      </div>
+          {activeTab === "info" && (
+            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+              <StockFinancials stockCode={stockCode} />
+            </div>
+          )}
+
+          {activeTab === "report" && (
+            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+              <StockReports data={data.reports} />
+            </div>
+          )}
+        </div>
     </div>
   );
 }

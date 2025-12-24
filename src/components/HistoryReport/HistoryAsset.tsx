@@ -9,7 +9,7 @@ import Egg1 from "../../assets/icons/egg1.png";
 import Egg2 from "../../assets/icons/egg2.png";
 
 import HistoryReport from "./HistoryReport";
-import { DollarSign } from "lucide-react";
+import { Check, DollarSign, Pencil } from "lucide-react";
 import type { Portfolio } from "../../types/portfolios";
 import { fetchStockCurrentPrice } from "../../api/liveStockApi";
 
@@ -31,6 +31,26 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
     rate: number;
   } | null>(null);
 
+  const [targetPrice, setTargetPrice] = useState<string>("");
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (stockData && !isInitialized) {
+      setTargetPrice(stockData.currentPrice.toString());
+      setIsInitialized(true);
+    }
+  }, [stockData, isInitialized]);
+
+  const handleConfirm = () => {
+    setIsConfirmed(true);
+    console.log(`[알림 설정] ${holdingStock.stock.name}: ${targetPrice}원`);
+  };
+
+  const handleEdit = () => {
+    setIsConfirmed(false);
+  };
+
   useEffect(() => {
     async function getStockData() {
       const data = await fetchStockCurrentPrice(
@@ -44,8 +64,8 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
         const rate =
           holdingStock.avgPrice > 0
             ? ((currentPrice - holdingStock.avgPrice) /
-                holdingStock.avgPrice) *
-              100
+              holdingStock.avgPrice) *
+            100
             : 0;
         setStockData({ currentPrice, profit, rate });
       }
@@ -77,8 +97,8 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
     profit > 0
       ? "text-red-400"
       : profit < 0
-      ? "text-blue-400"
-      : "text-gray-300";
+        ? "text-blue-400"
+        : "text-gray-300";
 
   return (
     <tr className="border-b border-[#232332] hover:bg-[#1f1f2e] transition">
@@ -102,11 +122,41 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
         {currentPrice.toLocaleString()}원
       </td>
 
-
       {/* 수익률 */}
       <td className={`px-4 py-3 text-right font-medium tabular-nums whitespace-nowrap min-w-[90px] ${color}`}>
         {rate > 0 ? "+" : ""}
         {rate.toFixed(2)}%
+      </td>
+      {/* 알림 설정가 */}
+      <td className="px-4 py-3 text-right font-medium tabular-nums whitespace-nowrap min-w-[140px]">
+        {isConfirmed ? (
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-indigo-300">
+              {Number(targetPrice).toLocaleString()}원
+            </span>
+            <button
+              onClick={handleEdit}
+              className="rounded p-1 hover:bg-[#2a2a35] text-gray-400 hover:text-indigo-400 transition"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-end gap-2">
+            <input
+              type="number"
+              value={targetPrice}
+              onChange={(e) => setTargetPrice(e.target.value)}
+              className="w-24 rounded bg-[#0a0a0f] border border-[#2a2a35] px-2 py-1 text-right text-sm text-gray-200 focus:border-indigo-500 focus:outline-none"
+            />
+            <button
+              onClick={handleConfirm}
+              className="rounded p-1 hover:bg-[#2a2a35] text-gray-400 hover:text-green-400 transition"
+            >
+              <Check size={16} />
+            </button>
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -179,9 +229,9 @@ export default function HistoryAsset({ portfolioId }: Props) {
     ) : null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
       {/* ---------- LEFT ---------- */}
-      <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+      <div className="lg:col-span-2 rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
         <div className="mb-4 border-b border-[#232332] pb-4">
           <div className="flex items-center">
             <h2 className="text-xl font-semibold text-gray-100">
@@ -212,7 +262,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
       </div>
 
       {/* ---------- RIGHT ---------- */}
-      <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+      <div className="lg:col-span-3 rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
         <div className="mb-4 flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-indigo-400" />
           <h2 className="text-lg font-semibold text-gray-100">
@@ -239,6 +289,10 @@ export default function HistoryAsset({ portfolioId }: Props) {
                 <th className="px-4 py-3 text-right min-w-[90px] whitespace-nowrap">
                   수익률
                 </th>
+                <th className="px-4 py-3 text-right min-w-[90px] whitespace-nowrap">
+                  알림 설정가
+                </th>
+
               </tr>
             </thead>
             <tbody>

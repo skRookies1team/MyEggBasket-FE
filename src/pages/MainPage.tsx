@@ -73,13 +73,13 @@ export default function MainPageDarkRealtime() {
           return list.map((item, i) =>
             i === idx
               ? {
-                  ...item,
-                  price: updated.price,
-                  percent: updated.diffRate,
-                  volume: updated.volume,
-                  amount: updated.tradingValue,
-                  change: updated.diff,
-                }
+                ...item,
+                price: updated.price,
+                percent: updated.diffRate,
+                volume: updated.volume,
+                amount: updated.tradingValue,
+                change: updated.diff,
+              }
               : item
           );
         }
@@ -130,7 +130,7 @@ export default function MainPageDarkRealtime() {
     { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#7c3aed" },
     { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#00e676" },
     { name: "2차전지", size: 95, mentions: 3123, change: 6.2, color: "#29b6f6" },
-    { name: "바이오", size: 120, mentions: 7940, change: 4.5, color: "#ff4d6a" },
+    { name: "바이오", size: 120, mentions: 7940, change: 4.5, color: "#ff4d6a" }
   ];
 
   return (

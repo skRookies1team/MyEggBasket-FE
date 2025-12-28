@@ -84,13 +84,13 @@ export function MarketIndexCard({
           {isUp ? (
             <TrendingUpIcon sx={{ fontSize: 16, color: "#ff4d6a" }} />
           ) : (
-            <TrendingDownIcon sx={{ fontSize: 16, color: "#00e676" }} />
+            <TrendingDownIcon sx={{ fontSize: 16, color: "#3ca8ff" }} />
           )}
           <Typography
             sx={{
               fontSize: "0.875rem",
               fontWeight: 600,
-              color: isUp ? "#ff4d6a" : "#00e676",
+              color: isUp ? "#ff4d6a" : "#3ca8ff",
             }}
           >
             {change} ({percent})
@@ -116,12 +116,12 @@ export function MarketIndexCard({
                 >
                   <stop
                     offset="0%"
-                    stopColor={isUp ? "#ff4d6a" : "#00e676"}
+                    stopColor={isUp ? "#ff4d6a" : "#3ca8ff"}
                     stopOpacity="0.4"
                   />
                   <stop
                     offset="100%"
-                    stopColor={isUp ? "#ff4d6a" : "#00e676"}
+                    stopColor={isUp ? "#ff4d6a" : "#3ca8ff"}
                     stopOpacity="0"
                   />
                 </linearGradient>
@@ -137,7 +137,7 @@ export function MarketIndexCard({
               <polyline
                 points={points}
                 fill="none"
-                stroke={isUp ? "#ff4d6a" : "#00e676"}
+                stroke={isUp ? "#ff4d6a" : "#3ca8ff"}
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"

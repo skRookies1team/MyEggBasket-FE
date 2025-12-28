@@ -94,7 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     
     // 자동 KIS 토큰/승인키 발급 조건: appkey + appsecret 등록된 사용자만
     if (user.appkey && user.appsecret) {
-      console.log("🔑 KIS API 키 발견 → 자동으로 KIS 토큰 발급 진행");
+      console.log(" KIS API 키 발견 → 자동으로 KIS 토큰 발급 진행");
       await get().issueKisToken();
       await get().issueApprovalKey();
     } else {

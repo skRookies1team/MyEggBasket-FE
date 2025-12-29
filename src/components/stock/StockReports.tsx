@@ -1,10 +1,31 @@
-import type { ReportItem } from "../../types/stock.ts";
+import type { S3ReportItem } from "../../types/stock";
 
 interface StockReportsProps {
-  data: ReportItem[];
+  data: S3ReportItem[];
+}
+
+const S3_BASE =
+  "https://eggstockbasket.s3.ap-northeast-2.amazonaws.com/reports";
+
+/* --------------------------------------------------
+ * 중복 제거: title + date 기준
+ * -------------------------------------------------- */
+function dedupeReports(list: S3ReportItem[]) {
+  const map = new Map<string, S3ReportItem>();
+
+  list.forEach((r) => {
+    const key = `${r.title}_${r.date}`;
+    if (!map.has(key)) {
+      map.set(key, r);
+    }
+  });
+
+  return Array.from(map.values());
 }
 
 export function StockReports({ data }: StockReportsProps) {
+  const reports = dedupeReports(data);
+
   return (
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
       {/* Header */}
@@ -13,16 +34,19 @@ export function StockReports({ data }: StockReportsProps) {
       </h3>
 
       <div className="space-y-3">
-        {data.length === 0 ? (
+        {reports.length === 0 ? (
           <div className="rounded-xl border border-dashed border-[#232332] py-10 text-center text-sm text-gray-400">
             리포트가 없습니다.
           </div>
         ) : (
-          data.map((report) => (
-            <div
-              key={report.id}
+          reports.map((report) => (
+            <a
+              key={report.file}
+              href={`${S3_BASE}/${report.file}`}
+              target="_blank"
+              rel="noreferrer"
               className="
-                rounded-xl border border-[#232332]
+                block rounded-xl border border-[#232332]
                 bg-[#0f0f17] p-4
                 transition
                 hover:border-indigo-400/60
@@ -35,31 +59,22 @@ export function StockReports({ data }: StockReportsProps) {
                     {report.title}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {report.source} • {report.date}
+                    {report.date}
                   </p>
                 </div>
 
-                {/* Sentiment Badge */}
+                {/* Download Badge */}
                 <span
-                  className={`
-                    shrink-0 rounded-md px-3 py-1 text-xs font-semibold
-                    ${
-                      report.sentiment === "buy"
-                        ? "bg-emerald-500/15 text-emerald-400"
-                        : report.sentiment === "sell"
-                        ? "bg-red-500/15 text-red-400"
-                        : "bg-gray-500/15 text-gray-300"
-                    }
-                  `}
+                  className="
+                    shrink-0 rounded-md
+                    bg-indigo-500/15 px-3 py-1
+                    text-xs font-semibold text-indigo-400
+                  "
                 >
-                  {report.sentiment.toUpperCase()}
+                  PDF
                 </span>
               </div>
-
-              <p className="text-sm text-gray-400">
-                {report.summary}
-              </p>
-            </div>
+            </a>
           ))
         )}
       </div>

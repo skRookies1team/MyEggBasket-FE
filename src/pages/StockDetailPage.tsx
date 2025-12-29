@@ -14,6 +14,7 @@ import type {
   TabType,
   StockCandle,
   StockCurrentPrice,
+  S3ReportItem,
 } from "../types/stock";
 
 import { useRealtimePrice } from "../hooks/useRealtimeStock";
@@ -35,7 +36,6 @@ export default function StockDetailPage() {
   const navigate = useNavigate();
 
   const stockCode = code ?? "005930";
-
   const [period, setPeriod] = useState<Period>("day");
 
   /* realtime (minute only) */
@@ -74,7 +74,7 @@ export default function StockDetailPage() {
     };
   }, [stockCode]);
 
-  /* header data */
+  /* header data (reports ❌ 포함 안 함) */
   const combinedData: StockDetailData = useMemo(
     () => ({
       currentPrice:
@@ -95,7 +95,6 @@ export default function StockDetailPage() {
       chartData: [],
       news: [],
       financials: { revenue: [], profit: [] },
-      reports: [],
     }),
     [realtimeData, restInfo]
   );
@@ -134,8 +133,13 @@ function StockDetailView({
   const [historicalData, setHistoricalData] = useState<StockCandle[]>([]);
   const [stockName, setStockName] = useState<string>("");
 
+  /* 🔹 S3 리포트 */
+  const [reports, setReports] = useState<S3ReportItem[]>([]);
 
-  /* historical chart data */
+  const REPORTS_BASE =
+    "https://eggstockbasket.s3.ap-northeast-2.amazonaws.com/reports";
+
+  /* historical chart */
   useEffect(() => {
     if (!isHistoryPeriod(period)) return;
 
@@ -144,13 +148,27 @@ function StockDetailView({
       .catch(console.error);
   }, [period, stockCode]);
 
+  /* stock name */
   useEffect(() => {
-    const loadStockInfo = async () => {
-      const data = await getStockInfoFromDB(stockCode);
-      console.log(data);
-      setStockName(data?.name || "");
+    getStockInfoFromDB(stockCode).then((info) =>
+      setStockName(info?.name || "")
+    );
+  }, [stockCode]);
+
+  /* reports.json */
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const res = await fetch(`${REPORTS_BASE}/reports.json`);
+        const json = await res.json();
+        setReports(json.stocks?.[stockCode] ?? []);
+      } catch (e) {
+        console.error("Failed to load reports", e);
+        setReports([]);
+      }
     };
-    loadStockInfo();
+
+    loadReports();
   }, [stockCode]);
 
   const displayChartData = useMemo(
@@ -173,9 +191,8 @@ function StockDetailView({
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] pb-24 mt-6">
-      {/* Header */}
       <StockHeader
-        stockCode={stockCode}          
+        stockCode={stockCode}
         stockName={stockName || stockCode}
         currentPrice={data.currentPrice}
         changeAmount={data.changeAmount}
@@ -185,7 +202,6 @@ function StockDetailView({
         acmlVol={0}
       />
 
-      {/* Tabs */}
       <div className="border-b border-[#232332] bg-[#0a0a0f]">
         <StockTabNav
           activeTab={activeTab}
@@ -193,7 +209,6 @@ function StockDetailView({
         />
       </div>
 
-      {/* Content */}
       <div className="mx-auto max-w-[1600px] px-4 py-6">
         {activeTab === "chart" && (
           <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
@@ -219,7 +234,7 @@ function StockDetailView({
 
         {activeTab === "report" && (
           <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            <StockReports data={data.reports} />
+            <StockReports data={reports} />
           </div>
         )}
       </div>

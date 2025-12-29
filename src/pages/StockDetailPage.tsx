@@ -32,10 +32,10 @@ const isHistoryPeriod = (p: Period): p is HistoryPeriod => p !== "minute";
 /* Container */
 /* ------------------------------------------------------------------ */
 export default function StockDetailPage() {
-  const { code } = useParams<{ code: string }>();
+  const { stockCode: paramCode } = useParams<{ stockCode: string }>();
   const navigate = useNavigate();
 
-  const stockCode = code ?? "005930";
+  const stockCode = paramCode ?? "";
   const [period, setPeriod] = useState<Period>("day");
 
   /* realtime (minute only) */

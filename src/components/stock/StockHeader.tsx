@@ -1,6 +1,12 @@
+import { useEffect, useMemo } from "react";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { useFavoriteStore } from "../../store/favoriteStore";
+
+import favoriteOn from "../../assets/icons/egg3.png";
+import favoriteOff from "../../assets/icons/egg2.png";
 
 interface StockHeaderProps {
+  stockCode: string;
   stockName: string;
   currentPrice: number;
   changeAmount: number;
@@ -16,6 +22,7 @@ interface StockHeaderProps {
 }
 
 export function StockHeader({
+  stockCode,
   stockName,
   currentPrice,
   changeAmount,
@@ -27,12 +34,38 @@ export function StockHeader({
   bidp1,
   acmlVol,
 }: StockHeaderProps) {
+  /* ---------------- util ---------------- */
   const safeNum = (v?: number) =>
     typeof v === "number" && Number.isFinite(v) ? v : 0;
 
   const isPositive = safeNum(changeAmount) >= 0;
   const ColorIcon = isPositive ? TrendingUp : TrendingDown;
   const colorClass = isPositive ? "text-red-400" : "text-blue-400";
+
+  /* ---------------- favorite ---------------- */
+  const favorites = useFavoriteStore((s) => s.favorites);
+  const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
+  const loadFavorites = useFavoriteStore((s) => s.loadFavorites);
+
+  /** 관심종목 여부 (안전) */
+  const isFavorite = useMemo(
+    () => favorites.some((f) => f.stockCode === stockCode),
+    [favorites, stockCode]
+  );
+
+  /** 최초 1회 관심종목 로딩 */
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  /** 관심종목 토글 (방어 포함) */
+  const handleToggleFavorite = () => {
+    if (!stockCode || stockCode === "undefined") {
+      console.error("❌ 잘못된 stockCode:", stockCode);
+      return;
+    }
+    toggleFavorite(stockCode);
+  };
 
   return (
     <header className="border-b border-[#232332] bg-gradient-to-b from-[#14141c] to-[#0a0a0f]">
@@ -48,12 +81,29 @@ export function StockHeader({
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          {/* ⬇️ Nav에 가려지지 않도록 margin-top 추가 */}
+          {/* ===================== */}
+          {/* Content */}
+          {/* ===================== */}
           <div className="flex-1 mt-14 md:mt-3">
-            {/* Stock Name */}
-            <h1 className="mb-2 text-xl font-semibold text-gray-100">
-              {stockName}
-            </h1>
+            {/* Name + Favorite */}
+            <div className="mb-2 flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-gray-100">
+                {stockName}
+              </h1>
+
+              <button
+                onClick={handleToggleFavorite}
+                className="rounded-md p-1 transition hover:bg-[#1f1f2e]"
+                title={isFavorite ? "관심 종목 해제" : "관심 종목 추가"}
+              >
+                <img
+                  src={isFavorite ? favoriteOn : favoriteOff}
+                  alt={isFavorite ? "관심 종목" : "관심 종목 아님"}
+                  className="h-5 w-5 select-none transition-transform hover:scale-110"
+                  draggable={false}
+                />
+              </button>
+            </div>
 
             {/* Price & Change */}
             <div className="flex flex-wrap items-center gap-4">

@@ -35,14 +35,24 @@ export default function LiveStockPanel({ data }: Props) {
   const favoriteCodes = favorites.map((f) => f.stockCode);
 
   const filteredData = {
-    volume: data.volume.filter((item) => favoriteCodes.includes(item.code)),
-    amount: data.amount.filter((item) => favoriteCodes.includes(item.code)),
-    rise: data.rise.filter((item) => favoriteCodes.includes(item.code)),
-    fall: data.fall.filter((item) => favoriteCodes.includes(item.code)),
+    volume: data.volume.filter((item) =>
+      favoriteCodes.includes(item.code)
+    ),
+    amount: data.amount.filter((item) =>
+      favoriteCodes.includes(item.code)
+    ),
+    rise: data.rise.filter((item) =>
+      favoriteCodes.includes(item.code)
+    ),
+    fall: data.fall.filter((item) =>
+      favoriteCodes.includes(item.code)
+    ),
   };
 
   const finalData =
-    onlyFavorites && favoriteCodes.length > 0 ? filteredData : data;
+    onlyFavorites && favoriteCodes.length > 0
+      ? filteredData
+      : data;
 
   const noFavorites = onlyFavorites && favoriteCodes.length === 0;
 
@@ -61,7 +71,10 @@ export default function LiveStockPanel({ data }: Props) {
           alignItems="center"
           sx={{ mb: 2 }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 600, color: "#ffffff" }} // 🔥 흰색
+          >
             실시간 종목 주가
           </Typography>
 
@@ -91,7 +104,10 @@ export default function LiveStockPanel({ data }: Props) {
             />
             <Typography
               variant="caption"
-              sx={{ color: "#b5b5c5", fontSize: "0.8rem" }}
+              sx={{
+                color: "#ffffff", // 🔥 레이블 흰색
+                fontSize: "0.8rem",
+              }}
             >
               {onlyFavorites
                 ? "관심종목만 보는 중"
@@ -103,7 +119,10 @@ export default function LiveStockPanel({ data }: Props) {
         <Divider sx={{ borderColor: "#2a2a35", mb: 2 }} />
 
         {/* 정렬 탭 */}
-        <LiveStockTabs selected={category} onChange={setCategory} />
+        <LiveStockTabs
+          selected={category}
+          onChange={setCategory}
+        />
 
         {/* 내용 */}
         <Box sx={{ mt: 2 }}>
@@ -112,7 +131,7 @@ export default function LiveStockPanel({ data }: Props) {
               sx={{
                 py: 4,
                 textAlign: "center",
-                color: "#b5b5c5",
+                color: "#ffffff", // 🔥 흰색
                 fontSize: "0.9rem",
               }}
             >

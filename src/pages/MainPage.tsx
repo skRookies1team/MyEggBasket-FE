@@ -9,7 +9,6 @@ import {
   Typography,
 } from "@mui/material";
 import { TrendingUp, Newspaper, Users } from "lucide-react";
-import { Client } from "@stomp/stompjs";
 
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
@@ -20,9 +19,6 @@ import InvestorTrend from "../components/Investor/InvestorTrend";
 
 import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
 import { getStockInfoFromDB } from "../api/stocksApi";
-import { requestStockSubscription } from "../hooks/useRealtimeStock";
-import { BACKEND_WS_URL } from "../config/api";
-import { TICKERS } from "../data/stockInfo";
 
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock";
@@ -40,7 +36,7 @@ export default function MainPageDarkRealtime() {
     fall: StockItem[];
   }>({ volume: [], amount: [], rise: [], fall: [] });
 
-  /* ---------------- 거래량 TOP10 ---------------- */
+  /* ---------------- 거래량 TOP10 (HTTP 폴링) ---------------- */
   useEffect(() => {
     const load = async () => {
       const list = await fetchVolumeRankTop10();
@@ -51,7 +47,7 @@ export default function MainPageDarkRealtime() {
     return () => clearInterval(timer);
   }, []);
 
-  /* ---------------- 주요 지수 sticky ---------------- */
+  /* ---------------- 주요 지수 sticky 감지 ---------------- */
   useEffect(() => {
     if (!indexRef.current) return;
     const observer = new IntersectionObserver(
@@ -62,70 +58,79 @@ export default function MainPageDarkRealtime() {
     return () => observer.disconnect();
   }, []);
 
-  /* ---------------- 실시간 주가 업데이트 ---------------- */
-  const updateRealtimePrice = async (updated: any) => {
-    const info = await getStockInfoFromDB(updated.stockCode);
-
-    setLiveData((prev) => {
-      const update = (list: StockItem[]) => {
-        const idx = list.findIndex(i => i.code === updated.stockCode);
-        if (idx !== -1) {
-          return list.map((item, i) =>
-            i === idx
-              ? {
-                ...item,
-                price: updated.price,
-                percent: updated.diffRate,
-                volume: updated.volume,
-                amount: updated.tradingValue,
-                change: updated.diff,
-              }
-              : item
-          );
-        }
-        return [
-          ...list,
-          {
-            code: updated.stockCode,
-            name: info?.name ?? updated.stockCode,
-            price: updated.price,
-            percent: updated.diffRate,
-            volume: updated.volume,
-            amount: updated.tradingValue,
-            change: updated.diff,
-          },
-        ];
-      };
-
-      return {
-        volume: update(prev.volume),
-        amount: update(prev.amount),
-        rise: update(prev.rise),
-        fall: update(prev.fall),
-      };
-    });
-  };
-
-  /* ---------------- STOMP 구독 ---------------- */
   useEffect(() => {
-    const client = new Client({
-      brokerURL: `ws://${new URL(BACKEND_WS_URL).host}/ws`,
-      reconnectDelay: 5000,
-    });
+    const socket = new WebSocket("ws://localhost:8000/ws?userId=1");
 
-    client.onConnect = () => {
-      TICKERS.forEach(code => {
-        requestStockSubscription(client, code, updateRealtimePrice);
-      });
+    socket.onopen = () => {
+      console.log("[WS] Python 서버 연결 성공");
     };
 
-    client.activate();
-    return () => {
-      client.deactivate(); // ❗ async 아님
+    socket.onmessage = async (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === "STOCK_TICK") {
+          // Python main.py에서 보낸 데이터 구조 분해 할당
+          const { code, price, change_rate, volume, trade_value } = msg;
+          
+          const numericPrice = typeof price === "string" ? parseInt(price, 10) : price;
+          const info = await getStockInfoFromDB(code);
+
+          setLiveData((prev) => {
+            const updateList = (list: StockItem[]) => {
+              const idx = list.findIndex((i) => i.code === code);
+
+              if (idx !== -1) {
+                // 1. 기존 리스트에 있으면 모든 정보 업데이트
+                return list.map((item, i) =>
+                  i === idx 
+                    ? { 
+                        ...item, 
+                        price: numericPrice,
+                        percent: change_rate, // 등락률 업데이트
+                        volume: volume,      // 거래량 업데이트
+                        amount: trade_value,  // 거래대금 업데이트
+                        change: change_rate >= 0 ? 1 : -1 // 상승/하락 여부 판단용 (임시)
+                      } 
+                    : item
+                );
+              } else {
+                // 2. 리스트에 없으면 새로운 StockItem 생성하여 추가
+                return [
+                  ...list,
+                  {
+                    code: code,
+                    name: info?.name ?? code,
+                    price: numericPrice,
+                    percent: change_rate || 0,
+                    change: (change_rate || 0) >= 0 ? 1 : -1,
+                    volume: volume || 0,
+                    amount: trade_value || 0,
+                  },
+                ];
+              }
+            };
+
+            // 카테고리별로 정렬 로직을 추가하면 더 좋습니다.
+            return {
+              volume: updateList(prev.volume).sort((a, b) => b.volume - a.volume),
+              amount: updateList(prev.amount).sort((a, b) => b.amount - a.amount),
+              rise: updateList(prev.rise).sort((a, b) => b.percent - a.percent),
+              fall: updateList(prev.fall).sort((a, b) => a.percent - b.percent),
+            };
+          });
+        }
+      } catch (error) {
+        console.error("[WS] 메시지 처리 에러:", error);
+      }
     };
+
+    socket.onerror = (err) => console.error("[WS] 에러:", err);
+    socket.onclose = () => console.log("[WS] 연결 종료");
+
+    return () => socket.close();
   }, []);
-
-  /* ---------------- AI Issue ---------------- */
+  /* ---------------- AI 이슈 데이터 ---------------- */
   const issueBubbles = [
     { name: "AI 반도체", size: 140, mentions: 8800, change: 12.5, color: "#7c3aed" },
     { name: "전기차", size: 110, mentions: 5029, change: 8.3, color: "#00e676" },
@@ -134,45 +139,7 @@ export default function MainPageDarkRealtime() {
   ];
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#0a0a0f",
-        py: 4,
-
-        /* ============================= */
-        /* 메인페이지 레이블 전체 흰색 */
-        /* ============================= */
-        color: "#ffffff",
-
-        "& .MuiTypography-root": {
-          color: "#ffffff",
-        },
-
-        "& .MuiTab-root": {
-          color: "#ffffff",
-          opacity: 0.7,
-          "&.Mui-selected": {
-            color: "#ffffff",
-            opacity: 1,
-          },
-        },
-
-        "& .MuiButton-root": {
-          color: "#ffffff",
-        },
-
-        "& .MuiChip-label": {
-          color: "#ffffff",
-        },
-
-        /* 보조 텍스트 */
-        "& .MuiTypography-colorTextSecondary": {
-          color: "#b5b5c5",
-        },
-      }}
-    >
-      {/* 🔹 Sticky 지수 티커 */}
+    <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0f", py: 4, color: "#ffffff" }}>
       {showTicker && (
         <Box sx={{ position: "sticky", top: 0, zIndex: 10 }}>
           <MarketIndexContainer showTickerOnly />
@@ -180,32 +147,22 @@ export default function MainPageDarkRealtime() {
       )}
 
       <Container maxWidth="xl">
-        {/* 🔹 주요 지수 카드 */}
         <Box ref={indexRef} sx={{ mb: 4 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-            주요 지수
-          </Typography>
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>주요 지수</Typography>
           <MarketIndexContainer showCardsOnly />
         </Box>
 
-        {/* 🔹 거래량 TOP10 */}
         {top10Rank.length > 0 && (
           <Box sx={{ mb: 4 }}>
             <Top10Rolling data={top10Rank} interval={2500} />
           </Box>
         )}
 
-        {/* 🔹 AI 이슈 */}
         <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <Typography variant="h6" fontWeight={600}>
-              AI 이슈포착
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>AI 이슈포착</Typography>
           <AIIssueLayout bubbles={issueBubbles} />
         </Box>
 
-        {/* 🔹 메인 카드 */}
         <Card sx={{ bgcolor: "#1a1a24", border: "1px solid #2a2a35" }}>
           <Tabs
             value={activeTab}
@@ -218,6 +175,7 @@ export default function MainPageDarkRealtime() {
           </Tabs>
 
           <CardContent sx={{ p: 4 }}>
+            {/* [연동] 실시간 업데이트되는 liveData 전달 */}
             {activeTab === 0 && <LiveStockPanel data={liveData} />}
             {activeTab === 1 && <NewsTabs />}
             {activeTab === 2 && <InvestorTrend data={liveData} />}

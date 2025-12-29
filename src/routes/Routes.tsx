@@ -28,7 +28,7 @@ export default function Router() {
                 <Route path="/" element={<MainPage />} />
                 <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/mypage" element={<MyPage />} />
-                <Route path="/stock/:code" element={<StockDetailPage />} />
+                <Route path="/stock/:stockCode" element={<StockDetailPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/myassets" element={<MyAssetPage />} />
                 <Route

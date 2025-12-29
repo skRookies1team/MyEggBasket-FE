@@ -167,17 +167,20 @@ function HoldingStockRow({ holdingStock }: HoldingStockRowProps) {
 ========================= */
 export default function HistoryAsset({ portfolioId }: Props) {
   const portfolios = usePortfolioStore((s) => s.portfolioList);
-  const portfolio: Portfolio | undefined = portfolios.find(
-    (p) => p.portfolioId === portfolioId
-  );
+  const portfolio = portfolios.find((p) => p.portfolioId === portfolioId);
 
-  const history = useHistoryStore((s) => s.historyReport);
+  // historyReport 대신 직접 계산할 상태 관리
+  const history = useHistoryStore((s) => s.historyReport); // 성공률(Win Rate) 등을 위해 유지
   const fetchHistory = useHistoryStore((s) => s.fetchHistory);
-
   const holdings = useHoldingStore((s) => s.holdingList);
   const fetchHoldings = useHoldingStore((s) => s.fetchHoldings);
 
-  const [totalStockValue, setTotalStockValue] = useState(0);
+  // 실시간 합산 데이터 상태
+  const [summary, setSummary] = useState({
+    totalPurchaseAmount: 0, // 총 매입 금액
+    totalCurrentValue: 0,   // 총 평가 금액
+    totalReturnRate: 0      // 전체 수익률
+  });
 
   useEffect(() => {
     if (portfolioId !== null) {
@@ -186,47 +189,59 @@ export default function HistoryAsset({ portfolioId }: Props) {
     }
   }, [portfolioId, fetchHistory, fetchHoldings]);
 
+  // 실시간 가격을 반영한 전체 합계 계산
   useEffect(() => {
-    const calc = async () => {
+    const calcTotalMetrics = async () => {
       if (holdings.length === 0) {
-        setTotalStockValue(0);
+        setSummary({ totalPurchaseAmount: 0, totalCurrentValue: 0, totalReturnRate: 0 });
         return;
       }
 
-      const prices = await Promise.all(
-        holdings.map((h) =>
-          fetchStockCurrentPrice(h.stock.stockCode)
-        )
+      // 1. 모든 종목의 현재가 가져오기
+      const priceResults = await Promise.all(
+        holdings.map((h) => fetchStockCurrentPrice(h.stock.stockCode))
       );
 
-      const total = prices.reduce((sum, p, i) => {
-        const price = p?.currentPrice ?? 0;
-        return sum + price * holdings[i].quantity;
-      }, 0);
+      let totalPurchase = 0;
+      let totalValue = 0;
 
-      setTotalStockValue(total);
+      // 2. 합계 계산
+      holdings.forEach((h, i) => {
+        const currentPrice = priceResults[i]?.currentPrice ?? 0;
+        totalPurchase += h.avgPrice * h.quantity;
+        totalValue += currentPrice * h.quantity;
+      });
+
+      // 3. 수익률 계산
+      const returnRate = totalPurchase > 0 
+        ? ((totalValue - totalPurchase) / totalPurchase) * 100 
+        : 0;
+
+      setSummary({
+        totalPurchaseAmount: totalPurchase,
+        totalCurrentValue: totalValue,
+        totalReturnRate: returnRate
+      });
     };
 
-    calc();
+    calcTotalMetrics();
+    const interval = setInterval(calcTotalMetrics, 1000); // 1초마다 갱신
+    return () => clearInterval(interval);
   }, [holdings]);
 
   if (!portfolio) {
-    return (
-      <div className="rounded-xl bg-[#1a1a24] p-6 text-center text-gray-400">
-        포트폴리오 정보를 불러오는 중입니다...
-      </div>
-    );
+    return <div className="rounded-xl bg-[#1a1a24] p-6 text-center text-gray-400">불러오는 중...</div>;
   }
 
-  const successRate = history?.successRate ?? null;
-  const eggIcon =
-    successRate !== null ? (
-      <img
-        src={successRate >= 10 ? Egg1 : Egg2}
-        className="ml-2 h-7 w-7"
-        alt="egg"
-      />
-    ) : null;
+  // UI용 가공 데이터
+  const calculatedHistory = {
+    totalReturnRate: summary.totalReturnRate,
+    successRate: history?.successRate ?? 0, // 성공률은 기존 데이터 사용
+  };
+
+  const eggIcon = calculatedHistory.successRate >= 10 
+    ? <img src={Egg1} className="ml-2 h-7 w-7" alt="egg" />
+    : <img src={Egg2} className="ml-2 h-7 w-7" alt="egg" />;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -234,30 +249,32 @@ export default function HistoryAsset({ portfolioId }: Props) {
       <div className="lg:col-span-2 rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
         <div className="mb-4 border-b border-[#232332] pb-4">
           <div className="flex items-center">
-            <h2 className="text-xl font-semibold text-gray-100">
-              {portfolio.name}
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-100">{portfolio.name}</h2>
             {eggIcon}
           </div>
           <p className="mt-1 text-sm text-gray-400">
-            위험 수준:
-            <span className="ml-1 font-semibold text-indigo-400">
-              {portfolio.riskLevel}
-            </span>
+            위험 수준: <span className="ml-1 font-semibold text-indigo-400">{portfolio.riskLevel}</span>
           </p>
         </div>
 
-        <div className="rounded-lg bg-[#1f1f2e] p-4">
-          <p className="text-sm text-gray-400">
-            주식 현재 평가 금액
-          </p>
-          <p className="mt-1 text-lg font-bold text-gray-100">
-            {totalStockValue.toLocaleString()}원
-          </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-lg bg-[#1f1f2e] p-4">
+            <p className="text-sm text-gray-400">총 매입 금액</p>
+            <p className="mt-1 text-lg font-bold text-gray-100">
+              {summary.totalPurchaseAmount.toLocaleString()}원
+            </p>
+          </div>
+          <div className="rounded-lg bg-[#1f1f2e] p-4">
+            <p className="text-sm text-gray-400">현재 평가 금액</p>
+            <p className="mt-1 text-lg font-bold text-indigo-400">
+              {summary.totalCurrentValue.toLocaleString()}원
+            </p>
+          </div>
         </div>
 
         <div className="mt-6">
-          <HistoryReport history={history} />
+          {/* 직접 계산한 calculatedHistory 전달 */}
+          <HistoryReport history={calculatedHistory} />
         </div>
       </div>
 

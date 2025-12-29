@@ -1,10 +1,9 @@
+// src/hooks/useRealtimeIndex.ts
 import { useState, useEffect, useRef } from "react";
-import { BACKEND_WS_URL as WS_URL, TR_ID2 } from "../config/api";
-import { useAuthStore } from "../store/authStore";
+import { Client, type StompSubscription } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { BACKEND_WS_URL } from "../config/api";
 
-/* =======================================================
-   🔵 2) 국내 지수 실시간 체결 훅 (H0UPCNT0)
-======================================================= */
 export interface IndexRealtimeData {
   indexName: "KOSPI" | "KOSDAQ";
   time: string;
@@ -13,106 +12,65 @@ export interface IndexRealtimeData {
   rate: number;
   volume: number;
 }
+
 export interface UseRealtimeResult<T> {
   data: T | null;
   connected: boolean;
   loading: boolean;
 }
-function parseIndexMessage(raw: string): IndexRealtimeData | null {
-  if (!raw.startsWith("0|H0UPCNT0")) return null;
 
-  const parts = raw.split("|");
-  const f = parts[3].split("^");
-  const g = (i: number) => (i < f.length ? f[i] : "0");
-
-  const trKey = parts[2]; // "001" or "201"
-  const indexName = trKey === "001" ? "KOSPI" : "KOSDAQ";
-
-  return {
-    indexName,
-    time: g(1),
-    current: Number(g(2)),
-    change: Number(g(4)),
-    rate: Number(g(5)),
-    volume: Number(g(6)),
-  };
-}
-
-/* -------------------------------------------------------
-   INDEX 훅
-------------------------------------------------------- */
 export function useRealtimeIndex(
-  indexCode: "001" | "201"
+    indexCode: "001" | "201" // 001: 코스피, 201: 코스닥
 ): UseRealtimeResult<IndexRealtimeData> {
   const [data, setData] = useState<IndexRealtimeData | null>(null);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const clientRef = useRef<Client | null>(null);
+  const subRef = useRef<StompSubscription | null>(null);
 
   useEffect(() => {
-    let closed = false;
+    // 1. 클라이언트 설정 (SockJS 사용)
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${BACKEND_WS_URL}/ws`),
+      reconnectDelay: 5000,
+      debug: (str) => console.log(`[Index-STOMP] ${str}`),
+    });
 
-    const connect = async () => {
-      const approval = await getApprovalKey();
-      if (!approval) return;
+    client.onConnect = () => {
+      setConnected(true);
+      setLoading(false);
 
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        if (closed) return;
-
-        setConnected(true);
-        setLoading(false);
-
-        ws.send(
-          JSON.stringify({
-            header: {
-              approval_key: approval,
-              custtype: "P",
-              tr_type: "1",
-              "content-type": "utf-8",
-            },
-            body: { input: { tr_id: TR_ID2, tr_key: indexCode } },
-          })
-        );
-      };
-
-      ws.onmessage = (event) => {
-        const parsed = parseIndexMessage(event.data);
-        if (parsed) setData(parsed);
-      };
-
-      ws.onclose = () => {
-        setConnected(false);
-        if (!closed) setTimeout(connect, 2000);
-      };
+      // 2. 지수 구독 (백엔드가 이 경로로 쏴줘야 함)
+      // 예: /topic/realtime-index/001
+      subRef.current = client.subscribe(
+          `/topic/realtime-index/${indexCode}`,
+          (message) => {
+            if (message.body) {
+              try {
+                // 백엔드가 JSON으로 변환해서 준다고 가정
+                const parsed = JSON.parse(message.body) as IndexRealtimeData;
+                setData(parsed);
+              } catch (err) {
+                console.error("[Index-STOMP] Parse Error:", err);
+              }
+            }
+          }
+      );
     };
 
-    connect();
+    client.onDisconnect = () => {
+      setConnected(false);
+    };
+
+    client.activate();
+    clientRef.current = client;
 
     return () => {
-      closed = true;
-      wsRef.current?.close();
+      if (subRef.current) subRef.current.unsubscribe();
+      if (clientRef.current) clientRef.current.deactivate();
     };
   }, [indexCode]);
 
   return { data, connected, loading };
-}
-
-// approvalKey를 가져오고 없으면 발급 요청하는 유틸
-async function getApprovalKey(): Promise<string | null> {
-  const s = useAuthStore.getState();
-  if (s.approvalKey) return s.approvalKey;
-
-  // 발급 함수가 없으면 null 반환
-  if (typeof s.issueApprovalKey !== "function") return null;
-
-  try {
-    await s.issueApprovalKey();
-    return useAuthStore.getState().approvalKey;
-  } catch {
-    return null;
-  }
 }

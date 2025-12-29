@@ -25,7 +25,6 @@ export interface Holding {
 }
 
 export interface HistoryReport {
-    portfolioId: number;
     totalReturnRate: number;
     successRate: number;
 }

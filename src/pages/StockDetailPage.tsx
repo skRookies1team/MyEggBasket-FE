@@ -173,55 +173,56 @@ function StockDetailView({
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] pb-24 mt-6">
-        {/* Header */}
-        <StockHeader
-          stockName={stockName || stockCode}
-          currentPrice={data.currentPrice}
-          changeAmount={data.changeAmount}
-          changeRate={data.changeRate}
-          onBack={onBack}
-          isLive={period === "minute"}
-          acmlVol={0}
+      {/* Header */}
+      <StockHeader
+        stockCode={stockCode}          
+        stockName={stockName || stockCode}
+        currentPrice={data.currentPrice}
+        changeAmount={data.changeAmount}
+        changeRate={data.changeRate}
+        onBack={onBack}
+        isLive={period === "minute"}
+        acmlVol={0}
+      />
+
+      {/* Tabs */}
+      <div className="border-b border-[#232332] bg-[#0a0a0f]">
+        <StockTabNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
+      </div>
 
-        {/* Tabs */}
-        <div className="border-b border-[#232332] bg-[#0a0a0f]">
-          <StockTabNav
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-        </div>
+      {/* Content */}
+      <div className="mx-auto max-w-[1600px] px-4 py-6">
+        {activeTab === "chart" && (
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockChart
+              data={displayChartData}
+              period={period}
+              onPeriodChange={onPeriodChange}
+            />
+          </div>
+        )}
 
-        {/* Content */}
-        <div className="mx-auto max-w-[1600px] px-4 py-6">
-          {activeTab === "chart" && (
-            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-              <StockChart
-                data={displayChartData}
-                period={period}
-                onPeriodChange={onPeriodChange}
-              />
-            </div>
-          )}
+        {activeTab === "news" && (
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockNews data={data.news} query={stockCode} />
+          </div>
+        )}
 
-          {activeTab === "news" && (
-            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-              <StockNews data={data.news} query={stockCode} />
-            </div>
-          )}
+        {activeTab === "info" && (
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockFinancials stockCode={stockCode} />
+          </div>
+        )}
 
-          {activeTab === "info" && (
-            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-              <StockFinancials stockCode={stockCode} />
-            </div>
-          )}
-
-          {activeTab === "report" && (
-            <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-              <StockReports data={data.reports} />
-            </div>
-          )}
-        </div>
+        {activeTab === "report" && (
+          <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
+            <StockReports data={data.reports} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

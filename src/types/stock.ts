@@ -153,3 +153,12 @@ export interface StockCurrentPrice {
     closePrice:number;
 }
 
+export interface StockTick {
+  type: "STOCK_TICK";
+  code: string;       // stckShrnIscd
+  price: number;      // stckPrpr
+  time: string;       // stckCntgHour
+  change_rate: number; // prdyCtrt (추가)
+  volume: number;      // acmlVol (추가)
+  trade_value: number; // acmlTrPbmn (추가)
+}

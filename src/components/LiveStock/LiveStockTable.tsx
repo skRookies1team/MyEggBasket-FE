@@ -123,7 +123,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   width: 100,
                   textAlign: "right",
                   fontWeight: 600,
-                  color: up ? "#00e676" : "#ff4d6a",
+                  color: up ? "red" : "blue",
                 }}
               >
                 {s.price.toLocaleString()}원
@@ -135,7 +135,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   width: 90,
                   textAlign: "right",
                   fontWeight: 600,
-                  color: up ? "#00e676" : "#ff4d6a",
+                  color: up ? "red" : "blue",
                 }}
               >
                 {s.percent}%

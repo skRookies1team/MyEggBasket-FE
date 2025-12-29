@@ -51,6 +51,7 @@ export function PortfolioCharts({
                 outerRadius={85}
                 paddingAngle={4}
                 dataKey="value"
+                stroke="none"
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

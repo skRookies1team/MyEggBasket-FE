@@ -48,9 +48,6 @@ export function StockHeader({
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          {/* ===================== */}
-          {/* Main Info */}
-          {/* ===================== */}
           {/* ⬇️ Nav에 가려지지 않도록 margin-top 추가 */}
           <div className="flex-1 mt-14 md:mt-3">
             {/* Stock Name */}

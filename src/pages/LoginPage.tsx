@@ -13,6 +13,10 @@ import {
 } from "@mui/material";
 
 import { useAuthStore } from "../store/authStore";
+import type { ModalType } from "../types/modal";
+import LoginResultModal from "../components/LoginResultModal";
+
+
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -23,26 +27,52 @@ export default function LoginPage() {
     password: "",
   });
 
-  /* ---------------- handlers ---------------- */
+  // 2. 모달 상태 관리
+  const [modalStatus, setModalStatus] = useState<{
+    type: ModalType;
+    message: string;
+  }>({
+    type: null,
+    message: "",
+  });
+
   const handleLoginChange =
     (field: keyof typeof loginData) =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setLoginData({ ...loginData, [field]: e.target.value });
-    };
+      (e: ChangeEvent<HTMLInputElement>) => {
+        setLoginData({ ...loginData, [field]: e.target.value });
+      };
 
   const handleEnter = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleLogin();
   };
 
+  // 3. 로그인 핸들러 수정
   const handleLogin = async () => {
     try {
       await login(loginData);
-      navigate("/");
+
+      // 성공 모달 표시
+      setModalStatus({
+        type: "success",
+        message: "로그인에 성공했습니다! 잠시 후 메인 화면으로 이동합니다.",
+      });
+
+      // 1.5초 후 페이지 이동
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message ?? "로그인 실패");
+        setModalStatus({
+          type: "error",
+          message: err.response?.data?.message ?? "로그인 정보가 일치하지 않습니다.",
+        });
       } else {
-        alert("알 수 없는 오류가 발생했습니다.");
+        setModalStatus({
+          type: "error",
+          message: "서버 연결에 실패했습니다. 다시 시도해 주세요.",
+        });
       }
     }
   };
@@ -57,7 +87,6 @@ export default function LoginPage() {
         justifyContent: "center",
       }}
     >
-      {/* 로그인 카드 */}
       <Card
         sx={{
           width: 420,
@@ -133,6 +162,21 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
+      {/* 4. 모달 컴포넌트 배치 */}
+
+      <LoginResultModal
+        type={modalStatus.type}
+        message={modalStatus.message}
+        onClose={() => setModalStatus({ ...modalStatus, type: null })}
+        // 로그인 성공 시 바로 이동할 수 있게 버튼 텍스트 변경
+        actionLabel={modalStatus.type === 'success' ? "메인으로 이동" : "다시 시도"}
+        onAction={() => {
+          if (modalStatus.type === 'success') {
+            navigate("/");
+          }
+          setModalStatus({ ...modalStatus, type: null });
+        }}
+      />
     </Box>
   );
 }

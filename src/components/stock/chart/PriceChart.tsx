@@ -117,7 +117,7 @@ export function PriceChart({
         return;
       }
 
-      const prices = param.seriesPrices as Map<any, any> | undefined;
+      const prices = param.seriesData as Map<any, any> | undefined;
       if (!prices) {
         onHover?.(null);
         return;

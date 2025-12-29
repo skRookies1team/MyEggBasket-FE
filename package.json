@@ -30,6 +30,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
+    "react-toastify": "^11.0.5",
     "recharts": "^3.5.0",
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",

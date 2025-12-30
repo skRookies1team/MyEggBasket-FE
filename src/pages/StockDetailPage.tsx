@@ -35,7 +35,7 @@ export default function StockDetailPage() {
 
   /* 1. 실시간 가격 및 호가 데이터 연결 */
   const realtimeData = useRealtimePrice(stockCode, period === "minute");
-  const orderBookData = useRealtimeOrderBook(stockCode); // 실시간 호가 수신 훅
+  const orderBookData = useRealtimeOrderBook(stockCode);
 
   const subscribedRef = useRef(false);
 
@@ -159,9 +159,6 @@ function StockDetailView({
       <div className="mx-auto max-w-[1600px] px-4 py-6">
         {activeTab === "chart" && (
           <div className="rounded-2xl bg-[#1a1a24] p-4 shadow">
-            {/* 호가 데이터를 차트 컴포넌트 내부로 전달합니다. 
-                차트 내부의 ChartLayout에서 이 데이터를 사용하여 호가를 그립니다.
-            */}
             <StockChart
               data={displayChartData}
               period={period}

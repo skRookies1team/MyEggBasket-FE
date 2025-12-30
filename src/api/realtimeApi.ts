@@ -11,8 +11,8 @@ export function subscribeRealtimePrice(
 
 export const registerStockSubscription = async (stockCode: string) => {
   // 사용자가 보고 있는 종목을 'view' 타입으로 구독 요청
-  return await api.post(`/api/app/subscriptions`, {
+  return await api.post(`/subscriptions`, {
     stockCode,
-    type: "VIEW" // 조회용 구독임을 명시
+    type: "INTEREST" // 조회용 구독임을 명시
   });
 };

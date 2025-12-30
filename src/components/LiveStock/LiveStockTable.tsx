@@ -126,7 +126,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   color: up ? "#ff4d6a" : "#3ca8ff",
                 }}
               >
-                {s.price.toLocaleString()}원
+                {Number(s.price).toLocaleString()}원
               </Typography>
 
               {/* 등락률 */}
@@ -150,7 +150,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                     color: "#d0d0dd",
                   }}
                 >
-                  {s.volume.toLocaleString()}
+                  {Number(s.volume).toLocaleString()}
                 </Typography>
               )}
 

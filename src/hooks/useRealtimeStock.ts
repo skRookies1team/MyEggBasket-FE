@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Client, type StompSubscription } from "@stomp/stompjs";
-import { useWebSocket } from "../context/WebSocketContext"; // 경로 확인 필요
+import { useWebSocket } from "../context/WebSocketContext";
 
 export interface RealtimePricePayload {
   stockCode: string;
@@ -12,46 +12,77 @@ export interface RealtimePricePayload {
   tradingValue?: number;
 }
 
-// 헬퍼 함수: 구독 요청 (그대로 유지)
+/**
+ * [Helper] 백엔드 메시지 파싱 및 매핑
+ * 백엔드 DTO(StockTickDTO) -> 프론트엔드 포맷(RealtimePricePayload)
+ */
+const parseAndMap = (messageBody: string): RealtimePricePayload => {
+  const body = JSON.parse(messageBody);
+  return {
+    stockCode: body.stockCode,
+    tickTime: body.timestamp || body.tickTime,
+    // currentPrice가 있으면 사용, 없으면 price
+    price: Number(body.currentPrice ?? body.price ?? 0),
+    // changeRate가 있으면 사용, 없으면 diffRate/fluctuationRate
+    diffRate: Number(body.changeRate ?? body.diffRate ?? body.fluctuationRate ?? 0),
+    // volume
+    volume: Number(body.accumulatedTradingVolume ?? body.volume ?? 0),
+    // changeAmount(diff)
+    diff: Number(body.changeAmount ?? body.diff ?? body.compareToPreviousClosePrice ?? 0),
+    // tradingValue
+    tradingValue: Number(body.accumulatedTradingValue ?? body.tradingValue ?? 0),
+  };
+};
+
+/**
+ * [Export Helper] 직접 구독 요청 함수
+ * MainPage.tsx 등에서 여러 종목을 한꺼번에 구독할 때 사용
+ */
 export const requestStockSubscription = (
-    stompClient: Client,
+    client: Client,
     stockCode: string,
     callback: (data: RealtimePricePayload) => void
-) => {
-  if (!stompClient || !stompClient.connected) return null;
+): StompSubscription | null => {
+  if (!client || !client.connected || !stockCode) return null;
 
-  return stompClient.subscribe(
+  return client.subscribe(
       `/topic/realtime-price/${stockCode}`,
       (message) => {
         try {
-          const payload = JSON.parse(message.body) as RealtimePricePayload;
+          const payload = parseAndMap(message.body);
           callback(payload);
         } catch (e) {
-          console.error("[STOMP] payload parse error", e);
+          console.error("[STOMP] Data parse error:", e);
         }
       },
       { id: `sub-${stockCode}` }
   );
 };
 
-// 훅 수정: 전역 클라이언트 사용
+/**
+ * [Export Hook] 단일 종목 실시간 구독 훅
+ * StockDetailPage.tsx 등에서 사용
+ */
 export function useRealtimePrice(stockCode: string, enabled: boolean) {
-  const { client, isConnected } = useWebSocket(); // 전역 소켓 가져오기
+  const { client, isConnected } = useWebSocket();
   const [data, setData] = useState<RealtimePricePayload | null>(null);
   const subRef = useRef<StompSubscription | null>(null);
 
   useEffect(() => {
+    // 1. 연결이 없거나 비활성화 상태면 중단
     if (!enabled || !stockCode || !client || !isConnected) return;
 
-    // 이미 구독 중이면 해제 후 재구독 (혹은 중복 방지 로직)
-    if (subRef.current) subRef.current.unsubscribe();
+    // 2. 기존 구독 해제 (중복 방지)
+    if (subRef.current) {
+      subRef.current.unsubscribe();
+    }
 
-    // 구독 수행
+    // 3. 헬퍼 함수를 사용하여 구독 시작
     subRef.current = requestStockSubscription(client, stockCode, (payload) => {
       setData(payload);
     });
 
-    // 언마운트 시: "연결 해제(deactivate)"가 아니라 "구독 취소(unsubscribe)"만 수행
+    // 4. 언마운트 시 구독 해제
     return () => {
       if (subRef.current) {
         subRef.current.unsubscribe();

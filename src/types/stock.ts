@@ -36,13 +36,14 @@ export interface StockItem {
 
 export interface OrderItem {
     price: number;
-    volume: number;
-    percent: number; // 시각적 바 길이 (0-100)
+    volume: number; 
 }
 
 export interface OrderBookData {
-    sell: OrderItem[];
-    buy: OrderItem[];
+    sell: OrderItem[];      // 백엔드의 'asks'
+    buy: OrderItem[];       // 백엔드의 'bids'
+    totalAskQty: number;    // 매도 총 잔량 (추가)
+    totalBidQty: number;    // 매수 총 잔량 (추가)
 }
 
 export interface NewsItem {

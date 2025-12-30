@@ -1,5 +1,3 @@
-// src/components/stock/StockOrderBook.tsx
-import { useEffect, useState, useRef } from "react";
 import type { OrderBookData } from "../../types/stock";
 
 interface Props {
@@ -36,7 +34,7 @@ export function StockOrderBook({ orderBook, currentPrice, stockCode, onSelectPri
 
       {/* Sell Orders (매도 호가) */}
       <div className="flex flex-col gap-[1px]">
-        {sortedSell.map((item, idx) => {
+        {sortedSell.map((item) => {
           const ratio = totalAskQty > 0 ? (item.volume / totalAskQty) * 100 : 0;
           return (
             <button
@@ -69,7 +67,7 @@ export function StockOrderBook({ orderBook, currentPrice, stockCode, onSelectPri
 
       {/* Buy Orders (매수 호가) */}
       <div className="flex flex-col gap-[1px]">
-        {buy.map((item, idx) => {
+        {buy.map((item) => {
           const ratio = totalBidQty > 0 ? (item.volume / totalBidQty) * 100 : 0;
           return (
             <button

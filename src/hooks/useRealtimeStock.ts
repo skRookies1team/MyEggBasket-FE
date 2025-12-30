@@ -18,18 +18,26 @@ export interface RealtimePricePayload {
  */
 const parseAndMap = (messageBody: string): RealtimePricePayload => {
   const body = JSON.parse(messageBody);
+
+  // 1. 기본 값 추출
+  const price = Number(body.currentPrice ?? body.price ?? 0);
+  const diffRate = Number(body.changeRate ?? body.diffRate ?? body.fluctuationRate ?? 0);
+  let diff = Number(body.changeAmount ?? body.diff ?? body.compareToPreviousClosePrice ?? 0);
+
+  // 2. [추가된 로직] 백엔드에서 diff를 안 보내줄 경우, 가격과 등락률로 역산
+  // 공식: 변동폭 = (현재가 * 등락률) / (100 + 등락률)
+  if (diff === 0 && diffRate !== 0 && price !== 0) {
+    const prevClose = price / (1 + diffRate / 100);
+    diff = Math.round(price - prevClose);
+  }
+
   return {
     stockCode: body.stockCode,
     tickTime: body.timestamp || body.tickTime,
-    // currentPrice가 있으면 사용, 없으면 price
-    price: Number(body.currentPrice ?? body.price ?? 0),
-    // changeRate가 있으면 사용, 없으면 diffRate/fluctuationRate
-    diffRate: Number(body.changeRate ?? body.diffRate ?? body.fluctuationRate ?? 0),
-    // volume
+    price: price,
+    diffRate: diffRate,
     volume: Number(body.accumulatedTradingVolume ?? body.volume ?? 0),
-    // changeAmount(diff)
-    diff: Number(body.changeAmount ?? body.diff ?? body.compareToPreviousClosePrice ?? 0),
-    // tradingValue
+    diff: diff, // 계산된 변동폭 적용
     tradingValue: Number(body.accumulatedTradingValue ?? body.tradingValue ?? 0),
   };
 };

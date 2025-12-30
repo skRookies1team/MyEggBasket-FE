@@ -19,15 +19,36 @@ interface KisPeriodStockResponse {
   data: KisPeriodStockData[];
 }
 
+// [수정] 백엔드 스펙에 맞춰 전체 문자열("day", "week" 등)로 전송하도록 변경
+// 만약 백엔드가 "minute" 대신 "1m" 등을 원한다면 이곳만 수정하면 됩니다.
+function mapPeriodToApiCode(period: Period): string {
+  switch (period) {
+    case "day": return "day";
+    case "week": return "week";
+    case "month": return "month";
+    case "year": return "year";
+    case "minute": return "minute"; // 백엔드가 "minute"을 그대로 받을 확률이 높음
+    default: return "day";
+  }
+}
+
 export async function fetchHistoricalData(
     stockCode: string,
     period: Period
 ): Promise<StockCandle[]> {
   try {
+    const periodCode = mapPeriodToApiCode(period);
+
+    // period 파라미터로 "day", "week" 등을 전송
     const res = await api.get<KisPeriodStockResponse>(
         `/kis/chart/${stockCode}`,
-        { params: { period } }
+        { params: { period: periodCode } }
     );
+
+    // 응답 데이터 안전하게 처리
+    if (!res.data || !Array.isArray(res.data.data)) {
+      return [];
+    }
 
     return res.data.data.map((item) => ({
       time: item.time,
@@ -38,7 +59,7 @@ export async function fetchHistoricalData(
       volume: item.volume,
     }));
   } catch (error) {
-    console.error("차트 데이터 조회 실패", error);
+    console.error(`차트 데이터 조회 실패 (${period})`, error);
     return [];
   }
 }
@@ -90,10 +111,7 @@ export async function searchStocks(
 export const stockSubscriptionApi = {
   subscribe: async (data: { stockCode: string; type: string }) => {
     console.log(`[API] 📡 Sending POST /subscriptions | stockCode: ${data.stockCode}, type: ${data.type}`);
-
-    // axiosStore의 baseURL이 '/api/app'이라면 '/subscriptions'로 요청
     const response = await api.post("/subscriptions", data);
-
     console.log(`[API] ✅ Response: ${response.status}`, response.data);
     return response;
   },

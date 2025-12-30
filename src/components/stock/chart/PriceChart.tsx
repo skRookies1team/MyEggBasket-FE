@@ -1,4 +1,3 @@
-// stock/chart/PriceChart.tsx
 import { useEffect, useRef, useState } from "react";
 import {
   createChart,
@@ -40,16 +39,47 @@ interface Props {
   onHover?: (ohlc: HoverOHLC | null) => void;
 }
 
+/**
+ * [Helper] 차트용 시간 포맷 정규화
+ * - minute: Unix Timestamp (number)
+ * - day/week/month: YYYY-MM-DD (string)
+ */
+const normalizeTime = (time: string | number, period: Period): any => {
+  if (typeof time === "number") return time as any; // 이미 timestamp라면 그대로 반환
+
+  const strTime = String(time);
+
+  // 1. 분봉인 경우: ISO string 등을 Timestamp로 변환
+  if (period === "minute") {
+    // 이미 숫자형 문자열이면 숫자로
+    if (!isNaN(Number(strTime))) return Number(strTime);
+
+    // ISO String (YYYY-MM-DDTHH:mm:ss...) -> Unix Timestamp
+    const date = new Date(strTime);
+    if (!isNaN(date.getTime())) {
+      // lightweight-charts는 초 단위 timestamp 사용
+      return Math.floor(date.getTime() / 1000) as any;
+    }
+  }
+
+  // 2. 일봉/주봉 등인 경우: 'T' 제거하고 날짜만 추출 (YYYY-MM-DD)
+  if (strTime.includes("T")) {
+    return strTime.split("T")[0];
+  }
+
+  return strTime;
+};
+
 export function PriceChart({
-  candles,
-  period,
-  showMA = true,
-  showBollinger = true,
-  maIndicators = [],
-  bollinger = null,
-  height = 420,
-  onHover,
-}: Props) {
+                             candles,
+                             period,
+                             showMA = true,
+                             showBollinger = true,
+                             maIndicators = [],
+                             bollinger = null,
+                             height = 420,
+                             onHover,
+                           }: Props) {
   // eslint / ts unused 방지 (추후 timeScale 옵션에 사용 예정)
   void period;
 
@@ -102,7 +132,8 @@ export function PriceChart({
       scaleMargins: { top: 0.8, bottom: 0 },
     });
 
-    chart.timeScale().fitContent();
+    // 데이터가 없어도 에러나지 않도록 처리
+    // chart.timeScale().fitContent(); // 데이터 셋팅 후 호출하는 것이 좋음
 
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
@@ -154,39 +185,62 @@ export function PriceChart({
   /* ------------------ Data update ------------------ */
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
-    if (!candles.length) return;
+    // 빈 배열이라도 setData([]) 호출해서 차트 초기화 가능하게 함
 
-    candleSeriesRef.current.setData(
-      candles.map((c) => ({
-        time: c.time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }))
-    );
+    // [수정] 데이터 매핑 시 normalizeTime 적용
+    const formattedCandles = candles.map((c) => ({
+      ...c,
+      time: normalizeTime(c.time, period), // 여기서 변환!
+    }));
 
-    volumeSeriesRef.current.setData(
-      candles.map((c) => ({
-        time: c.time,
-        value: c.volume,
-        color:
-          c.close >= c.open
-            ? "rgba(239,68,68,0.6)"
-            : "rgba(59,130,246,0.6)",
-      }))
-    );
-  }, [candles]);
+    // 중복 제거 및 시간순 정렬 (안전장치)
+    // Lightweight-charts는 시간이 정렬되어 있어야 함
+    formattedCandles.sort((a, b) => {
+      const ta = typeof a.time === 'number' ? a.time : new Date(a.time).getTime();
+      const tb = typeof b.time === 'number' ? b.time : new Date(b.time).getTime();
+      return ta - tb;
+    });
+
+    try {
+      candleSeriesRef.current.setData(
+          formattedCandles.map((c) => ({
+            time: c.time,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+          }))
+      );
+
+      volumeSeriesRef.current.setData(
+          formattedCandles.map((c) => ({
+            time: c.time,
+            value: c.volume,
+            color:
+                c.close >= c.open
+                    ? "rgba(239,68,68,0.6)"
+                    : "rgba(59,130,246,0.6)",
+          }))
+      );
+
+      if (chart && formattedCandles.length > 0) {
+        chart.timeScale().fitContent();
+      }
+    } catch (e) {
+      console.error("[PriceChart] Data set error:", e);
+    }
+
+  }, [candles, period, chart]); // period, chart 의존성 추가
 
   return (
-    <>
-      <div ref={containerRef} style={{ width: "100%" }} />
+      <>
+        <div ref={containerRef} style={{ width: "100%" }} />
 
-      {/* MA */}
-      {showMA && <MAChart chart={chart} indicators={maIndicators} />}
+        {/* MA */}
+        {showMA && <MAChart chart={chart} indicators={maIndicators} />}
 
-      {/* Bollinger */}
-      {showBollinger && <BollingerChart chart={chart} bollinger={bollinger} />}
-    </>
+        {/* Bollinger */}
+        {showBollinger && <BollingerChart chart={chart} bollinger={bollinger} />}
+      </>
   );
 }

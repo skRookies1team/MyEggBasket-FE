@@ -65,7 +65,7 @@ export const StockNews = memo(function StockNews({
     };
 
     loadNews();
-  }, [data, query]);
+  }, [query]);
 
   return (
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">

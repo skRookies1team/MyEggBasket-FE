@@ -112,7 +112,6 @@ export function ChartPanel({
               <OhlcItem label="H" value={hoverOHLC.high} />
               <OhlcItem label="L" value={hoverOHLC.low} />
               <OhlcItem label="C" value={hoverOHLC.close} />
-              <OhlcItem label="V" value={hoverOHLC.volume} />
             </div>
           ) : (
             <span className="text-gray-400">

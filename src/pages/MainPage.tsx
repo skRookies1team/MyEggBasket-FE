@@ -9,7 +9,8 @@ import {
   Typography,
 } from "@mui/material";
 import { TrendingUp, Newspaper, Users } from "lucide-react";
-
+import { type StompSubscription} from "@stomp/stompjs";
+import { useWebSocket} from "../context/WebSocketContext.tsx";
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
@@ -19,6 +20,8 @@ import InvestorTrend from "../components/Investor/InvestorTrend";
 
 import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
 import { getStockInfoFromDB } from "../api/stocksApi";
+import { requestStockSubscription } from "../hooks/useRealtimeStock";
+import { TICKERS } from "../data/stockInfo";
 
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock";
@@ -27,6 +30,8 @@ export default function MainPageDarkRealtime() {
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0);
   const [showTicker, setShowTicker] = useState(false);
   const indexRef = useRef<HTMLDivElement | null>(null);
+  const { client, isConnected } = useWebSocket();
+  const subscriptionsRef = useRef<StompSubscription[]>([]); // 구독 객체 관리
 
   const [top10Rank, setTop10Rank] = useState<VolumeRankItem[]>([]);
   const [liveData, setLiveData] = useState<{
@@ -58,69 +63,85 @@ export default function MainPageDarkRealtime() {
     return () => observer.disconnect();
   }, []);
 
-  /* ---------------- 실시간 WebSocket ---------------- */
+  /* ---------------- 실시간 주가 업데이트 ---------------- */
+  const updateRealtimePrice = async (updated: any) => {
+    const info = await getStockInfoFromDB(updated.stockCode);
+
+    setLiveData((prev) => {
+      const update = (list: StockItem[]) => {
+        const idx = list.findIndex(i => i.code === updated.stockCode);
+        if (idx !== -1) {
+          return list.map((item, i) =>
+            i === idx
+              ? {
+                ...item,
+                price: updated.price,
+                percent: updated.diffRate,
+                volume: updated.volume,
+                amount: updated.tradingValue,
+                change: updated.diff,
+              }
+              : item
+          );
+        }
+        return [
+          ...list,
+          {
+            code: updated.stockCode,
+            name: info?.name ?? updated.stockCode,
+            price: updated.price,
+            percent: updated.diffRate,
+            volume: updated.volume,
+            amount: updated.tradingValue,
+            change: updated.diff,
+          },
+        ];
+      };
+
+      return {
+        volume: update(prev.volume),
+        amount: update(prev.amount),
+        rise: update(prev.rise),
+        fall: update(prev.fall),
+      };
+    });
+  };
+
+  /* ---------------- STOMP 구독 ---------------- */
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws?userId=1");
+    // 연결이 아직 안 됐으면 대기
+    if (!client || !isConnected) return;
 
-    socket.onmessage = async (event) => {
-      try {
-        const msg = JSON.parse(event.data);
+    // 기존 구독 정리
+    subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+    subscriptionsRef.current = [];
 
-        if (msg.type !== "STOCK_TICK") return;
+    let mounted = true;
 
-        const { code, price, change_rate, volume, trade_value } = msg;
-        const numericPrice =
-          typeof price === "string" ? parseInt(price, 10) : price;
+    console.log("[MainPage] Starting subscriptions...");
 
-        const info = await getStockInfoFromDB(code);
+    // 부하 분산을 위해 50ms 간격으로 구독
+    TICKERS.forEach((code, index) => {
+      setTimeout(() => {
+        if (!mounted || !client.connected) return;
 
-        setLiveData((prev) => {
-          const updateList = (list: StockItem[]) => {
-            const idx = list.findIndex((i) => i.code === code);
-
-            if (idx !== -1) {
-              return list.map((item, i) =>
-                i === idx
-                  ? {
-                      ...item,
-                      price: numericPrice,
-                      percent: change_rate,
-                      volume,
-                      amount: trade_value,
-                      change: change_rate >= 0 ? 1 : -1,
-                    }
-                  : item
-              );
-            }
-
-            return [
-              ...list,
-              {
-                code,
-                name: info?.name ?? code,
-                price: numericPrice,
-                percent: change_rate || 0,
-                change: (change_rate || 0) >= 0 ? 1 : -1,
-                volume: volume || 0,
-                amount: trade_value || 0,
-              },
-            ];
-          };
-
-          return {
-            volume: updateList(prev.volume).sort((a, b) => b.volume - a.volume),
-            amount: updateList(prev.amount).sort((a, b) => b.amount - a.amount),
-            rise: updateList(prev.rise).sort((a, b) => b.percent - a.percent),
-            fall: updateList(prev.fall).sort((a, b) => a.percent - b.percent),
-          };
+        const sub = requestStockSubscription(client, code, (updated) => {
+          updateRealtimePrice(updated);
         });
-      } catch (error) {
-        console.error("[WS] 메시지 처리 에러:", error);
-      }
-    };
 
-    return () => socket.close();
-  }, []);
+        if (sub) {
+          subscriptionsRef.current.push(sub);
+        }
+      }, index * 50);
+    });
+
+    return () => {
+      mounted = false;
+      // 페이지를 떠날 때 연결은 유지하되, 구독만 모두 취소
+      subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+      subscriptionsRef.current = [];
+    };
+  }, [client, isConnected]); // client나 연결 상태가 바뀌면 재실행
 
   /* ---------------- AI 이슈 ---------------- */
   const issueBubbles = [

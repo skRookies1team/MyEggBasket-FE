@@ -1,49 +1,51 @@
-// src/hooks/useRealtimeOrderBook.ts
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useWebSocket } from "../context/WebSocketContext"; // 글로벌 WS 사용
 import type { OrderBookData, OrderItem } from "../types/stock";
 
 export function useRealtimeOrderBook(stockCode: string) {
   const [orderBook, setOrderBook] = useState<OrderBookData | undefined>();
-  const socketRef = useRef<WebSocket | null>(null);
+  const { client, isConnected } = useWebSocket();
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws?userId=1");
-    socketRef.current = socket;
+    if (!client || !isConnected || !stockCode) return;
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === "ORDER_BOOK" && data.code === stockCode) {
-          
-          const mapToOrderItem = (items: any[]): OrderItem[] => 
-            items.map(item => ({
-              price: Number(item.price),
-              volume: Number(item.qty) 
-            }));
+    console.log(`[OrderBook] Subscribing to /topic/stock-order-book/${stockCode}`);
 
-          setOrderBook({
-            sell: mapToOrderItem(data.asks),     
-            buy: mapToOrderItem(data.bids),      
-            totalAskQty: data.totalAskQty,       
-            totalBidQty: data.totalBidQty        
-          });
+    // 백엔드 중계 경로 구독
+    const subscription = client.subscribe(
+        `/topic/stock-order-book/${stockCode}`,
+        (message) => {
+          try {
+            const data = JSON.parse(message.body);
+
+            if (data.type === "ORDER_BOOK") {
+              // 데이터 매핑 (Python 필드명 -> Frontend 타입)
+              // Python: asks=[{price:.., qty:..}], bids=[...]
+              // Frontend: OrderItem { price: number, volume: number }
+
+              const mapToOrderItem = (items: any[]): OrderItem[] =>
+                  items.map((item: any) => ({
+                    price: Number(item.price),
+                    volume: Number(item.qty || item.volume)
+                  }));
+
+              setOrderBook({
+                sell: mapToOrderItem(data.asks || []),
+                buy: mapToOrderItem(data.bids || []),
+                totalAskQty: Number(data.totalAskQty),
+                totalBidQty: Number(data.totalBidQty),
+              });
+            }
+          } catch (e) {
+            console.error("[OrderBook] Parse Error:", e);
+          }
         }
-      } catch (e) {
-        console.error("[WS] Parsing Error:", e);
-      }
-    };
-
-    socket.onopen = () => console.log(`[WS] Connected: ${stockCode}`);
-    socket.onerror = (err) => console.error("[WS] Error:", err);
-    socket.onclose = () => console.log("[WS] Disconnected");
+    );
 
     return () => {
-      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        socket.close();
-      }
+      subscription.unsubscribe();
     };
-  }, [stockCode]);
+  }, [client, isConnected, stockCode]);
 
   return orderBook;
 }

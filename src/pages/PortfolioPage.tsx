@@ -242,16 +242,16 @@ export function PortfolioPage() {
                         bg-gradient-to-b from-[#1a1a24] to-[#14141c]
                         p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]
                         sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-lg font-semibold tracking-wide text-indigo-300">
+          <h1 className="text-lg font-semibold tracking-wide text-purple-300">
             AI 추천 포트폴리오
           </h1>
 
           <button
             onClick={() => setShowAddPortfolio(true)}
             className="flex items-center justify-center gap-2
-                       rounded-lg bg-indigo-500 px-4 py-2
+                       rounded-lg bg-purple-500 px-4 py-2
                        text-sm font-semibold text-white
-                       hover:bg-indigo-600 transition"
+                       hover:bg-purple-600 transition"
           >
             <Plus size={16} />
             포트폴리오 추가
@@ -274,7 +274,7 @@ export function PortfolioPage() {
                 className={`rounded-md px-3 py-1 text-sm transition
                   ${
                     activePortfolioId === p.portfolioId
-                      ? "bg-indigo-500/20 text-indigo-300"
+                      ? "bg-purple-500/20 text-purple-300"
                       : "text-gray-400 hover:text-gray-200"
                   }`}
               >
@@ -307,8 +307,8 @@ export function PortfolioPage() {
                             from-[#1a1a24] to-[#14141c]
                             p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
               <div className="mb-5 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-indigo-400" />
-                <h3 className="text-sm font-semibold tracking-wide text-indigo-300">
+                <TrendingUp className="h-5 w-5 text-purple-400" />
+                <h3 className="text-sm font-semibold tracking-wide text-purple-300">
                   내 보유 주식 추이
                 </h3>
               </div>

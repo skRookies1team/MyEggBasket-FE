@@ -1,3 +1,4 @@
+// stock/chart/StochasticChart.tsx
 import { useEffect, useRef } from "react";
 import { createChart, ColorType, LineSeries } from "lightweight-charts";
 
@@ -17,6 +18,10 @@ import { normalizeTime } from "./utils";
 interface StochasticChartProps {
   indicator: StochasticIndicator;
   height?: number;
+
+  /** ChartPanel에서 timeScale 동기화 */
+  onChartReady?: (chart: IChartApi) => void;
+  onChartDispose?: (chart: IChartApi) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -25,9 +30,11 @@ interface StochasticChartProps {
 export function StochasticChart({
   indicator,
   height = 140,
+  onChartReady,
+  onChartDispose,
 }: StochasticChartProps) {
+  /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
-
   const chartRef = useRef<IChartApi | null>(null);
   const kRef = useRef<ISeriesApi<"Line"> | null>(null);
   const dRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -50,23 +57,39 @@ export function StochasticChart({
         autoScale: false,
         scaleMargins: { top: 0.15, bottom: 0.15 },
       },
-      timeScale: { timeVisible: true, secondsVisible: false },
+      timeScale: {
+        visible: false, // ⬅️ 공용 X축 (PriceChart만 표시)
+        timeVisible: true,
+        secondsVisible: false,
+      },
       crosshair: { mode: 1 },
+
+      /* 🔑 드래그 / 휠 안정화 */
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        axisPressedMouseMove: true,
+      },
     });
 
     const kLine = chart.addSeries(LineSeries, {
       color: "#60a5fa",
       lineWidth: 2,
-      title: "%K",
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
     });
 
     const dLine = chart.addSeries(LineSeries, {
       color: "#f59e0b",
       lineWidth: 2,
-      title: "%D",
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
     });
 
-    // 기준선 80/20
+    // 기준선 80 / 20
     kLine.createPriceLine({
       price: 80,
       color: "rgba(239,68,68,0.8)",
@@ -83,19 +106,21 @@ export function StochasticChart({
       title: "20",
     });
 
-    chart.timeScale().fitContent();
-
     chartRef.current = chart;
     kRef.current = kLine;
     dRef.current = dLine;
 
+    onChartReady?.(chart);
+
     return () => {
+      onChartDispose?.(chart); // ⭐ 핵심
       chart.remove();
+
       chartRef.current = null;
       kRef.current = null;
       dRef.current = null;
     };
-  }, [height]);
+  }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
@@ -114,7 +139,15 @@ export function StochasticChart({
 
     kRef.current.setData(kData);
     dRef.current.setData(dData);
+    chartRef.current?.timeScale().fitContent();
+
   }, [indicator]);
 
-  return <div ref={containerRef} style={{ width: "100%" }} />;
-}
+  return (
+      <div className="relative w-full">
+        <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
+          Stochastic (14, 3, 3)
+        </div>
+        <div ref={containerRef} className="w-full" />
+      </div>
+  );}

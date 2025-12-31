@@ -1,26 +1,26 @@
-// stock/chart/RSIChart.tsx
+// stock/chart/VolumeChart.tsx
 import { useEffect, useRef } from "react";
 import {
   createChart,
   ColorType,
-  LineSeries,
+  HistogramSeries,
 } from "lightweight-charts";
 
 import type {
   IChartApi,
   ISeriesApi,
-  LineData,
+  HistogramData,
   UTCTimestamp,
 } from "lightweight-charts";
 
-import type { RSIIndicator } from "../../../types/indicator";
+import type { StockCandle } from "../../../types/stock";
 import { normalizeTime } from "./utils";
 
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
-interface RSIChartProps {
-  indicator: RSIIndicator;
+interface VolumeChartProps {
+  candles: StockCandle[];
   height?: number;
 
   /** ChartPanel에서 timeScale 동기화 */
@@ -31,16 +31,16 @@ interface RSIChartProps {
 /* ------------------------------------------------------------------ */
 /* Component */
 /* ------------------------------------------------------------------ */
-export function RSIChart({
-  indicator,
-  height = 140,
+export function VolumeChart({
+  candles,
+  height = 120,
   onChartReady,
   onChartDispose,
-}: RSIChartProps) {
+}: VolumeChartProps) {
   /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const rsiSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   /* ------------------ chart init ------------------ */
   useEffect(() => {
@@ -57,11 +57,11 @@ export function RSIChart({
         horzLines: { color: "rgba(148,163,184,0.1)" },
       },
       rightPriceScale: {
-        autoScale: false,
-        scaleMargins: { top: 0.15, bottom: 0.15 },
+        autoScale: true,
+        scaleMargins: { top: 0.8, bottom: 0 },
       },
       timeScale: {
-        visible: false, // ⬅️ 공용 X축
+        visible: false, // 공용 X축 (PriceChart만 표시)
         timeVisible: true,
         secondsVisible: false,
       },
@@ -78,64 +78,51 @@ export function RSIChart({
       },
     });
 
-    const rsiSeries = chart.addSeries(LineSeries, {
-      color: "#a855f7",
-      lineWidth: 2,
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: "volume" },
       priceLineVisible: false,
-      crosshairMarkerVisible: false,
-    });
-
-    // 기준선
-    rsiSeries.createPriceLine({
-      price: 70,
-      color: "#ef4444",
-      lineStyle: 2,
-      axisLabelVisible: true,
-      title: "70",
-    });
-
-    rsiSeries.createPriceLine({
-      price: 30,
-      color: "#3b82f6",
-      lineStyle: 2,
-      axisLabelVisible: true,
-      title: "30",
     });
 
     chartRef.current = chart;
-    rsiSeriesRef.current = rsiSeries;
+    volumeRef.current = volumeSeries;
 
     onChartReady?.(chart);
 
     return () => {
-      onChartDispose?.(chart); // ⭐ 핵심
+      onChartDispose?.(chart); // ⭐ 반드시 필요
       chart.remove();
 
       chartRef.current = null;
-      rsiSeriesRef.current = null;
+      volumeRef.current = null;
     };
   }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
-    if (!rsiSeriesRef.current) return;
-    if (!indicator?.data?.length) return;
+    if (!volumeRef.current) return;
+    if (!candles?.length) return;
 
-    const seriesData: LineData<UTCTimestamp>[] =
-      indicator.data.map((p) => ({
-        time: normalizeTime(p.time),
-        value: p.value,
-      }));
+    const volumeData: HistogramData<UTCTimestamp>[] = candles.map((c) => ({
+      time: normalizeTime(c.time),
+      value: c.volume,
+      color:
+        c.close >= c.open
+          ? "rgba(239,68,68,0.6)"   // 상승
+          : "rgba(59,130,246,0.6)", // 하락
+    }));
 
-    rsiSeriesRef.current.setData(seriesData);
+    volumeRef.current.setData(volumeData);
     chartRef.current?.timeScale().fitContent();
-  }, [indicator]);
+  }, [candles]);
 
   return (
       <div className="relative w-full">
+        {/* 🔹 지표 이름 라벨 추가 */}
         <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
-          RSI (14)
+          Volume
         </div>
+
+        {/* 차트 컨테이너 */}
         <div ref={containerRef} className="w-full" />
       </div>
   );}

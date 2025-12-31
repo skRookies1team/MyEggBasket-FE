@@ -1,19 +1,44 @@
+// src/store/aiRecommendationStore.ts
 import { create } from "zustand";
-import type { AIRecommendationResponse } from "../types/aiRecommendation";
+
+import {
+  fetchAIRecommendations,
+  createAIRecommendation,
+} from "../api/aiRecommendationApi";
+
+import type {
+  AIRecommendation,
+  AIRecommendationCreateRequest as CreateAIRecommendationRequest,
+} from "../types/aiRecommendation";
 
 interface AIRecommendationState {
-  recommendations: AIRecommendationResponse[];
-  setRecommendations: (data: AIRecommendationResponse[]) => void;
-  clear: () => void;
+  recommendations: AIRecommendation[];
+  isLoading: boolean;
+
+  loadRecommendations: (portfolioId: number) => Promise<void>;
+  addRecommendation: (payload: CreateAIRecommendationRequest) => Promise<void>;
 }
 
-export const useAIRecommendationStore =
-  create<AIRecommendationState>((set) => ({
+export const useAIRecommendationStore = create<AIRecommendationState>(
+  (set) => ({
     recommendations: [],
+    isLoading: false,
 
-    setRecommendations: (data) =>
-      set({ recommendations: data }),
+    loadRecommendations: async (portfolioId) => {
+      set({ isLoading: true });
+      try {
+        const data = await fetchAIRecommendations(portfolioId);
+        set({ recommendations: data });
+      } finally {
+        set({ isLoading: false });
+      }
+    },
 
-    clear: () =>
-      set({ recommendations: [] }),
-  }));
+    addRecommendation: async (payload) => {
+      const created = await createAIRecommendation(payload);
+      set((state) => ({
+        recommendations: [created, ...state.recommendations],
+      }));
+    },
+  })
+);

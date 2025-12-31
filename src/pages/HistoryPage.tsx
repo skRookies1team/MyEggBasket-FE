@@ -24,7 +24,7 @@ export default function HistoryPage() {
                      from-[#1a1a24] to-[#14141c]
                      p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
         >
-          <h2 className="mb-4 text-sm font-semibold tracking-wide text-indigo-300">
+          <h2 className="mb-4 text-sm font-semibold tracking-wide text-purple-300">
             포트폴리오 선택
           </h2>
 
@@ -37,7 +37,7 @@ export default function HistoryPage() {
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition
                     ${
                       selectedPortfolioId === p.portfolioId
-                        ? "bg-indigo-500/20 text-indigo-300 shadow-inner"
+                        ? "bg-purple-500/20 text-purple-300 shadow-inner"
                         : "bg-[#14141c] text-gray-400 hover:text-gray-200 hover:bg-[#1f1f2e]"
                     }`}
                 >

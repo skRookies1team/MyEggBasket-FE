@@ -213,7 +213,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
             <h2 className="text-xl font-semibold text-gray-100">{portfolio.name}</h2>
             {eggIcon}
           </div>
-          <p className="mt-1 text-sm text-gray-400">위험 수준: <span className="ml-1 font-semibold text-indigo-400">{portfolio.riskLevel}</span></p>
+          <p className="mt-1 text-sm text-gray-400">위험 수준: <span className="ml-1 font-semibold text-purple-400">{portfolio.riskLevel}</span></p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-lg bg-[#1f1f2e] p-4">
@@ -222,7 +222,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
           </div>
           <div className="rounded-lg bg-[#1f1f2e] p-4">
             <p className="text-sm text-gray-400">현재 평가 금액</p>
-            <p className="mt-1 text-lg font-bold text-indigo-400">{summary.totalCurrentValue.toLocaleString()}원</p>
+            <p className="mt-1 text-lg font-bold text-purple-400">{summary.totalCurrentValue.toLocaleString()}원</p>
           </div>
         </div>
         <div className="mt-6"><HistoryReport history={calculatedHistory} /></div>
@@ -231,7 +231,7 @@ export default function HistoryAsset({ portfolioId }: Props) {
       {/* RIGHT 섹션: 종목 리스트 (핵심 수정 부분) */}
       <div className="lg:col-span-3 rounded-2xl bg-[#14141c] p-6 shadow-xl border border-[#1f1f2e]">
         <div className="mb-6 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-indigo-400" />
+          <DollarSign className="h-5 w-5 text-purple-400" />
           <h2 className="text-lg font-semibold text-gray-100">종목별 수익 및 알림 현황</h2>
         </div>
         <div className="overflow-x-auto">

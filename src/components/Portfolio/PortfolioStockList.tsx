@@ -18,7 +18,7 @@ export function PortfolioStockList({
   return (
     <div className="mt-6 border-t border-[#2a2a3a] pt-6">
       {/* Section Title */}
-      <h3 className="mb-4 text-sm font-semibold tracking-wide text-indigo-300">
+      <h3 className="mb-4 text-sm font-semibold tracking-wide text-purple-300">
         {title}
       </h3>
 
@@ -26,10 +26,6 @@ export function PortfolioStockList({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {stocks.map((holding) => {
           const stockCode = holding.stock.stockCode;
-
-          const stockRecommendations = recommendations.filter(
-            (r) => r.stockCode === stockCode
-          );
 
           return (
             <div
@@ -41,9 +37,7 @@ export function PortfolioStockList({
                 <p className="text-sm font-semibold text-white">
                   {holding.stock.name}
                 </p>
-                <p className="text-xs text-gray-400">
-                  {stockCode}
-                </p>
+                <p className="text-xs text-gray-400">{stockCode}</p>
               </div>
 
               {/* ===== Stock Info ===== */}
@@ -81,14 +75,14 @@ export function PortfolioStockList({
 
               {/* ===== AI Rebalancing ===== */}
               <div className="mt-4 flex items-center justify-between border-t border-[#2a2a3a] pt-3">
-                <p className="text-xs font-medium text-indigo-300">
-                  AI 리밸런싱 판단
+                <p className="text-xs font-medium text-purple-300">
+                  AI 포트폴리오 판단
                 </p>
 
                 <AIRebalancingBadge
-                  recommendations={stockRecommendations}
+                  recommendations={recommendations}
                   onClick={() => {
-                    // TODO: AI 추천 상세 모달
+                    // TODO: AI 추천 상세 모달 (Portfolio 기준)
                   }}
                 />
               </div>

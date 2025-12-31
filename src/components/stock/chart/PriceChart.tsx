@@ -1,15 +1,18 @@
+// stock/chart/PriceChart.tsx
 import { useEffect, useRef, useState } from "react";
 import {
   createChart,
   ColorType,
   CandlestickSeries,
-  HistogramSeries,
 } from "lightweight-charts";
 
 import type { IChartApi, ISeriesApi } from "lightweight-charts";
 
 import type { Period, StockCandle } from "../../../types/stock";
-import type { MAIndicator, BollingerIndicator } from "../../../types/indicator";
+import type {
+  MAIndicator,
+  BollingerIndicator,
+} from "../../../types/indicator";
 
 import { MAChart } from "./MAChart";
 import { BollingerChart } from "./BollingerChart";
@@ -20,7 +23,6 @@ export interface HoverOHLC {
   high: number;
   low: number;
   close: number;
-  volume: number;
 }
 
 /* ------------------ Props ------------------ */
@@ -35,60 +37,63 @@ interface Props {
   bollinger?: BollingerIndicator | null;
   height?: number;
 
-  /** 마우스 호버(크로스헤어 이동) 시 OHLC/Volume 전달 */
+  /** 마우스 호버(크로스헤어 이동) 시 OHLC 전달 */
   onHover?: (ohlc: HoverOHLC | null) => void;
+
+  /** ChartPanel 동기화 */
+  onChartReady?: (chart: IChartApi) => void;
+  onChartDispose?: (chart: IChartApi) => void;
 }
 
-/**
- * [Helper] 차트용 시간 포맷 정규화
- * - minute: Unix Timestamp (number)
- * - day/week/month: YYYY-MM-DD (string)
- */
+/* ------------------ time normalize ------------------ */
 const normalizeTime = (time: string | number, period: Period): any => {
-  if (typeof time === "number") return time as any; // 이미 timestamp라면 그대로 반환
+  if (typeof time === "number") return time;
 
-  const strTime = String(time);
+  const str = String(time);
 
-  // 1. 분봉인 경우: ISO string 등을 Timestamp로 변환
   if (period === "minute") {
-    // 이미 숫자형 문자열이면 숫자로
-    if (!isNaN(Number(strTime))) return Number(strTime);
+    if (!isNaN(Number(str))) return Number(str);
 
-    // ISO String (YYYY-MM-DDTHH:mm:ss...) -> Unix Timestamp
-    const date = new Date(strTime);
-    if (!isNaN(date.getTime())) {
-      // lightweight-charts는 초 단위 timestamp 사용
-      return Math.floor(date.getTime() / 1000) as any;
-    }
+    // 🔥 [수정 1] "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss" 변환
+    // Safari 등 일부 브라우저는 공백이 있는 날짜 문자열을 new Date()로 파싱하지 못할 수 있음
+    const d = new Date(str.replace(" ", "T"));
+    return Math.floor(d.getTime() / 1000);
   }
 
-  // 2. 일봉/주봉 등인 경우: 'T' 제거하고 날짜만 추출 (YYYY-MM-DD)
-  if (strTime.includes("T")) {
-    return strTime.split("T")[0];
-  }
+  // 🔥 [수정 2] 공백(" ")이 포함된 날짜 문자열 처리 (일봉 전환 시 에러 방지)
+  // 기존: if (str.includes("T")) return str.split("T")[0];
+  if (str.includes("T")) return str.split("T")[0];
+  if (str.includes(" ")) return str.split(" ")[0]; // "2025-12-30 11:10:00" -> "2025-12-30"
 
-  return strTime;
+  return str;
 };
 
 export function PriceChart({
-                             candles,
-                             period,
-                             showMA = true,
-                             showBollinger = true,
-                             maIndicators = [],
-                             bollinger = null,
-                             height = 420,
-                             onHover,
-                           }: Props) {
-  // eslint / ts unused 방지 (추후 timeScale 옵션에 사용 예정)
-  void period;
-
+  candles,
+  period,
+  showMA = true,
+  showBollinger = true,
+  maIndicators = [],
+  bollinger = null,
+  height = 420,
+  onHover,
+  onChartReady,
+  onChartDispose,
+}: Props) {
+  /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  const [chart, setChart] = useState<IChartApi | null>(null);
-
+  const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+
+  // 1. onHover를 ref에 저장 (렌더링 됨에 따라 최신 함수를 가리키도록 함)
+  const onHoverRef = useRef(onHover);
+
+  // 2. onHover prop이 바뀔 때마다 ref 업데이트
+  useEffect(() => {
+    onHoverRef.current = onHover;
+  }, [onHover]);
+
+  const [chartState, setChartState] = useState<IChartApi | null>(null);
 
   /* ------------------ Chart init ------------------ */
   useEffect(() => {
@@ -112,6 +117,16 @@ export function PriceChart({
         secondsVisible: false,
       },
       crosshair: { mode: 1 },
+
+      /* 🔑 드래그/휠 안정화 */
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        axisPressedMouseMove: true,
+      },
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -123,124 +138,105 @@ export function PriceChart({
       wickDownColor: "#3b82f6",
     });
 
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceScaleId: "volume",
-      priceFormat: { type: "volume" },
-    });
-
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
-
-    // 데이터가 없어도 에러나지 않도록 처리
-    // chart.timeScale().fitContent(); // 데이터 셋팅 후 호출하는 것이 좋음
-
+    chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
+    setChartState(chart); // ✅ 렌더용
 
     /* ------------------ Hover ------------------ */
     const handleCrosshairMove = (param: any) => {
-      const candleSeriesApi = candleSeriesRef.current;
-      const volumeSeriesApi = volumeSeriesRef.current;
 
-      if (!param?.time || !candleSeriesApi || !volumeSeriesApi) {
+
+      if (!param?.time || !candleSeriesRef.current) {
         onHover?.(null);
         return;
       }
 
       const prices = param.seriesData as Map<any, any> | undefined;
-      if (!prices) {
-        onHover?.(null);
-        return;
-      }
-
-      const price = prices.get(candleSeriesApi);
-      const volume = prices.get(volumeSeriesApi);
+      const price = prices?.get(candleSeriesRef.current);
 
       if (!price) {
         onHover?.(null);
         return;
       }
 
-      onHover?.({
+      // 3. 여기서 props로 받은 onHover 대신 ref.current를 사용
+      onHoverRef.current?.({
         open: Number(price.open),
         high: Number(price.high),
         low: Number(price.low),
         close: Number(price.close),
-        volume: typeof volume === "number" ? volume : Number(volume ?? 0),
       });
     };
 
     chart.subscribeCrosshairMove(handleCrosshairMove);
 
-    setChart(chart);
+    onChartReady?.(chart);
 
     return () => {
       chart.unsubscribeCrosshairMove(handleCrosshairMove);
+
+      // ⭐ ChartPanel에 반드시 알려야 함
+      onChartDispose?.(chart);
       chart.remove();
-      setChart(null);
+
+      chartRef.current = null;
+      candleSeriesRef.current = null;
+      setChartState(null);
     };
-  }, [height, onHover]);
+  }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ Data update ------------------ */
   useEffect(() => {
-    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
-    // 빈 배열이라도 setData([]) 호출해서 차트 초기화 가능하게 함
+    if (!candleSeriesRef.current || !chartRef.current) return;
 
-    // [수정] 데이터 매핑 시 normalizeTime 적용
-    const formattedCandles = candles.map((c) => ({
+    // 1. 데이터를 먼저 정규화
+    const normalized = candles.map((c) => ({
       ...c,
-      time: normalizeTime(c.time, period), // 여기서 변환!
+      time: normalizeTime(c.time, period),
     }));
 
-    // 중복 제거 및 시간순 정렬 (안전장치)
-    // Lightweight-charts는 시간이 정렬되어 있어야 함
-    formattedCandles.sort((a, b) => {
-      const ta = typeof a.time === 'number' ? a.time : new Date(a.time).getTime();
-      const tb = typeof b.time === 'number' ? b.time : new Date(b.time).getTime();
+    // 2. [추가] 중복 시간 제거 (Map 사용)
+    // 동일한 시간(time) 키가 있으면 나중 데이터로 덮어씌워짐 -> 중복 제거 효과
+    const uniqueDataMap = new Map();
+    normalized.forEach((item) => {
+      uniqueDataMap.set(item.time, item);
+    });
+
+    // 3. Map 값을 배열로 변환 후 정렬
+    const formatted = Array.from(uniqueDataMap.values()).sort((a, b) => {
+      const ta = typeof a.time === "number" ? a.time : new Date(a.time).getTime();
+      const tb = typeof b.time === "number" ? b.time : new Date(b.time).getTime();
       return ta - tb;
     });
 
-    try {
-      candleSeriesRef.current.setData(
-          formattedCandles.map((c) => ({
-            time: c.time,
-            open: c.open,
-            high: c.high,
-            low: c.low,
-            close: c.close,
-          }))
-      );
+    candleSeriesRef.current.setData(
+        formatted.map((c) => ({
+          time: c.time,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        }))
+    );
 
-      volumeSeriesRef.current.setData(
-          formattedCandles.map((c) => ({
-            time: c.time,
-            value: c.volume,
-            color:
-                c.close >= c.open
-                    ? "rgba(239,68,68,0.6)"
-                    : "rgba(59,130,246,0.6)",
-          }))
-      );
-
-      if (chart && formattedCandles.length > 0) {
-        chart.timeScale().fitContent();
-      }
-    } catch (e) {
-      console.error("[PriceChart] Data set error:", e);
+    if (formatted.length > 0) {
+      chartRef.current.timeScale().fitContent();
     }
-
-  }, [candles, period, chart]); // period, chart 의존성 추가
+  }, [candles, period]);
 
   return (
-      <>
-        <div ref={containerRef} style={{ width: "100%" }} />
+    <>
+      <div ref={containerRef} style={{ width: "100%" }} />
 
-        {/* MA */}
-        {showMA && <MAChart chart={chart} indicators={maIndicators} />}
+      {/* MA Overlay */}
+      {showMA && chartState && (
+        <MAChart chart={chartState} indicators={maIndicators} />
+      )}
 
-        {/* Bollinger */}
-        {showBollinger && <BollingerChart chart={chart} bollinger={bollinger} />}
-      </>
+      {/* Bollinger Overlay */}
+      {showBollinger && chartState && (
+        <BollingerChart chart={chartState} bollinger={bollinger} />
+      )}
+    </>
   );
 }

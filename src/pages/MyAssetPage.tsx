@@ -222,8 +222,8 @@ export default function MyAssetPage() {
             <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c]
                             p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
               <div className="mb-5 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-indigo-400" />
-                <h3 className="text-sm font-semibold tracking-wide text-indigo-300">
+                <TrendingUp className="h-5 w-5 text-purple-400" />
+                <h3 className="text-sm font-semibold tracking-wide text-purple-300">
                   내 보유 주식 추이
                 </h3>
               </div>

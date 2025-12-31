@@ -216,18 +216,25 @@ export function OrderPanel({
             </button>
 
             <input
-              type="text"
-              readOnly={priceType === "MARKET"}
-              value={
-                priceType === "MARKET"
-                  ? "시장가로 체결됩니다"
-                  : price.toLocaleString()
-              }
-              className={`flex-1 rounded px-3 py-2 text-sm ring-1 ring-[#232332] ${
-                priceType === "MARKET"
-                  ? "bg-black/20 text-white cursor-not-allowed"
-                  : "bg-black/30 text-gray-100"
-              }`}
+                type="text"
+                // [수정] MARKET일 때는 아예 비활성화(disabled) 처리하거나 readOnly 유지
+                disabled={priceType === "MARKET"}
+                value={
+                  priceType === "MARKET"
+                      ? "시장가로 체결됩니다"
+                      : price.toLocaleString()
+                }
+                // [추가] 사용자가 가격을 직접 입력할 수 있도록 핸들러 추가
+                onChange={(e) => {
+                  // 콤마 등 숫자 이외의 문자는 제거하고 숫자로 변환
+                  const val = Number(e.target.value.replace(/[^0-9]/g, ""));
+                  setPrice(val);
+                }}
+                className={`flex-1 rounded px-3 py-2 text-sm ring-1 ring-[#232332] ${
+                    priceType === "MARKET"
+                        ? "bg-black/20 text-white cursor-not-allowed"
+                        : "bg-black/30 text-gray-100"
+                }`}
             />
 
             <button

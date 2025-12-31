@@ -115,5 +115,14 @@ export function VolumeChart({
     chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
-  return <div ref={containerRef} style={{ width: "100%" }} />;
-}
+  return (
+      <div className="relative w-full">
+        {/* 🔹 지표 이름 라벨 추가 */}
+        <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
+          Volume
+        </div>
+
+        {/* 차트 컨테이너 */}
+        <div ref={containerRef} className="w-full" />
+      </div>
+  );}

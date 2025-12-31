@@ -170,5 +170,11 @@ export function MACDChart({
 
   }, [indicator]);
 
-  return <div ref={containerRef} style={{ width: "100%" }} />;
-}
+  return (
+      <div className="relative w-full">
+        <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
+          MACD (12, 26, 9)
+        </div>
+        <div ref={containerRef} className="w-full" />
+      </div>
+  );}

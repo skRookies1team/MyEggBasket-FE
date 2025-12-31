@@ -1,22 +1,26 @@
-// stock/chart/StochasticChart.tsx
+// stock/chart/VolumeChart.tsx
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, LineSeries } from "lightweight-charts";
+import {
+  createChart,
+  ColorType,
+  HistogramSeries,
+} from "lightweight-charts";
 
 import type {
   IChartApi,
   ISeriesApi,
-  LineData,
+  HistogramData,
   UTCTimestamp,
 } from "lightweight-charts";
 
-import type { StochasticIndicator } from "../../../types/indicator";
+import type { StockCandle } from "../../../types/stock";
 import { normalizeTime } from "./utils";
 
 /* ------------------------------------------------------------------ */
 /* Props */
 /* ------------------------------------------------------------------ */
-interface StochasticChartProps {
-  indicator: StochasticIndicator;
+interface VolumeChartProps {
+  candles: StockCandle[];
   height?: number;
 
   /** ChartPanel에서 timeScale 동기화 */
@@ -27,17 +31,16 @@ interface StochasticChartProps {
 /* ------------------------------------------------------------------ */
 /* Component */
 /* ------------------------------------------------------------------ */
-export function StochasticChart({
-  indicator,
-  height = 140,
+export function VolumeChart({
+  candles,
+  height = 120,
   onChartReady,
   onChartDispose,
-}: StochasticChartProps) {
+}: VolumeChartProps) {
   /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const kRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const dRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   /* ------------------ chart init ------------------ */
   useEffect(() => {
@@ -54,17 +57,17 @@ export function StochasticChart({
         horzLines: { color: "rgba(148,163,184,0.1)" },
       },
       rightPriceScale: {
-        autoScale: false,
-        scaleMargins: { top: 0.15, bottom: 0.15 },
+        autoScale: true,
+        scaleMargins: { top: 0.8, bottom: 0 },
       },
       timeScale: {
-        visible: false, // ⬅️ 공용 X축 (PriceChart만 표시)
+        visible: false, // 공용 X축 (PriceChart만 표시)
         timeVisible: true,
         secondsVisible: false,
       },
       crosshair: { mode: 1 },
 
-      /* 🔑 드래그 / 휠 안정화 */
+      /* 🔑 드래그/휠 안정화 */
       handleScroll: {
         mouseWheel: true,
         pressedMouseMove: true,
@@ -75,71 +78,41 @@ export function StochasticChart({
       },
     });
 
-    const kLine = chart.addSeries(LineSeries, {
-      color: "#60a5fa",
-      lineWidth: 2,
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: "volume" },
       priceLineVisible: false,
-      crosshairMarkerVisible: false,
-    });
-
-    const dLine = chart.addSeries(LineSeries, {
-      color: "#f59e0b",
-      lineWidth: 2,
-      priceLineVisible: false,
-      crosshairMarkerVisible: false,
-    });
-
-    // 기준선 80 / 20
-    kLine.createPriceLine({
-      price: 80,
-      color: "rgba(239,68,68,0.8)",
-      lineStyle: 2,
-      axisLabelVisible: true,
-      title: "80",
-    });
-
-    kLine.createPriceLine({
-      price: 20,
-      color: "rgba(59,130,246,0.8)",
-      lineStyle: 2,
-      axisLabelVisible: true,
-      title: "20",
     });
 
     chartRef.current = chart;
-    kRef.current = kLine;
-    dRef.current = dLine;
+    volumeRef.current = volumeSeries;
 
     onChartReady?.(chart);
 
     return () => {
-      onChartDispose?.(chart); // ⭐ 핵심
+      onChartDispose?.(chart); // ⭐ 반드시 필요
       chart.remove();
 
       chartRef.current = null;
-      kRef.current = null;
-      dRef.current = null;
+      volumeRef.current = null;
     };
   }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
-    if (!kRef.current || !dRef.current) return;
-    if (!indicator?.k?.length || !indicator?.d?.length) return;
+    if (!volumeRef.current) return;
+    if (!candles?.length) return;
 
-    const kData: LineData<UTCTimestamp>[] = indicator.k.map((p) => ({
-      time: normalizeTime(p.time),
-      value: p.value,
+    const volumeData: HistogramData<UTCTimestamp>[] = candles.map((c) => ({
+      time: normalizeTime(c.time),
+      value: c.volume,
+      color:
+        c.close >= c.open
+          ? "rgba(239,68,68,0.6)"   // 상승
+          : "rgba(59,130,246,0.6)", // 하락
     }));
 
-    const dData: LineData<UTCTimestamp>[] = indicator.d.map((p) => ({
-      time: normalizeTime(p.time),
-      value: p.value,
-    }));
-
-    kRef.current.setData(kData);
-    dRef.current.setData(dData);
-  }, [indicator]);
+    volumeRef.current.setData(volumeData);
+  }, [candles]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;
 }

@@ -1,3 +1,4 @@
+// stock/chart/MACDChart.tsx
 import { useEffect, useRef } from "react";
 import {
   createChart,
@@ -23,14 +24,23 @@ import { normalizeTime } from "./utils";
 interface MACDChartProps {
   indicator: MACDIndicator;
   height?: number;
+
+  /** ChartPanel에서 timeScale 동기화 */
+  onChartReady?: (chart: IChartApi) => void;
+  onChartDispose?: (chart: IChartApi) => void;
 }
 
 /* ------------------------------------------------------------------ */
 /* Component */
 /* ------------------------------------------------------------------ */
-export function MACDChart({ indicator, height = 160 }: MACDChartProps) {
+export function MACDChart({
+  indicator,
+  height = 160,
+  onChartReady,
+  onChartDispose,
+}: MACDChartProps) {
+  /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
-
   const chartRef = useRef<IChartApi | null>(null);
   const macdRef = useRef<ISeriesApi<"Line"> | null>(null);
   const signalRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -54,28 +64,46 @@ export function MACDChart({ indicator, height = 160 }: MACDChartProps) {
         autoScale: true,
         scaleMargins: { top: 0.2, bottom: 0.2 },
       },
-      timeScale: { timeVisible: true, secondsVisible: false },
+      timeScale: {
+        visible: false, // ⬅️ 공용 X축
+        timeVisible: true,
+        secondsVisible: false,
+      },
       crosshair: { mode: 1 },
+
+      /* 🔑 드래그 / 휠 안정화 */
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        axisPressedMouseMove: true,
+      },
     });
 
+    /* ------------------ Series ------------------ */
     const histogram = chart.addSeries(HistogramSeries, {
       base: 0,
       priceFormat: {
         type: "custom",
         formatter: (v: number) => v.toFixed(2),
       },
+      priceLineVisible: false,
     });
 
     const macdLine = chart.addSeries(LineSeries, {
       color: "#22c55e",
       lineWidth: 2,
-      title: "MACD",
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
     });
 
     const signalLine = chart.addSeries(LineSeries, {
       color: "#f97316",
       lineWidth: 2,
-      title: "Signal",
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
     });
 
     // 0 기준선
@@ -86,21 +114,23 @@ export function MACDChart({ indicator, height = 160 }: MACDChartProps) {
       axisLabelVisible: false,
     });
 
-    chart.timeScale().fitContent();
-
     chartRef.current = chart;
     macdRef.current = macdLine;
     signalRef.current = signalLine;
     histRef.current = histogram;
 
+    onChartReady?.(chart);
+
     return () => {
+      onChartDispose?.(chart); // ⭐ 핵심
       chart.remove();
+
       chartRef.current = null;
       macdRef.current = null;
       signalRef.current = null;
       histRef.current = null;
     };
-  }, [height]);
+  }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
@@ -117,16 +147,21 @@ export function MACDChart({ indicator, height = 160 }: MACDChartProps) {
       value: p.value,
     }));
 
-    const signalData: LineData<UTCTimestamp>[] = indicator.signalLine.map((p) => ({
-      time: normalizeTime(p.time),
-      value: p.value,
-    }));
+    const signalData: LineData<UTCTimestamp>[] =
+      indicator.signalLine.map((p) => ({
+        time: normalizeTime(p.time),
+        value: p.value,
+      }));
 
-    const histData: HistogramData<UTCTimestamp>[] = indicator.histogram.map((p) => ({
-      time: normalizeTime(p.time),
-      value: p.value,
-      color: p.value >= 0 ? "rgba(34,197,94,0.8)" : "rgba(239,68,68,0.8)",
-    }));
+    const histData: HistogramData<UTCTimestamp>[] =
+      indicator.histogram.map((p) => ({
+        time: normalizeTime(p.time),
+        value: p.value,
+        color:
+          p.value >= 0
+            ? "rgba(34,197,94,0.8)"
+            : "rgba(239,68,68,0.8)",
+      }));
 
     macdRef.current.setData(macdData);
     signalRef.current.setData(signalData);

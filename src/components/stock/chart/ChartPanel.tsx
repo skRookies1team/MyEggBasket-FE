@@ -1,13 +1,13 @@
-import { useMemo, useState } from "react";
+// stock/chart/ChartPanel.tsx
+import { useMemo, useRef, useState } from "react";
+import type { IChartApi, LogicalRange } from "lightweight-charts";
 
 import type { Period, StockPriceData, StockCandle } from "../../../types/stock";
-import type {
-  IndicatorState,
-  MAIndicator,
-} from "../../../types/indicator";
+import type { IndicatorState, MAIndicator } from "../../../types/indicator";
 import type { HoverOHLC } from "./PriceChart";
 
 import { PriceChart } from "./PriceChart";
+import { VolumeChart } from "./VolumeChart";
 import { RSIChart } from "./RSIChart";
 import { MACDChart } from "./MACDChart";
 import { StochasticChart } from "./StochasticChart";
@@ -19,12 +19,57 @@ import { calculateMACD } from "../../../utils/indicators/macd";
 import { calculateBollinger } from "../../../utils/indicators/bollinger";
 import { calculateStochastic } from "../../../utils/indicators/stochastic";
 
+/* ------------------------------------------------------------------ */
+/* Props */
+/* ------------------------------------------------------------------ */
 interface Props {
   period: Period;
   indicators: IndicatorState;
   data?: StockPriceData[];
 }
 
+/* ------------------------------------------------------------------ */
+/* TimeScale Sync Helper (🔥 jitter 방지 최종) */
+/* ------------------------------------------------------------------ */
+function syncTimeScale(charts: IChartApi[]) {
+  const cleanups: (() => void)[] = [];
+  let isSyncing = false;
+
+  charts.forEach((source) => {
+    const handler = (range: LogicalRange | null) => {
+      if (!range || isSyncing) return;
+
+      isSyncing = true;
+      charts.forEach((target) => {
+        if (target !== source) {
+          try {
+            target.timeScale().setVisibleLogicalRange(range);
+          } catch {
+            // disposed chart 접근 시 무시
+          }
+        }
+      });
+      isSyncing = false;
+    };
+
+    source.timeScale().subscribeVisibleLogicalRangeChange(handler);
+
+    cleanups.push(() => {
+      try {
+        source.timeScale().unsubscribeVisibleLogicalRangeChange(handler);
+      } catch {
+        // chart가 이미 dispose된 경우 무시
+      }
+    });
+  });
+
+  return () => cleanups.forEach((fn) => fn());
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Component */
+/* ------------------------------------------------------------------ */
 export function ChartPanel({
   period,
   indicators,
@@ -39,15 +84,40 @@ export function ChartPanel({
   /* ------------------ hover OHLC ------------------ */
   const [hoverOHLC, setHoverOHLC] = useState<HoverOHLC | null>(null);
 
+  /* ------------------ chart registry ------------------ */
+  const chartsRef = useRef<IChartApi[]>([]);
+  const syncCleanupRef = useRef<(() => void) | null>(null);
+
+  const registerChart = (chart: IChartApi) => {
+    if (chartsRef.current.includes(chart)) return;
+
+    chartsRef.current.push(chart);
+
+    // 🔑 chart 추가될 때만 sync 재설정
+    syncCleanupRef.current?.();
+    syncCleanupRef.current = syncTimeScale(chartsRef.current);
+  };
+
+  const unregisterChart = (chart: IChartApi) => {
+    chartsRef.current = chartsRef.current.filter((c) => c !== chart);
+
+    syncCleanupRef.current?.();
+    syncCleanupRef.current = null;
+
+    if (chartsRef.current.length >= 2) {
+      syncCleanupRef.current = syncTimeScale(chartsRef.current);
+    }
+  };
+
   /* ------------------ indicator 계산 ------------------ */
   const maIndicators: MAIndicator[] = useMemo(
     () =>
       indicators.ma && candles.length
         ? [
-            calculateMA(candles, 5),
-            calculateMA(candles, 20),
-            calculateMA(candles, 60),
-          ]
+          calculateMA(candles, 5),
+          calculateMA(candles, 20),
+          calculateMA(candles, 60),
+        ]
         : [],
     [candles, indicators.ma]
   );
@@ -94,18 +164,10 @@ export function ChartPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ===================== */}
-      {/* Price Chart + OHLC */}
-      {/* ===================== */}
+      {/* ===================== Price ===================== */}
       <div className="relative rounded-xl bg-[#0f0f17] p-3">
         {/* OHLC Overlay */}
-        <div
-          className="
-            absolute left-3 top-3 z-10
-            rounded-lg bg-black/40 px-3 py-1
-            text-xs text-gray-200 backdrop-blur
-          "
-        >
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg bg-black/40 px-3 py-1 text-xs text-gray-200 backdrop-blur">
           {hoverOHLC ? (
             <div className="flex gap-3">
               <OhlcItem label="O" value={hoverOHLC.open} />
@@ -120,7 +182,6 @@ export function ChartPanel({
           )}
         </div>
 
-        {/* Price Chart */}
         <PriceChart
           candles={candles}
           period={period}
@@ -130,34 +191,47 @@ export function ChartPanel({
           bollinger={bollinger}
           height={420}
           onHover={setHoverOHLC}
+          onChartReady={registerChart}
+          onChartDispose={unregisterChart}
         />
       </div>
 
-      {/* ===================== */}
-      {/* RSI */}
-      {/* ===================== */}
+      {/* ===================== Volume ===================== */}
+      <VolumeChart
+        candles={candles}
+        height={120}
+        onChartReady={registerChart}
+        onChartDispose={unregisterChart}
+      />
+
+      {/* ===================== RSI ===================== */}
       {indicators.rsi && rsi && (
-        <div className="rounded-xl bg-[#0f0f17] p-2">
-          <RSIChart indicator={rsi} height={140} />
-        </div>
+        <RSIChart
+          indicator={rsi}
+          height={140}
+          onChartReady={registerChart}
+          onChartDispose={unregisterChart}
+        />
       )}
 
-      {/* ===================== */}
-      {/* MACD */}
-      {/* ===================== */}
+      {/* ===================== MACD ===================== */}
       {indicators.macd && macd && (
-        <div className="rounded-xl bg-[#0f0f17] p-2">
-          <MACDChart indicator={macd} height={160} />
-        </div>
+        <MACDChart
+          indicator={macd}
+          height={160}
+          onChartReady={registerChart}
+          onChartDispose={unregisterChart}
+        />
       )}
 
-      {/* ===================== */}
-      {/* Stochastic */}
-      {/* ===================== */}
+      {/* ===================== Stochastic ===================== */}
       {indicators.stochastic && stochastic && (
-        <div className="rounded-xl bg-[#0f0f17] p-2">
-          <StochasticChart indicator={stochastic} height={140} />
-        </div>
+        <StochasticChart
+          indicator={stochastic}
+          height={140}
+          onChartReady={registerChart}
+          onChartDispose={unregisterChart}
+        />
       )}
     </div>
   );

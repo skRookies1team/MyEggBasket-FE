@@ -47,7 +47,7 @@ export default function HistoryReport({ history }: Props) {
           <span className="text-sm text-gray-400">
             AI 사용 시 성공률 (Win Rate)
           </span>
-          <span className="text-xl font-bold tabular-nums text-indigo-400">
+          <span className="text-xl font-bold tabular-nums text-purple-400">
             {successRate}%
           </span>
         </div>

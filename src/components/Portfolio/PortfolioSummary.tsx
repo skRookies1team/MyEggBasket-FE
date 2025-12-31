@@ -28,8 +28,8 @@ export function ProtfolioSummary({
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
-        <DollarSign className="h-5 w-5 text-indigo-400" />
-        <h2 className="text-sm font-semibold tracking-wide text-indigo-300">
+        <DollarSign className="h-5 w-5 text-purple-400" />
+        <h2 className="text-sm font-semibold tracking-wide text-purple-300">
           내 자산 현황
         </h2>
       </div>

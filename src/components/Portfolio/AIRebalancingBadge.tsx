@@ -3,10 +3,10 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 
-import type { AIRecommendationResponse } from "../../types/aiRecommendation";
+import type { AIRecommendation } from "../../types/aiRecommendation";
 
 interface Props {
-  recommendations: AIRecommendationResponse[];
+  recommendations: AIRecommendation[];
   onClick?: () => void;
 }
 
@@ -26,37 +26,32 @@ export function AIRebalancingBadge({
     );
   }
 
-  /* ---------------- 우선순위 계산 ---------------- */
-  const actionPriority: Record<
-    AIRecommendationResponse["actionType"],
-    number
-  > = {
-    SELL: 3,
-    BUY: 2,
+  /* ---------------- 우선순위 계산 (Portfolio 기준) ---------------- */
+  const typePriority: Record<AIRecommendation["type"], number> = {
+    RISK: 3,
+    REBALANCING: 2,
     HOLD: 1,
   };
 
-  const dominantAction = recommendations.reduce(
+  const dominantType = recommendations.reduce(
     (prev, curr) =>
-      actionPriority[curr.actionType] > actionPriority[prev.actionType]
-        ? curr
-        : prev,
+      typePriority[curr.type] > typePriority[prev.type] ? curr : prev,
     recommendations[0]
-  ).actionType;
+  ).type;
 
-  const avgScore =
-    recommendations.reduce((sum, r) => sum + r.aiScore, 0) /
+  const avgConfidence =
+    recommendations.reduce((sum, r) => sum + r.confidence, 0) /
     recommendations.length;
 
   /* ---------------- UI 설정 ---------------- */
   const configMap = {
-    BUY: {
-      label: "AI 매수 추천",
+    REBALANCING: {
+      label: "AI 리밸런싱 추천",
       color: "#22c55e",
       icon: <TrendingUpIcon fontSize="small" />,
     },
-    SELL: {
-      label: "AI 매도 경고",
+    RISK: {
+      label: "AI 리스크 경고",
       color: "#ef4444",
       icon: <TrendingDownIcon fontSize="small" />,
     },
@@ -67,7 +62,7 @@ export function AIRebalancingBadge({
     },
   } as const;
 
-  const config = configMap[dominantAction];
+  const config = configMap[dominantType];
 
   /* ---------------- 렌더 ---------------- */
   return (
@@ -79,10 +74,10 @@ export function AIRebalancingBadge({
             {config.label}
           </Typography>
           <Typography fontSize={12}>
-            평균 AI 점수: {avgScore.toFixed(1)}
+            평균 신뢰도: {(avgConfidence * 100).toFixed(1)}%
           </Typography>
           <Typography fontSize={12}>
-            추천 종목 수: {recommendations.length}
+            AI 추천 수: {recommendations.length}
           </Typography>
         </Box>
       }
@@ -99,8 +94,8 @@ export function AIRebalancingBadge({
           fontWeight: 600,
           cursor: onClick ? "pointer" : "default",
 
-          /* SELL 강조 애니메이션 */
-          ...(dominantAction === "SELL" && {
+          /* RISK 강조 애니메이션 */
+          ...(dominantType === "RISK" && {
             animation: "shake 0.6s ease-in-out",
           }),
 

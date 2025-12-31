@@ -60,7 +60,7 @@ export default function HistoryGraph() {
       {/* ================= 수익률 비교 ================= */}
       <section className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
         <div className="mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-indigo-400" />
+          <TrendingUp className="h-5 w-5 text-purple-400" />
           <h2 className="text-lg font-semibold text-gray-100">
             수익률 비교
           </h2>
@@ -120,9 +120,9 @@ export default function HistoryGraph() {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {profitView === "monthly" ? (
-              <Calendar className="h-5 w-5 text-indigo-400" />
+              <Calendar className="h-5 w-5 text-purple-400" />
             ) : (
-              <BarChart3 className="h-5 w-5 text-indigo-400" />
+              <BarChart3 className="h-5 w-5 text-purple-400" />
             )}
             <h2 className="text-lg font-semibold text-gray-100">
               {profitView === "monthly" ? "월별" : "주간"} 수익
@@ -135,7 +135,7 @@ export default function HistoryGraph() {
               className={`px-3 py-1 text-sm rounded-md transition
                 ${
                   profitView === "monthly"
-                    ? "bg-indigo-500/20 text-indigo-300"
+                    ? "bg-purple-500/20 text-purple-300"
                     : "text-gray-400 hover:text-gray-200"
                 }`}
             >
@@ -146,7 +146,7 @@ export default function HistoryGraph() {
               className={`px-3 py-1 text-sm rounded-md transition
                 ${
                   profitView === "weekly"
-                    ? "bg-indigo-500/20 text-indigo-300"
+                    ? "bg-purple-500/20 text-purple-300"
                     : "text-gray-400 hover:text-gray-200"
                 }`}
             >

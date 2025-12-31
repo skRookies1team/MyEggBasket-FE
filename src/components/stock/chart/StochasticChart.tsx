@@ -139,6 +139,8 @@ export function StochasticChart({
 
     kRef.current.setData(kData);
     dRef.current.setData(dData);
+    chartRef.current?.timeScale().fitContent();
+
   }, [indicator]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;

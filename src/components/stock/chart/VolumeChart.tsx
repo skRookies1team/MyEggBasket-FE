@@ -112,6 +112,7 @@ export function VolumeChart({
     }));
 
     volumeRef.current.setData(volumeData);
+    chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;

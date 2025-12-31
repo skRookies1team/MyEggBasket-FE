@@ -166,6 +166,8 @@ export function MACDChart({
     macdRef.current.setData(macdData);
     signalRef.current.setData(signalData);
     histRef.current.setData(histData);
+    chartRef.current?.timeScale().fitContent();
+
   }, [indicator]);
 
   return <div ref={containerRef} style={{ width: "100%" }} />;

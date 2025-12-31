@@ -53,11 +53,18 @@ const normalizeTime = (time: string | number, period: Period): any => {
 
   if (period === "minute") {
     if (!isNaN(Number(str))) return Number(str);
-    const d = new Date(str);
+
+    // 🔥 [수정 1] "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss" 변환
+    // Safari 등 일부 브라우저는 공백이 있는 날짜 문자열을 new Date()로 파싱하지 못할 수 있음
+    const d = new Date(str.replace(" ", "T"));
     return Math.floor(d.getTime() / 1000);
   }
 
+  // 🔥 [수정 2] 공백(" ")이 포함된 날짜 문자열 처리 (일봉 전환 시 에러 방지)
+  // 기존: if (str.includes("T")) return str.split("T")[0];
   if (str.includes("T")) return str.split("T")[0];
+  if (str.includes(" ")) return str.split(" ")[0]; // "2025-12-30 11:10:00" -> "2025-12-30"
+
   return str;
 };
 
@@ -182,31 +189,34 @@ export function PriceChart({
   useEffect(() => {
     if (!candleSeriesRef.current || !chartRef.current) return;
 
-    const formatted = candles
-      .map((c) => ({
-        ...c,
-        time: normalizeTime(c.time, period),
-      }))
-      .sort((a, b) => {
-        const ta =
-          typeof a.time === "number"
-            ? a.time
-            : new Date(a.time).getTime();
-        const tb =
-          typeof b.time === "number"
-            ? b.time
-            : new Date(b.time).getTime();
-        return ta - tb;
-      });
+    // 1. 데이터를 먼저 정규화
+    const normalized = candles.map((c) => ({
+      ...c,
+      time: normalizeTime(c.time, period),
+    }));
+
+    // 2. [추가] 중복 시간 제거 (Map 사용)
+    // 동일한 시간(time) 키가 있으면 나중 데이터로 덮어씌워짐 -> 중복 제거 효과
+    const uniqueDataMap = new Map();
+    normalized.forEach((item) => {
+      uniqueDataMap.set(item.time, item);
+    });
+
+    // 3. Map 값을 배열로 변환 후 정렬
+    const formatted = Array.from(uniqueDataMap.values()).sort((a, b) => {
+      const ta = typeof a.time === "number" ? a.time : new Date(a.time).getTime();
+      const tb = typeof b.time === "number" ? b.time : new Date(b.time).getTime();
+      return ta - tb;
+    });
 
     candleSeriesRef.current.setData(
-      formatted.map((c) => ({
-        time: c.time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }))
+        formatted.map((c) => ({
+          time: c.time,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        }))
     );
 
     if (formatted.length > 0) {

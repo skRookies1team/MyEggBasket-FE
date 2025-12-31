@@ -78,11 +78,14 @@ export function PriceChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  /**
-   * ⚠️ 렌더용 chart state
-   * - JSX에서는 ref.current ❌
-   * - state로 한 번만 노출
-   */
+  // 1. onHover를 ref에 저장 (렌더링 됨에 따라 최신 함수를 가리키도록 함)
+  const onHoverRef = useRef(onHover);
+
+  // 2. onHover prop이 바뀔 때마다 ref 업데이트
+  useEffect(() => {
+    onHoverRef.current = onHover;
+  }, [onHover]);
+
   const [chartState, setChartState] = useState<IChartApi | null>(null);
 
   /* ------------------ Chart init ------------------ */
@@ -134,6 +137,8 @@ export function PriceChart({
 
     /* ------------------ Hover ------------------ */
     const handleCrosshairMove = (param: any) => {
+
+
       if (!param?.time || !candleSeriesRef.current) {
         onHover?.(null);
         return;
@@ -147,7 +152,8 @@ export function PriceChart({
         return;
       }
 
-      onHover?.({
+      // 3. 여기서 props로 받은 onHover 대신 ref.current를 사용
+      onHoverRef.current?.({
         open: Number(price.open),
         high: Number(price.high),
         low: Number(price.low),
@@ -164,14 +170,13 @@ export function PriceChart({
 
       // ⭐ ChartPanel에 반드시 알려야 함
       onChartDispose?.(chart);
-
       chart.remove();
 
       chartRef.current = null;
       candleSeriesRef.current = null;
       setChartState(null);
     };
-  }, [height, onHover, onChartReady, onChartDispose]);
+  }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ Data update ------------------ */
   useEffect(() => {

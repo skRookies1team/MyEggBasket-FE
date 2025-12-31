@@ -1,5 +1,5 @@
 // stock/chart/ChartPanel.tsx
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { IChartApi, LogicalRange } from "lightweight-charts";
 
 import type { Period, StockPriceData, StockCandle } from "../../../types/stock";
@@ -88,7 +88,8 @@ export function ChartPanel({
   const chartsRef = useRef<IChartApi[]>([]);
   const syncCleanupRef = useRef<(() => void) | null>(null);
 
-  const registerChart = (chart: IChartApi) => {
+  // 1. useCallback으로 감싸기
+  const registerChart = useCallback((chart: IChartApi) => {
     if (chartsRef.current.includes(chart)) return;
 
     chartsRef.current.push(chart);
@@ -96,9 +97,10 @@ export function ChartPanel({
     // 🔑 chart 추가될 때만 sync 재설정
     syncCleanupRef.current?.();
     syncCleanupRef.current = syncTimeScale(chartsRef.current);
-  };
+  }, []); // 의존성 배열 비움 (refs는 안정적임)
 
-  const unregisterChart = (chart: IChartApi) => {
+  // 2. useCallback으로 감싸기
+  const unregisterChart = useCallback((chart: IChartApi) => {
     chartsRef.current = chartsRef.current.filter((c) => c !== chart);
 
     syncCleanupRef.current?.();
@@ -107,7 +109,7 @@ export function ChartPanel({
     if (chartsRef.current.length >= 2) {
       syncCleanupRef.current = syncTimeScale(chartsRef.current);
     }
-  };
+  }, []); // 의존성 배열 비움
 
   /* ------------------ indicator 계산 ------------------ */
   const maIndicators: MAIndicator[] = useMemo(
@@ -170,10 +172,10 @@ export function ChartPanel({
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg bg-black/40 px-3 py-1 text-xs text-gray-200 backdrop-blur">
           {hoverOHLC ? (
             <div className="flex gap-3">
-              <OhlcItem label="O" value={hoverOHLC.open} />
-              <OhlcItem label="H" value={hoverOHLC.high} />
-              <OhlcItem label="L" value={hoverOHLC.low} />
-              <OhlcItem label="C" value={hoverOHLC.close} />
+              <OhlcItem label="시가" value={hoverOHLC.open} />
+              <OhlcItem label="고가" value={hoverOHLC.high} />
+              <OhlcItem label="저가" value={hoverOHLC.low} />
+              <OhlcItem label="종가" value={hoverOHLC.close} />
             </div>
           ) : (
             <span className="text-gray-400">

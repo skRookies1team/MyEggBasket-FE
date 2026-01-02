@@ -10,7 +10,8 @@ import {
 } from "@mui/material";
 import { TrendingUp, Newspaper, Users } from "lucide-react";
 import { type StompSubscription } from "@stomp/stompjs";
-import { useWebSocket } from "../context/WebSocketContext.tsx";
+
+import { useWebSocket } from "../context/WebSocketContext";
 import MarketIndexContainer from "../components/MarketIndex/MarketIndexContainer";
 import Top10Rolling from "../components/Top10Rolling";
 import LiveStockPanel from "../components/LiveStock/LiveStockPanel";
@@ -22,20 +23,34 @@ import { fetchVolumeRankTop10 } from "../api/volumeRankApi";
 import { getStockInfoFromDB } from "../api/stocksApi";
 import { requestStockSubscription } from "../hooks/useRealtimeStock";
 import { TICKERS } from "../data/stockInfo";
+import { AiBubbleChart } from "../api/bubbleChartApi";
 
 import type { VolumeRankItem } from "../components/Top10Rolling";
 import type { StockItem } from "../types/stock";
 import type { BubbleItem } from "../components/AIIssueBubble/AIIssueBubbleCircular";
-import { AiBubbleChart } from "../api/bubbleChartApi.ts";
+
+/* ===================== */
+/* NAV 높이 (중요) */
+/* ===================== */
+const NAV_HEIGHT = 64;
 
 const BUBBLE_COLORS = [
-  "#7c3aed", "#00e676", "#29b6f6", "#ff4d6a", "#ffa726",
-  "#ec4899", "#8b5cf6", "#10b981", "#ff7043", "#5c6bc0"
+  "#7c3aed",
+  "#00e676",
+  "#29b6f6",
+  "#ff4d6a",
+  "#ffa726",
+  "#ec4899",
+  "#8b5cf6",
+  "#10b981",
+  "#ff7043",
+  "#5c6bc0",
 ];
 
 export default function MainPageDarkRealtime() {
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0);
   const [showTicker, setShowTicker] = useState(false);
+
   const indexRef = useRef<HTMLDivElement | null>(null);
   const { client, isConnected } = useWebSocket();
   const subscriptionsRef = useRef<StompSubscription[]>([]);
@@ -47,31 +62,44 @@ export default function MainPageDarkRealtime() {
     rise: StockItem[];
     fall: StockItem[];
   }>({ volume: [], amount: [], rise: [], fall: [] });
+
   const [issueBubbles, setIssueBubbles] = useState<BubbleItem[]>([]);
 
-  /* ---------------- 주요 지수 sticky ---------------- */
+  /* ===================== */
+  /* 주요 지수 Sticky 감지 */
+  /* ===================== */
   useEffect(() => {
     if (!indexRef.current) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => setShowTicker(!entry.isIntersecting),
-      { threshold: 0 }
+      {
+        rootMargin: `-${NAV_HEIGHT}px 0px 0px 0px`,
+        threshold: 0,
+      }
     );
+
     observer.observe(indexRef.current);
     return () => observer.disconnect();
   }, []);
 
-  /* ---------------- 거래량 TOP10  ---------------- */
+  /* ===================== */
+  /* 거래량 TOP10 */
+  /* ===================== */
   useEffect(() => {
     const load = async () => {
       const list = await fetchVolumeRankTop10();
       if (list) setTop10Rank(list);
     };
     load();
+
     const timer = setInterval(load, 20000);
     return () => clearInterval(timer);
   }, []);
 
-  /* -------------- AI Bubble chart ---------------- */
+  /* ===================== */
+  /* AI Bubble Chart */
+  /* ===================== */
   useEffect(() => {
     const load = async () => {
       try {
@@ -80,24 +108,25 @@ export default function MainPageDarkRealtime() {
         console.log(periodData)
         if (!periodData) return;
 
-        const combinedRawData = [
+        const combined = [
           ...(periodData.keywords || []),
-          ...(periodData.categories || [])
+          ...(periodData.categories || []),
         ];
+        if (combined.length === 0) return;
 
-        if (combinedRawData.length === 0) return;
+        const maxCount = Math.max(...combined.map((i: any) => i.count));
 
-        const maxCount = Math.max(...combinedRawData.map((item: any) => item.count));
+        const processed: BubbleItem[] = combined.map(
+          (item: any, index: number) => ({
+            name: item.name,
+            size: 70 + (item.count / maxCount) * 70,
+            mentions: item.count,
+            change: Number((Math.random() * 10 - 2).toFixed(1)),
+            color: BUBBLE_COLORS[index % BUBBLE_COLORS.length],
+          })
+        );
 
-        const processedData: BubbleItem[] = combinedRawData.map((item: any, index: number) => ({
-          name: item.name,
-          size: 70 + (item.count / maxCount) * 70,
-          mentions: item.count,
-          change: Number((Math.random() * 10 - 2).toFixed(1)),
-          color: BUBBLE_COLORS[index % BUBBLE_COLORS.length],
-        }));
-
-        setIssueBubbles(processedData);
+        setIssueBubbles(processed);
       } catch (e) {
         console.error("Bubble Chart Load Error", e);
       }
@@ -105,13 +134,16 @@ export default function MainPageDarkRealtime() {
     load();
   }, []);
 
-  /* -------------- 실시간 주가 업데이트 --------------- */
+  /* ===================== */
+  /* 실시간 주가 업데이트 */
+  /* ===================== */
   const updateRealtimePrice = async (updated: any) => {
     const info = await getStockInfoFromDB(updated.stockCode);
 
     setLiveData((prev) => {
       const update = (list: StockItem[]) => {
-        const idx = list.findIndex(i => i.code === updated.stockCode);
+        const idx = list.findIndex((i) => i.code === updated.stockCode);
+
         if (idx !== -1) {
           return list.map((item, i) =>
             i === idx
@@ -126,6 +158,7 @@ export default function MainPageDarkRealtime() {
               : item
           );
         }
+
         return [
           ...list,
           {
@@ -149,11 +182,13 @@ export default function MainPageDarkRealtime() {
     });
   };
 
-  /* ---------------- STOMP 구독 ---------------- */
+  /* ===================== */
+  /* STOMP 구독 */
+  /* ===================== */
   useEffect(() => {
     if (!client || !isConnected) return;
 
-    subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+    subscriptionsRef.current.forEach((s) => s.unsubscribe());
     subscriptionsRef.current = [];
 
     let mounted = true;
@@ -162,39 +197,56 @@ export default function MainPageDarkRealtime() {
       setTimeout(() => {
         if (!mounted || !client.connected) return;
 
-        const sub = requestStockSubscription(client, code, (updated) => {
-          updateRealtimePrice(updated);
-        });
-
-        if (sub) {
-          subscriptionsRef.current.push(sub);
-        }
+        const sub = requestStockSubscription(client, code, updateRealtimePrice);
+        if (sub) subscriptionsRef.current.push(sub);
       }, index * 50);
     });
 
     return () => {
       mounted = false;
-      subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+      subscriptionsRef.current.forEach((s) => s.unsubscribe());
       subscriptionsRef.current = [];
     };
   }, [client, isConnected]);
 
+  /* ===================== */
+  /* Render */
+  /* ===================== */
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0f", py: 4, color: "#ffffff" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0f", py: 4, color: "#fff" }}>
+      {/* Sticky Ticker (NAV 아래 고정) */}
       {showTicker && (
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10 }}>
+        <Box
+          sx={{
+            position: "sticky",
+            top: `${NAV_HEIGHT}px`,
+            zIndex: 1100,
+            bgcolor: "#0a0a0f",
+          }}
+        >
           <MarketIndexContainer showTickerOnly />
         </Box>
       )}
 
       <Container maxWidth="xl">
-        <Box ref={indexRef} sx={{ mb: 4 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600, color: "#fff" }}>
+        {/* 주요 지수 */}
+        <Box
+          ref={indexRef}
+          sx={{
+            mb: 4,
+            pt: `${NAV_HEIGHT}px`,
+            scrollMarginTop: `${NAV_HEIGHT + 16}px`,
+          }}
+        >
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
             주요 지수
           </Typography>
           <MarketIndexContainer showCardsOnly />
         </Box>
 
+        <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+          거래량 TOP 10
+        </Typography>
         {top10Rank.length > 0 && (
           <Box sx={{ mb: 4 }}>
             <Top10Rolling data={top10Rank} interval={2500} />
@@ -202,7 +254,7 @@ export default function MainPageDarkRealtime() {
         )}
 
         <Box sx={{ mb: 6 }}>
-          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: "#fff" }}>
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
             AI 이슈포착
           </Typography>
           <AIIssueLayout bubbles={issueBubbles} />
@@ -212,25 +264,24 @@ export default function MainPageDarkRealtime() {
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
+            TabIndicatorProps={{ style: { backgroundColor: "#7c3aed" } }}
             sx={{
               px: 2,
               borderBottom: "1px solid #2a2a35",
               "& .MuiTab-root": {
-                color: "#ffffff",
-                opacity: 0.8,
+                color: "#fff",
+                opacity: 0.7,
                 fontWeight: 500,
                 textTransform: "none",
+                minHeight: 56,
               },
               "& .MuiTab-root:hover": {
                 opacity: 1,
+                color: "#c4b5fd",
               },
               "& .Mui-selected": {
-                color: "#ffffff",
+                color: "#7c3aed",
                 fontWeight: 700,
-                opacity: 1,
-              },
-              "& .MuiSvgIcon-root": {
-                color: "#ffffff",
               },
             }}
           >

@@ -1,34 +1,47 @@
-// src/types/aiRecommendation.ts
+/* =========================
+   백엔드 enum 대응
+========================= */
+export type RecommendationAction = "BUY" | "SELL" | "HOLD";
 
-/**
- * 포트폴리오 단위 AI 추천 유형
- * - REBALANCING: 리밸런싱 권고
- * - RISK: 리스크 경고
- * - HOLD: 관망
- */
-export type RecommendationType = "REBALANCING" | "RISK" | "HOLD";
-
-/**
- * AI 추천 생성 요청 (AI 서버 → 백엔드)
- */
+/* =========================
+   POST 요청 DTO
+========================= */
 export interface AIRecommendationCreateRequest {
   portfolioId: number;
-  type: RecommendationType;
+  stockCode: string;
 
-  summary: string;      // AI 판단 요약
-  confidence: number;   // 0 ~ 1 (신뢰도)
+  aiScore: number; // 0 ~ 100
+  actionType: RecommendationAction;
+
+  currentHolding: number;        // BigDecimal → number
+  targetHolding: number;         // BigDecimal → number
+  targetHoldingPercentage: number;
+
+  adjustmentAmount: number;      // BigDecimal → number
+
+  reasonSummary?: string;
+  riskWarning?: string;
 }
 
-/**
- * AI 추천 응답 (백엔드 → 프런트)
- */
-export interface AIRecommendation {
+/* =========================
+   GET 응답 DTO
+========================= */
+export interface AIRecommendationResponse {
   recommendationId: number;
   portfolioId: number;
-  type: RecommendationType;
 
-  summary: string;
-  confidence: number;
+  stockCode: string;
+  stockName: string;
 
-  createdAt: string; // ISO-8601
+  aiScore: number;
+  actionType: RecommendationAction;
+
+  currentHolding: number;
+  targetHoldingDisplay: string;  // "1,000,000원 (20.0%)"
+  adjustmentAmount: number;
+
+  reasonSummary?: string;
+  riskWarning?: string;
+
+  createdAt: string; // ISO datetime
 }

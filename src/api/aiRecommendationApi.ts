@@ -1,27 +1,30 @@
 import api from "../store/axiosStore";
-import type { 
-  AIRecommendation,
-  AIRecommendationCreateRequest as CreateAIRecommendationRequest 
+import type {
+  AIRecommendationCreateRequest,
+  AIRecommendationResponse,
 } from "../types/aiRecommendation";
 
-/* ===================== */
-/* API 함수 */
-/* ===================== */
-
-// 추천 생성
-export const createAIRecommendation = async (
-  payload: CreateAIRecommendationRequest
-): Promise<AIRecommendation> => {
-  const res = await api.post("/ai-recommendations", payload);
-  return res.data;
-};
-
-// 추천 조회
-export const fetchAIRecommendations = async (
-  portfolioId: number
-): Promise<AIRecommendation[]> => {
-  const res = await api.get(
-    `/portfolios/${portfolioId}/ai-recommendations`
+/* =========================
+   AI 추천 생성
+========================= */
+export async function createAIRecommendation(
+  payload: AIRecommendationCreateRequest
+): Promise<AIRecommendationResponse> {
+  const res = await api.post<AIRecommendationResponse>(
+    "/api/app/ai-recommendations",
+    payload
   );
   return res.data;
-};
+}
+
+/* =========================
+   포트폴리오 AI 추천 조회
+========================= */
+export async function fetchAIRecommendations(
+  portfolioId: number
+): Promise<AIRecommendationResponse[]> {
+  const res = await api.get<AIRecommendationResponse[]>(
+    `/api/app/portfolios/${portfolioId}/ai-recommendations`
+  );
+  return res.data;
+}

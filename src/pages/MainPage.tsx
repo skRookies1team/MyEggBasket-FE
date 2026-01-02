@@ -264,23 +264,21 @@ export default function MainPageDarkRealtime() {
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
-            TabIndicatorProps={{ style: { backgroundColor: "#7c3aed" } }}
+            textColor="inherit"
+            TabIndicatorProps={{
+              style: {
+                backgroundColor: "#7c3aed", // 보라색 인디케이터
+              },
+            }}
             sx={{
-              px: 2,
-              borderBottom: "1px solid #2a2a35",
               "& .MuiTab-root": {
-                color: "#fff",
-                opacity: 0.7,
+                color: "#fff", 
                 fontWeight: 500,
+                minHeight: 42,
                 textTransform: "none",
-                minHeight: 56,
               },
-              "& .MuiTab-root:hover": {
-                opacity: 1,
-                color: "#c4b5fd",
-              },
-              "& .Mui-selected": {
-                color: "#7c3aed",
+              "& .MuiTab-root.Mui-selected": {
+                color: "#7c3aed", 
                 fontWeight: 700,
               },
             }}

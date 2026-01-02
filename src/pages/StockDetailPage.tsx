@@ -53,6 +53,33 @@ export default function StockDetailPage() {
     subscribeRealtimePrice(stockCode).catch((e) => console.warn("Realtime sub failed", e));
   }, [period, stockCode]);
 
+  /* ==============================
+     최근 본 주식 저장
+  ============================== */
+  useEffect(() => {
+    if (!stockCode) return;
+
+    const key = "recent_stocks";
+    const MAX = 10;
+
+    try {
+      const stored: string[] = JSON.parse(
+        localStorage.getItem(key) || "[]"
+      );
+
+      // 중복 제거 + 최신 맨 앞으로
+      const updated = [
+        stockCode,
+        ...stored.filter((c) => c !== stockCode),
+      ].slice(0, MAX);
+
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch (e) {
+      console.warn("Failed to save recent stock", e);
+    }
+  }, [stockCode]);
+
+
   useEffect(() => {
     if (stockCode) {
       registerStockSubscription(stockCode)

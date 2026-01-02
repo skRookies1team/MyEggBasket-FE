@@ -1,27 +1,43 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+function loadRecentStocks(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("recent_stocks") || "[]");
+  } catch {
+    return [];
+  }
+}
+
 export default function RecentTab() {
-  const [recent, setRecent] = useState<string[]>([]);
+  // 초기값을 useState에서 계산 (effect 아님)
+  const [recent, setRecent] = useState<string[]>(() =>
+    loadRecentStocks()
+  );
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.resolve().then(() => {
-      const stored = JSON.parse(
-        localStorage.getItem("recent_stocks") || "[]"
-      );
-      setRecent(stored);
-    });
+    // 외부 시스템 이벤트에 "구독"
+    const sync = () => {
+      setRecent(loadRecentStocks());
+    };
+
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
+
+    return () => {
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
   }, []);
 
   return (
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
-      {/* Title */}
       <h3 className="mb-3 text-sm font-semibold tracking-wide text-indigo-300">
         최근 본 주식
       </h3>
 
-      {/* Empty */}
       {recent.length === 0 ? (
         <p className="py-6 text-center text-sm text-gray-400">
           최근 본 종목이 없습니다.

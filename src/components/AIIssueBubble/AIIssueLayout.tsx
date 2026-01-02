@@ -14,20 +14,12 @@ export default function AIIssueLayout({ bubbles }: Props) {
 
   return (
     <section className="flex flex-col gap-3">
-      {/* ===================== */}
-      {/* Title */}
-      {/* ===================== */}
       <h3 className="text-sm font-bold text-gray-200">
         최근 7일간 뉴스 연관 종목
       </h3>
-
-      {/* ===================== */}
-      {/* Panels */}
-      {/* ===================== */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {/* --------------------- */}
+
         {/* Left : Bubble Panel */}
-        {/* --------------------- */}
         <div className="
           flex items-center justify-center
           rounded-xl
@@ -41,10 +33,8 @@ export default function AIIssueLayout({ bubbles }: Props) {
             onSelect={setSelectedBubble}
           />
         </div>
-
-        {/* --------------------- */}
+        
         {/* Right : Detail Panel */}
-        {/* --------------------- */}
         <div className="
           rounded-xl
           border border-[#2a2a35]

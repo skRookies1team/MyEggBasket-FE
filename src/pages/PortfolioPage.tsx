@@ -16,6 +16,7 @@ import { PortfolioCharts } from "../components/Portfolio/PortfolioCharts";
 import StockTrendCard from "../components/Portfolio/ProtfolioStockTrendCard";
 import { PortfolioStockList } from "../components/Portfolio/PortfolioStockList";
 import { AddPortfolioModal } from "../components/Portfolio/AddPortfolioModal";
+import { AddHoldingModal } from "../components/Portfolio/AddHoldingModal";
 
 export function PortfolioPage() {
   /* =========================
@@ -28,6 +29,7 @@ export function PortfolioPage() {
     { name: string; value: number; color: string }[]
   >([]);
   const [showAddPortfolio, setShowAddPortfolio] = useState(false);
+  const [showAddHolding, setShowAddHolding] = useState(false);
   const [activePortfolioId, setActivePortfolioId] = useState<number>();
 
   /* =========================
@@ -185,6 +187,36 @@ export function PortfolioPage() {
   }, [holdings]);
 
   /* =========================
+     종목 추가 로직
+  ========================= */
+  const addNewHolding = async (selectedHoldings: AccountHolding[]) => {
+    if (!activePortfolioId) return;
+
+    try {
+      await Promise.all(
+        selectedHoldings.map((h) =>
+          addHolding(activePortfolioId, {
+            stockCode: h.stockCode,
+            quantity: h.quantity,
+            avgPrice: h.avgPrice,
+            currentWeight: 0,
+            targetWeight: 0,
+          })
+        )
+      );
+
+      // 추가 후 데이터 갱신
+      await fetchHoldings(activePortfolioId);
+      await fetchPortfolios(); 
+    } catch (e) {
+      console.error("종목 추가 실패", e);
+      alert("종목 추가에 실패했습니다.");
+    } finally {
+      setShowAddHolding(false);
+    }
+  };
+
+  /* =========================
      포트폴리오 추가 / 삭제
   ========================= */
   const addNewPortfolio = async (data: {
@@ -221,6 +253,8 @@ export function PortfolioPage() {
       setShowAddPortfolio(false);
     }
   };
+
+  
 
   const removePortfolio = async (id: number) => {
     if (!confirm("정말 포트폴리오를 삭제하시겠습니까?")) return;
@@ -293,6 +327,19 @@ export function PortfolioPage() {
           ))}
         </div>
 
+        {/* 2. 종목 추가 버튼 (포트폴리오 버튼 바로 아래 배치) */}
+        {activePortfolio && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowAddHolding(true)}
+              className="flex items-center gap-2 rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-xs font-medium text-purple-300 transition hover:bg-purple-500/20"
+            >
+              <Plus size={14} />
+              이 포트폴리오에 종목 추가
+            </button>
+          </div>
+        )}
+
         {/* Content */}
         {activePortfolio && (
           <div className="space-y-8">
@@ -340,6 +387,16 @@ export function PortfolioPage() {
             onAdd={addNewPortfolio}
           />
         )}
+
+
+        {showAddHolding && (
+          <AddHoldingModal
+            onClose={() => setShowAddHolding(false)}
+            onAdd={addNewHolding}
+            currentHoldings={activePortfolio.holdings} // 이미 추가된 종목 제외용 (선택사항)
+          />
+        )}
+
       </div>
     </div>
   );

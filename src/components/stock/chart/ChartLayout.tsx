@@ -36,9 +36,16 @@ export function ChartLayout({
   const isLogin = useAuthStore((state) => state.isAuthenticated);
 
   const [availableCash, setAvailableCash] = useState<number>(0);
+  const [holdingQty, setHoldingQty] = useState<number>(0);
+  const [avgPrice, setAvgPrice] = useState<number>(0);
 
   useEffect(() => {
-    if (!isLogin) return;
+    if (!isLogin) {
+      setAvailableCash(0);
+      setHoldingQty(0);
+      setAvgPrice(0);
+      return;
+    }
 
     fetchUserBalance(virtual).then((res) => {
 
@@ -48,8 +55,19 @@ export function ChartLayout({
         0;
 
       setAvailableCash(cash);
+
+      const matchedHolding = res?.holdings?.find(
+        (holding: any) => holding?.stockCode === stockCode
+      );
+
+      setHoldingQty(
+        Number(matchedHolding?.orderableQuantity) ||
+          Number(matchedHolding?.quantity) ||
+          0
+      );
+      setAvgPrice(Number(matchedHolding?.avgPrice) || 0);
     });
-  }, [isLogin, virtual]);
+  }, [isLogin, stockCode, virtual]);
 
   return (
     <section
@@ -71,6 +89,8 @@ export function ChartLayout({
           stockCode={stockCode}
           currentPrice={currentPrice}
           orderBook={orderBook}
+          holdingQty={holdingQty}
+          avgPrice={avgPrice}
           availableCash={availableCash}
           virtual={virtual}
         />

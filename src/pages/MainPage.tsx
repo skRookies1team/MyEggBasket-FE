@@ -75,9 +75,9 @@ export default function MainPageDarkRealtime() {
   useEffect(() => {
     const load = async () => {
       try {
-        const AIChartData = AiBubbleChart();
-        const periodData = AIChartData?.periods?.["1_week"];
-
+        const AIChartData = await AiBubbleChart();
+        const periodData = AIChartData?.["1_month"];
+        console.log(periodData)
         if (!periodData) return;
 
         const combinedRawData = [

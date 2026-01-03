@@ -84,7 +84,7 @@ export default function AIIssueBubbleCircular({ bubbles, onSelect }: Props) {
       {processedBubbles.map((item) => (
         <Tooltip
           key={item.name}
-          title={`검색량: ${item.mentions.toLocaleString()} · 등락률: ${item.change}%`}
+          title={`검색량: ${item.mentions.toLocaleString()}`}
           arrow
         >
           <Box

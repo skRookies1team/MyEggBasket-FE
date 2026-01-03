@@ -13,7 +13,7 @@ export default function NewsTabs() {
         border: "1px solid #2a2a35",
       }}
     >
-      {/* 🔹 상단 탭 */}
+      {/* 상단 탭 */}
       <Stack
         direction="row"
         spacing={1}

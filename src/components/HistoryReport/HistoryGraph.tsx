@@ -33,7 +33,7 @@ export default function HistoryGraph({ trades }: HistoryGraphProps) {
         );
 
         // 2. CSV 데이터 로드 (AI 수익률 비교용)
-        const csvResponse = await fetch("../../../public/trade_record.csv");
+        const csvResponse = await fetch("../../../public/data/trade_record.csv");
         const csvText = await csvResponse.text();
         const parsedCsv = Papa.parse(csvText, { header: false, skipEmptyLines: true }).data;
 

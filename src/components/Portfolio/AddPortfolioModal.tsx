@@ -46,7 +46,10 @@ export function AddPortfolioModal({
     const loadData = async () => {
       try {
         const data = await fetchUserBalance();
-        if (data) setHoldings(data.holdings ?? []);
+        if (data)
+          setHoldings(
+            (data.holdings ?? []).filter((h: AccountHolding) => h.quantity > 0)
+          );
       } catch (error) {
         console.error("잔고 로딩 실패", error);
       } finally {

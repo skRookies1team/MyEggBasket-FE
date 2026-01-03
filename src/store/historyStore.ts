@@ -13,7 +13,6 @@ interface PortfolioState {
 
 
 const initialHistoryReport: HistoryReport = {
-    portfolioId: 0,
     totalReturnRate: 0,
     successRate: 0,
 };

@@ -1,11 +1,6 @@
-import api from "../store/axiosStore"
+import api from "../store/axiosStore"; // 네가 쓰는 axios 인스턴스
 
-export const AiBubbleChart = async () => {
-    try {
-        const res = await api.get(`ai/keywords/trending`)
-        return res.data
-    } catch (err) {
-        console.error("❌ AI chart data 불러오기 실패:", err);
-        return null;
-    }
+export async function AiBubbleChart() {
+  const res = await api.get("/ai/keywords/trending");
+  return res.data;
 }

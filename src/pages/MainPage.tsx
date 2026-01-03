@@ -104,24 +104,21 @@ export default function MainPageDarkRealtime() {
     const load = async () => {
       try {
         const AIChartData = await AiBubbleChart();
+
         const periodData = AIChartData?.["1_month"];
-        console.log(periodData)
-        if (!periodData) return;
+        if (!periodData || !periodData.keywords) return;
 
-        const combined = [
-          ...(periodData.keywords || []),
-          ...(periodData.categories || []),
-        ];
-        if (combined.length === 0) return;
+        const keywords = periodData.keywords;
+        if (keywords.length === 0) return;
 
-        const maxCount = Math.max(...combined.map((i: any) => i.count));
+        const maxCount = Math.max(...keywords.map((k: any) => k.count));
 
-        const processed: BubbleItem[] = combined.map(
+        const processed: BubbleItem[] = keywords.map(
           (item: any, index: number) => ({
             name: item.name,
-            size: 70 + (item.count / maxCount) * 70,
             mentions: item.count,
-            change: Number((Math.random() * 10 - 2).toFixed(1)),
+            size: 70 + (item.count / maxCount) * 70,
+            change: 0, // snapshot 데이터이므로 고정
             color: BUBBLE_COLORS[index % BUBBLE_COLORS.length],
           })
         );
@@ -131,9 +128,9 @@ export default function MainPageDarkRealtime() {
         console.error("Bubble Chart Load Error", e);
       }
     };
+
     load();
   }, []);
-
   /* ===================== */
   /* 실시간 주가 업데이트 */
   /* ===================== */
@@ -272,13 +269,13 @@ export default function MainPageDarkRealtime() {
             }}
             sx={{
               "& .MuiTab-root": {
-                color: "#fff", 
+                color: "#fff",
                 fontWeight: 500,
                 minHeight: 42,
                 textTransform: "none",
               },
               "& .MuiTab-root.Mui-selected": {
-                color: "#7c3aed", 
+                color: "#7c3aed",
                 fontWeight: 700,
               },
             }}

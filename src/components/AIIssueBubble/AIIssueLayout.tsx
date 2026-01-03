@@ -15,7 +15,7 @@ export default function AIIssueLayout({ bubbles }: Props) {
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-sm font-bold text-gray-200">
-        최근 1달간 뉴스 연관 종목(1주일 데이터가 없어서 1달로 가져옴 수정하기)
+        최근 1달간 뉴스 연관 종목
       </h3>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 

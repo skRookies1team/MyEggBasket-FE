@@ -13,123 +13,98 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { fetchHistoricalData } from "../../api/stocksApi";
 
 interface HistoryGraphProps {
   trades: any[];
 }
 
-export default function HistoryGraph({ trades}: HistoryGraphProps) {
+export default function HistoryGraph({ trades }: HistoryGraphProps) {
   const [profitView, setProfitView] = useState<"monthly" | "weekly">("monthly");
   const [combinedData, setCombinedData] = useState<any[]>([]);
 
   useEffect(() => {
-    async function calculateAndCompare() {
-      console.log(trades)
-      if (trades.length === 0) return;
+    async function calculateTradeReturns() {
+      if (!trades || trades.length === 0) return;
 
       try {
-        // 1. 내 거래 내역 필터링 및 정렬
-        const myTrades = trades
-          .sort((a, b) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime());
-
-        if (myTrades.length === 0) return;
-
-        // 종목별 종가 데이터 가져오기
-        const stockCodes = Array.from(new Set(myTrades.map((t) => t.stockCode)));
-        const priceHistoryMap: Record<string, any[]> = {};
-        await Promise.all(
-          stockCodes.map(async (code) => {
-            const history = await fetchHistoricalData(code, "day");
-            priceHistoryMap[code] = history;
-          })
+        // 1. 거래 내역 시간순 정렬
+        const sortedTrades = [...trades].sort(
+          (a, b) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime()
         );
 
-        // 2. CSV 파일 읽기 (public/trade_record.csv)
+        // 2. CSV 데이터 로드 (AI 수익률 비교용)
         const csvResponse = await fetch("../../../public/trade_record.csv");
         const csvText = await csvResponse.text();
         const parsedCsv = Papa.parse(csvText, { header: false, skipEmptyLines: true }).data;
 
-        // CSV 날짜별 수익률 Map 생성 (0번: 날짜시간, 5번: 수익률%)
         const csvDataMap = new Map();
         parsedCsv.forEach((row: any) => {
           if (row[0] && row[5]) {
-            const dateOnly = row[0].split(" ")[0]; // "2025-12-19"
-            const rate = parseFloat(row[5].toString().replace("%", "")); 
-            
+            const dateOnly = row[0].split(" ")[0];
+            const rate = parseFloat(row[5].toString().replace("%", ""));
             const d = new Date(dateOnly);
             const dateKey = d.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
-            
-            // 같은 날 여러 데이터가 있을 경우 마지막 데이터 반영
             csvDataMap.set(dateKey, rate);
           }
         });
 
-        // 3. 일별 통합 데이터 생성 (첫 거래일부터 오늘까지)
-        const startDate = new Date(myTrades[0].executedAt);
-        const endDate = new Date();
-        const result = [];
+        // 3. 매도 시점 기반 수익률 계산
+        const result: any[] = [];
+        const inventory: Record<string, { totalQty: number; totalCost: number }> = {};
+        
+        // 누적 실현 손익 및 누적 투입 금액
+        let cumulativeRealizedProfit = 0;
+        let cumulativeInvestedAmount = 0;
 
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split("T")[0];
-          const displayDate = d.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
-
-          let totalValue = 0;
-          let totalInvested = 0;
-          let hasValidPrice = true;
-
-          stockCodes.forEach((code) => {
-            const tradesUntilNow = myTrades.filter(
-              (t) => new Date(t.executedAt) <= d && t.stockCode === code
-            );
-
-            let currentQty = 0;
-            let investedAmount = 0;
-
-            tradesUntilNow.forEach((t) => {
-              if (t.type === "BUY") {
-                currentQty += t.quantity;
-                investedAmount += t.totalPrice;
-              } else if (t.type === "SELL") {
-                currentQty -= t.quantity;
-                const avgPrice = investedAmount / (currentQty + t.quantity);
-                investedAmount -= avgPrice * t.quantity;
-              }
-            });
-
-            if (currentQty > 0) {
-              const dayPriceInfo = priceHistoryMap[code]?.find((p) => p.time.startsWith(dateStr));
-              if (dayPriceInfo) {
-                totalValue += dayPriceInfo.close * currentQty;
-              } else {
-                hasValidPrice = false;
-              }
-            }
-            totalInvested += investedAmount;
+        sortedTrades.forEach((trade) => {
+          const code = trade.stockCode;
+          const dateKey = new Date(trade.executedAt).toLocaleDateString("ko-KR", {
+            month: "numeric",
+            day: "numeric",
           });
 
-          // 내 수익률 또는 CSV 데이터 중 하나라도 있는 날만 기록
-          const myReturn = (totalInvested > 0 && hasValidPrice && totalValue > 0)
-            ? Number(((totalValue - totalInvested) / totalInvested * 100).toFixed(2))
-            : null;
-          
-          const compareReturn = csvDataMap.get(displayDate) ?? null;
+          if (!inventory[code]) {
+            inventory[code] = { totalQty: 0, totalCost: 0 };
+          }
 
-          if (myReturn !== null || compareReturn !== null) {
+          if (trade.type === "BUY") {
+            inventory[code].totalQty += trade.quantity;
+            inventory[code].totalCost += trade.totalPrice;
+            cumulativeInvestedAmount += trade.totalPrice;
+          } 
+          else if (trade.type === "SELL") {
+            // 매도 시점: 평균 단가 기반으로 수익률 계산
+            const avgPrice = inventory[code].totalCost / inventory[code].totalQty;
+            const realizedProfit = trade.totalPrice - (avgPrice * trade.quantity);
+            
+            cumulativeRealizedProfit += realizedProfit;
+            
+            // 재고 업데이트
+            inventory[code].totalQty -= trade.quantity;
+            inventory[code].totalCost -= avgPrice * trade.quantity;
+
+            // 매도 발생 시점에만 '내 수익률' 기록
+            const myReturn = (cumulativeInvestedAmount > 0)
+              ? Number(((cumulativeRealizedProfit / cumulativeInvestedAmount) * 100).toFixed(2))
+              : 0;
+
             result.push({
-              date: displayDate,
+              date: dateKey,
               myReturn: myReturn,
-              compareReturn: compareReturn,
+              compareReturn: csvDataMap.get(dateKey) ?? null,
+              type: "SELL" // 매도 시점 마킹
             });
           }
-        }
+        });
+
+        // 만약 매도 데이터가 하나도 없다면 빈 그래프 방지를 위해 날짜만 표시하거나 처리
         setCombinedData(result);
       } catch (error) {
-        console.error("데이터 계산 및 CSV 로드 실패:", error);
+        console.error("데이터 계산 실패:", error);
       }
     }
 
-    calculateAndCompare();
+    calculateTradeReturns();
   }, [trades]);
 
   const monthlyProfit = [
@@ -155,22 +130,13 @@ export default function HistoryGraph({ trades}: HistoryGraphProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
+<section className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-6 shadow">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-indigo-400" />
-            <h2 className="text-lg font-semibold text-gray-100">최근 3개월 간 수익률 비교 추이</h2>
+            <h2 className="text-lg font-semibold text-gray-100">실현 수익률(매도 시점) 추이</h2>
           </div>
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-[#7c3aed]"></span>
-              <span className="text-gray-400">내 수익률</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-[#10b981]"></span>
-              <span className="text-gray-400">AI 수익률</span>
-            </div>
-          </div>
+          <p className="text-[11px] text-gray-500">* 매도(SELL)가 완료된 시점의 누적 수익률입니다.</p>
         </div>
 
         <div className="h-[300px]">
@@ -189,14 +155,13 @@ export default function HistoryGraph({ trades}: HistoryGraphProps) {
               />
               <Legend />
               <Line
-                connectNulls
                 type="monotone"
                 dataKey="myReturn"
                 stroke="#7c3aed"
-                name="내 수익률"
+                name="내 실현 수익률"
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 5 }}
+                dot={{ r: 4, fill: "#7c3aed" }} // 매도 시점을 점으로 표시
+                activeDot={{ r: 6 }}
               />
               <Line
                 connectNulls
@@ -207,7 +172,6 @@ export default function HistoryGraph({ trades}: HistoryGraphProps) {
                 strokeWidth={2}
                 dot={false}
                 strokeDasharray="5 5"
-                activeDot={{ r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>

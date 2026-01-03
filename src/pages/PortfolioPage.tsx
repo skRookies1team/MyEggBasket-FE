@@ -3,7 +3,7 @@ import { Plus, X, TrendingUp } from "lucide-react";
 import axios from "axios";
 
 import type { AccountBalanceData, AccountHolding } from "../types/stock";
-import type { Holding, RiskLevel } from "../types/portfolios";
+import type { Holding } from "../types/portfolios";
 
 import { fetchUserBalance } from "../api/accountApi";
 import { addPortfolio, deletePortfolio } from "../api/portfolioApi";
@@ -321,7 +321,7 @@ export function PortfolioPage() {
           )}
 
           {showAddPortfolio && <AddPortfolioModal onClose={() => setShowAddPortfolio(false)} onAdd={addNewPortfolio} />}
-          {showAddHolding && <AddHoldingModal onClose={() => setShowAddHolding(false)} onAdd={addNewHolding} currentHoldings={activePortfolio.holdings} />}
+          {showAddHolding && <AddHoldingModal onClose={() => setShowAddHolding(false)} onAdd={addNewHolding} currentHoldings={activePortfolio?.holdings} />}
         </div>
       </div>
   );

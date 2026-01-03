@@ -126,7 +126,7 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
       skipEmptyLines: true,
       complete: (result) => {
         const rows = result.data.filter((row) =>
-          matchedSectors.includes(normalizeSector(row.sector))
+          matchedSectors.includes(normalizeSector(row.sector)!)
         );
 
         const parsed = rows.flatMap((row) => {

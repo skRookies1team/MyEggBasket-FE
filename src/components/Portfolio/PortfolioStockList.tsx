@@ -1,9 +1,7 @@
 import type { Holding } from "../../types/portfolios";
 import { AIRebalancingBadge } from "../Portfolio/AIRebalancingBadge";
-import { useAIRecommendationStore } from "../../store/aiRecommendationStore";
 import type {AiRecommendation} from "../../pages/PortfolioPage";
 
-import RefreshIcon from "@mui/icons-material/Refresh";
 import type {AccountBalanceData} from "../../types/stock.ts";
 
 interface PortfolioStockListProps {
@@ -25,8 +23,8 @@ export function PortfolioStockList({
     // 총 평가 금액 (비중 계산용)
     // balanceData.summary가 있으면 그것을, 없으면 stocks의 합산으로 추정
     let totalEval = 0;
-    if (balanceData?.summary?.totalStockEvaluationAmount) {
-        totalEval = balanceData.summary.totalStockEvaluationAmount;
+    if (balanceData?.summary?.totalEvaluationAmount) {
+        totalEval = balanceData.summary.totalEvaluationAmount;
     } else {
         // balanceData 로딩 전이거나 없을 경우 avgPrice 기반 추정 (정확도 낮음)
         totalEval = stocks.reduce((sum, h) => sum + h.avgPrice * h.quantity, 0);

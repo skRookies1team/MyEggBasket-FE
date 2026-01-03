@@ -3,7 +3,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { AiRecommendation } from "../../pages/PortfolioPage";
+import type {AiRecommendation} from "../../pages/PortfolioPage.tsx";
 
 interface Props {
     recommendation?: AiRecommendation | null;

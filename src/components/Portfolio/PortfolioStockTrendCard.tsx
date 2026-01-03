@@ -8,10 +8,8 @@ import {
     LineChart,
     ResponsiveContainer,
     Tooltip,
-    XAxis,
     YAxis,
 } from "recharts";
-import { Info } from "lucide-react"; // 아이콘 활용
 
 interface Props {
     stockCode: string;
@@ -29,7 +27,6 @@ export default function StockTrendCard({
                                            quantity,
                                            avgPrice,
                                            profitRate: parentProfitRate,
-                                           aiAnalysis,
                                            aiScore,
                                        }: Props) {
     const [chartData, setChartData] = useState<StockPriceData[]>([]);

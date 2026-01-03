@@ -17,21 +17,20 @@ import { fetchHistoricalData } from "../../api/stocksApi";
 
 interface HistoryGraphProps {
   trades: any[];
-  selectedPortfolioId: number | null;
 }
 
-export default function HistoryGraph({ trades, selectedPortfolioId }: HistoryGraphProps) {
+export default function HistoryGraph({ trades}: HistoryGraphProps) {
   const [profitView, setProfitView] = useState<"monthly" | "weekly">("monthly");
   const [combinedData, setCombinedData] = useState<any[]>([]);
 
   useEffect(() => {
     async function calculateAndCompare() {
-      if (!selectedPortfolioId || trades.length === 0) return;
+      console.log(trades)
+      if (trades.length === 0) return;
 
       try {
         // 1. 내 거래 내역 필터링 및 정렬
         const myTrades = trades
-          .filter((t) => t.portfolioId === selectedPortfolioId)
           .sort((a, b) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime());
 
         if (myTrades.length === 0) return;
@@ -47,7 +46,7 @@ export default function HistoryGraph({ trades, selectedPortfolioId }: HistoryGra
         );
 
         // 2. CSV 파일 읽기 (public/trade_record.csv)
-        const csvResponse = await fetch("/trade_record.csv");
+        const csvResponse = await fetch("../../../public/trade_record.csv");
         const csvText = await csvResponse.text();
         const parsedCsv = Papa.parse(csvText, { header: false, skipEmptyLines: true }).data;
 
@@ -56,7 +55,7 @@ export default function HistoryGraph({ trades, selectedPortfolioId }: HistoryGra
         parsedCsv.forEach((row: any) => {
           if (row[0] && row[5]) {
             const dateOnly = row[0].split(" ")[0]; // "2025-12-19"
-            const rate = parseFloat(row[5].toString().replace("%", "")); // "0.23%" -> 0.23
+            const rate = parseFloat(row[5].toString().replace("%", "")); 
             
             const d = new Date(dateOnly);
             const dateKey = d.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
@@ -131,7 +130,7 @@ export default function HistoryGraph({ trades, selectedPortfolioId }: HistoryGra
     }
 
     calculateAndCompare();
-  }, [trades, selectedPortfolioId]);
+  }, [trades]);
 
   const monthlyProfit = [
     { month: "1월", profit: 150000, rate: 2.3 },

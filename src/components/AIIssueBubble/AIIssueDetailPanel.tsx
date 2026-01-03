@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Card,
@@ -16,7 +16,6 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import Papa from "papaparse";
 
 /* ================= 타입 ================= */
 interface BubbleItem {
@@ -32,118 +31,76 @@ interface Props {
   bubbles?: BubbleItem[];
 }
 
-interface ValueChainRow {
+interface ValueChainStock {
+  name: string;
+  code: string;
+}
+
+interface ValueChainNode {
   sector: string;
   stage1?: string;
   stage2?: string;
   stage3?: string;
-  stockCode: string;
-}
-
-interface ValueChainStock {
-  sector: string;
-  stage: string;
-  stockName: string;
-  stockCode: string;
+  stocks: ValueChainStock[];
 }
 
 /* ================= 유틸 ================= */
-
-/** 🔥 sector 문자열 정규화 (NBSP, 공백, 줄바꿈 제거) */
-function normalizeSector(value?: string) {
-  return value
-    ?.replace(/\u00A0/g, " ") // NBSP 제거
-    ?.replace(/\s+/g, " ")   // 연속 공백 제거
-    ?.trim();
-}
-
-function parseStockCodes(
-  raw: string,
-  sector: string,
-  stage: string
-): ValueChainStock[] {
-  if (!raw) return [];
-
-  return raw
-    .split(",")
-    .map((item) => {
-      const match = item.trim().match(/(.+?)\s*\((\d+)\)/);
-      if (!match) return null;
-
-      return {
-        sector,
-        stage,
-        stockName: match[1].trim(),
-        stockCode: match[2],
-      };
-    })
-    .filter(Boolean) as ValueChainStock[];
-}
-
-function groupBySector(stocks: ValueChainStock[]) {
-  return stocks.reduce<Record<string, ValueChainStock[]>>((acc, stock) => {
-    if (!acc[stock.sector]) acc[stock.sector] = [];
-    acc[stock.sector].push(stock);
-    return acc;
-  }, {});
-}
+const takeTop3 = <T,>(arr: T[]) => arr.slice(0, 3);
 
 /* ================= 컴포넌트 ================= */
 export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
   /* ---------------- 대표 이슈 선택 ---------------- */
-  const sortedByMention = [...bubbles].sort(
-    (a, b) => b.mentions - a.mentions
+  const sortedByMention = useMemo(
+    () => [...bubbles].sort((a, b) => b.mentions - a.mentions),
+    [bubbles]
   );
+
   const activeBubble = bubble ?? sortedByMention[0] ?? null;
 
   /* ---------------- 상태 ---------------- */
-  const [matchedSectors, setMatchedSectors] = useState<string[]>([]);
-  const [valueChainStocks, setValueChainStocks] = useState<ValueChainStock[]>([]);
+  const [valueChain, setValueChain] = useState<ValueChainNode[]>([]);
 
-  /* ---------------- issue → sector 매핑 ---------------- */
+  /* ---------------- issue → sector → value_chain 매핑 ---------------- */
   useEffect(() => {
-    if (!activeBubble) return;
-
-    fetch("/data/issue_sector_map.json")
-      .then((res) => res.json())
-      .then((map: Record<string, string[]>) => {
-        const sectors = map[activeBubble.name] ?? [];
-        setMatchedSectors(sectors.map(normalizeSector).filter(Boolean) as string[]);
-      })
-      .catch(() => setMatchedSectors([]));
-  }, [activeBubble]);
-
-  /* ---------------- CSV 로딩 + 정규화 필터 ---------------- */
-  useEffect(() => {
-    if (!activeBubble || matchedSectors.length === 0) {
-      setValueChainStocks([]);
+    if (!activeBubble) {
+      setValueChain([]);
       return;
     }
 
-    Papa.parse<ValueChainRow>("/data/value_chain.csv", {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (result) => {
-        const rows = result.data.filter((row) =>
-          matchedSectors.includes(normalizeSector(row.sector))
-        );
+    Promise.all([
+      fetch("/data/issue_sector_map.json").then((r) => r.json()),
+      fetch("/data/value_chain.json").then((r) => r.json()),
+    ])
+      .then(
+        ([issueMap, valueChainData]: [
+          Record<string, string[]>,
+          ValueChainNode[]
+        ]) => {
+          const keywords = issueMap[activeBubble.name] ?? [];
 
-        const parsed = rows.flatMap((row) => {
-          const stage =
-            row.stage3 || row.stage2 || row.stage1 || "기타";
+          if (keywords.length === 0) {
+            setValueChain([]);
+            return;
+          }
 
-          return parseStockCodes(
-            row.stockCode,
-            normalizeSector(row.sector)!,
-            stage
-          );
-        });
+          const filtered = valueChainData.filter((node) => {
+            const fields = [
+              node.sector,
+              node.stage1,
+              node.stage2,
+              node.stage3,
+            ].filter(Boolean) as string[];
 
-        setValueChainStocks(parsed);
-      },
-    });
-  }, [activeBubble, matchedSectors]);
+            return keywords.some((kw) =>
+              fields.some((f) => f.includes(kw))
+            );
+          });
+
+          setValueChain(filtered);
+        }
+      )
+      .catch(() => setValueChain([]));
+  }, [activeBubble]);
 
   /* ---------------- 예외 처리 ---------------- */
   if (!activeBubble) {
@@ -156,19 +113,11 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
     );
   }
 
-  const groupedBySector = groupBySector(valueChainStocks);
-
-  /* ---------------- 더미 데이터 ---------------- */
+  /* ---------------- 더미 검색 추이 ---------------- */
   const searchTrend = Array.from({ length: 14 }).map((_, i) => ({
     day: `${i + 1}`,
     value: Math.floor(Math.random() * 100) + 20,
   }));
-
-  const newsSamples = [
-    `${activeBubble.name} 관련 이슈가 증가하고 있습니다.`,
-    `${activeBubble.name} 업계에서 새로운 동향이 감지됨.`,
-    `${activeBubble.name} 기업 실적 발표 예정.`,
-  ];
 
   return (
     <Card sx={{ bgcolor: "#1a1a24", border: "1px solid #2a2a35" }}>
@@ -186,7 +135,7 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
             검색 빈도 추이
           </Typography>
 
-          <Box sx={{ width: "100%", height: 180 }}>
+          <Box sx={{ width: "100%", height: 180, minHeight: 180 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={searchTrend}>
                 <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#b5b5c5" }} />
@@ -211,82 +160,75 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
         </Box>
 
         {/* 밸류체인 관련 주식 */}
-        <Box sx={{ mb: 4 }}>
+        <Box>
           <Typography sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}>
             관련 주식
           </Typography>
 
-          {matchedSectors.length === 0 ? (
+          {valueChain.length === 0 ? (
             <Typography sx={{ color: "#777", fontSize: "0.85rem" }}>
               해당 이슈는 산업 밸류체인 분석 대상이 아닙니다.
             </Typography>
-          ) : Object.keys(groupedBySector).length === 0 ? (
-            <Typography sx={{ color: "#777", fontSize: "0.85rem" }}>
-              밸류체인 종목 정보가 없습니다.
-            </Typography>
           ) : (
-            Object.entries(groupedBySector).map(([sector, stocks]) => (
-              <Box key={sector} sx={{ mb: 1.5 }}>
-                <Typography
-                  sx={{
-                    fontSize: "0.8rem",
-                    color: "#7c3aed",
-                    fontWeight: 600,
-                    mb: 0.5,
-                  }}
+            valueChain.map((node, idx) => {
+              const stageLabel =
+                node.stage3 || node.stage2 || node.stage1 || "기타";
+
+              const stocksToShow = takeTop3(node.stocks);
+
+              return (
+                <Box
+                  key={`${node.sector}-${node.stage1 ?? "n1"}-${node.stage2 ?? "n2"}-${node.stage3 ?? "n3"}-${idx}`}
+                  sx={{ mb: 1.5 }}
                 >
-                  {sector}
-                </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.8rem",
+                      color: "#7c3aed",
+                      fontWeight: 600,
+                      mb: 0.5,
+                    }}
+                  >
+                    {node.sector} · {stageLabel}
+                  </Typography>
 
-                <List dense>
-                  {stocks.map((stock, i) => (
-                    <ListItem
-                      key={i}
-                      sx={{
-                        px: 0,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        cursor: "pointer",
-                        "&:hover": { color: "#fff" },
-                      }}
-                      onClick={() =>
-                        (window.location.href = `/stock/${stock.stockCode}`)
-                      }
-                    >
-                      <span>
-                        <b style={{ color: "#fff" }}>{stock.stockName}</b>
-                        <span style={{ marginLeft: 6, color: "#777" }}>
-                          · {stock.stage}
+                  <List dense>
+                    {stocksToShow.map((stock) => (
+                      <ListItem
+                        key={stock.code}
+                        sx={{
+                          px: 0,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
+                          "&:hover": { color: "#fff" },
+                        }}
+                        onClick={() =>
+                          (window.location.href = `/stock/${stock.code}`)
+                        }
+                      >
+                        <span>
+                          <b style={{ color: "#fff" }}>{stock.name}</b>
                         </span>
-                      </span>
 
-                      <span style={{ fontSize: "0.75rem", color: "#7c3aed" }}>
-                        {stock.stockCode}
-                      </span>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            ))
+                        <span style={{ fontSize: "0.75rem", color: "#7c3aed" }}>
+                          {stock.code}
+                        </span>
+                      </ListItem>
+                    ))}
+                  </List>
+
+                  {node.stocks.length > 3 && (
+                    <Typography
+                      sx={{ fontSize: "0.7rem", color: "#777", mt: 0.5 }}
+                    >
+                      + {node.stocks.length - 3}개 종목 더 있음
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })
           )}
-        </Box>
-
-        {/* 관련 뉴스 */}
-        <Box>
-          <Typography sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}>
-            관련 뉴스
-          </Typography>
-
-          <List dense>
-            {newsSamples.map((n, i) => (
-              <ListItem
-                key={i}
-                sx={{ color: "#b5b5c5", fontSize: "0.85rem", pl: 0 }}
-              >
-                • {n}
-              </ListItem>
-            ))}
-          </List>
         </Box>
       </CardContent>
     </Card>

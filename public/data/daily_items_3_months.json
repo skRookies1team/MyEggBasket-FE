@@ -1,0 +1,2692 @@
+{
+  "period": "3_months",
+  "period_start": "2025-10-03",
+  "period_end": "2026-01-03",
+  "daily_items": [
+    {
+      "date": "2025-10-04",
+      "total": 9,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 4
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-05",
+      "total": 21,
+      "items": [
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "가상자산",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-06",
+      "total": 8,
+      "items": [
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "생성형 AI",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-07",
+      "total": 7,
+      "items": [
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "반도체",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-08",
+      "total": 12,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "넷플릭스",
+          "count": 1
+        },
+        {
+          "name": "배터리",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-09",
+      "total": 25,
+      "items": [
+        {
+          "name": "ETF",
+          "count": 8
+        },
+        {
+          "name": "반도체",
+          "count": 6
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "인공지능",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "배터리",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-10",
+      "total": 72,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 19
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "HBM",
+          "count": 7
+        },
+        {
+          "name": "하이브",
+          "count": 3
+        },
+        {
+          "name": "환율",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "OTT",
+          "count": 2
+        },
+        {
+          "name": "비트코인",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-11",
+      "total": 6,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 1
+        },
+        {
+          "name": "트럼프",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-12",
+      "total": 26,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 8
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        },
+        {
+          "name": "희토류",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-13",
+      "total": 98,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 18
+        },
+        {
+          "name": "환율",
+          "count": 8
+        },
+        {
+          "name": "트럼프",
+          "count": 7
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "하이브",
+          "count": 5
+        },
+        {
+          "name": "희토류",
+          "count": 5
+        },
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-14",
+      "total": 96,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 12
+        },
+        {
+          "name": "배터리",
+          "count": 7
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "5G",
+          "count": 1
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-15",
+      "total": 113,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 19
+        },
+        {
+          "name": "환율",
+          "count": 8
+        },
+        {
+          "name": "하이브",
+          "count": 6
+        },
+        {
+          "name": "HBM",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "미중 갈등",
+          "count": 3
+        },
+        {
+          "name": "하마스",
+          "count": 3
+        },
+        {
+          "name": "희토류",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-16",
+      "total": 100,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 12
+        },
+        {
+          "name": "ETF",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 7
+        },
+        {
+          "name": "로봇",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 4
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "의료 파업",
+          "count": 2
+        },
+        {
+          "name": "K-팝",
+          "count": 1
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-17",
+      "total": 82,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 11
+        },
+        {
+          "name": "2차전지",
+          "count": 6
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "배터리",
+          "count": 3
+        },
+        {
+          "name": "OTT",
+          "count": 2
+        },
+        {
+          "name": "트럼프",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        },
+        {
+          "name": "숏폼",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-18",
+      "total": 7,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "밸류업",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-19",
+      "total": 31,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 11
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "가상자산",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "비트코인",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 1
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        },
+        {
+          "name": "밸류업",
+          "count": 1
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-20",
+      "total": 89,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "IPO",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "배터리",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "트럼프",
+          "count": 4
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "자율주행",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-21",
+      "total": 112,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 14
+        },
+        {
+          "name": "ETF",
+          "count": 12
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "HBM",
+          "count": 4
+        },
+        {
+          "name": "OTT",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "5G",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-22",
+      "total": 104,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 17
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "인플레이션",
+          "count": 5
+        },
+        {
+          "name": "환율",
+          "count": 5
+        },
+        {
+          "name": "IPO",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "숏폼",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "자율주행",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-23",
+      "total": 101,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 14
+        },
+        {
+          "name": "인공지능",
+          "count": 9
+        },
+        {
+          "name": "ETF",
+          "count": 6
+        },
+        {
+          "name": "HBM",
+          "count": 5
+        },
+        {
+          "name": "배터리",
+          "count": 5
+        },
+        {
+          "name": "환율",
+          "count": 5
+        },
+        {
+          "name": "2차전지",
+          "count": 4
+        },
+        {
+          "name": "가상자산",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "5G",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-24",
+      "total": 91,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 23
+        },
+        {
+          "name": "2차전지",
+          "count": 4
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "배터리",
+          "count": 3
+        },
+        {
+          "name": "인공지능",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "OTT",
+          "count": 1
+        },
+        {
+          "name": "넷플릭스",
+          "count": 1
+        },
+        {
+          "name": "로봇",
+          "count": 1
+        },
+        {
+          "name": "밸류업",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-25",
+      "total": 6,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "자율주행",
+          "count": 1
+        },
+        {
+          "name": "재개발",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-26",
+      "total": 22,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 10
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "인공지능",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-27",
+      "total": 101,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 22
+        },
+        {
+          "name": "ETF",
+          "count": 11
+        },
+        {
+          "name": "인공지능",
+          "count": 7
+        },
+        {
+          "name": "트럼프",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "기후 위기",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 2
+        },
+        {
+          "name": "자율주행",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "희토류",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-28",
+      "total": 91,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 12
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "공급망",
+          "count": 6
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "인플레이션",
+          "count": 2
+        },
+        {
+          "name": "트럼프",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "IRA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-29",
+      "total": 97,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 13
+        },
+        {
+          "name": "인공지능",
+          "count": 10
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "배터리",
+          "count": 3
+        },
+        {
+          "name": "6G",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-30",
+      "total": 112,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 14
+        },
+        {
+          "name": "트럼프",
+          "count": 9
+        },
+        {
+          "name": "HBM",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "환율",
+          "count": 5
+        },
+        {
+          "name": "하이브",
+          "count": 4
+        },
+        {
+          "name": "밸류업",
+          "count": 3
+        },
+        {
+          "name": "자율주행",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-10-31",
+      "total": 104,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "HBM",
+          "count": 8
+        },
+        {
+          "name": "ETF",
+          "count": 6
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "환율",
+          "count": 5
+        },
+        {
+          "name": "하이브",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "트럼프",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-01",
+      "total": 5,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 3
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-02",
+      "total": 16,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 7
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        },
+        {
+          "name": "트럼프",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-03",
+      "total": 140,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 24
+        },
+        {
+          "name": "환율",
+          "count": 10
+        },
+        {
+          "name": "IPO",
+          "count": 9
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "ETF",
+          "count": 7
+        },
+        {
+          "name": "배터리",
+          "count": 6
+        },
+        {
+          "name": "HBM",
+          "count": 5
+        },
+        {
+          "name": "트럼프",
+          "count": 5
+        },
+        {
+          "name": "하이브",
+          "count": 5
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "date": "2025-11-04",
+      "total": 105,
+      "items": [
+        {
+          "name": "ETF",
+          "count": 10
+        },
+        {
+          "name": "반도체",
+          "count": 10
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "배터리",
+          "count": 4
+        },
+        {
+          "name": "넷플릭스",
+          "count": 3
+        },
+        {
+          "name": "트럼프",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-05",
+      "total": 114,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 22
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "2차전지",
+          "count": 3
+        },
+        {
+          "name": "밸류업",
+          "count": 3
+        },
+        {
+          "name": "하이브",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "공매도",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-06",
+      "total": 89,
+      "items": [
+        {
+          "name": "인공지능",
+          "count": 11
+        },
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "환율",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        },
+        {
+          "name": "밸류업",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-07",
+      "total": 102,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 17
+        },
+        {
+          "name": "로봇",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "하이브",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "OTT",
+          "count": 2
+        },
+        {
+          "name": "미분양",
+          "count": 2
+        },
+        {
+          "name": "밸류업",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-08",
+      "total": 1,
+      "items": [
+        {
+          "name": "2차전지",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-09",
+      "total": 22,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "밸류업",
+          "count": 2
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-10",
+      "total": 89,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 11
+        },
+        {
+          "name": "인공지능",
+          "count": 7
+        },
+        {
+          "name": "환율",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "가상자산",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-11",
+      "total": 119,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 20
+        },
+        {
+          "name": "하이브",
+          "count": 12
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "공급망",
+          "count": 3
+        },
+        {
+          "name": "인공지능",
+          "count": 3
+        },
+        {
+          "name": "K-컬처",
+          "count": 1
+        },
+        {
+          "name": "OTT",
+          "count": 1
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        },
+        {
+          "name": "배터리",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-12",
+      "total": 100,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "하이브",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 4
+        },
+        {
+          "name": "공급망",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-13",
+      "total": 125,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 19
+        },
+        {
+          "name": "환율",
+          "count": 8
+        },
+        {
+          "name": "하이브",
+          "count": 7
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 2
+        },
+        {
+          "name": "인플레이션",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-14",
+      "total": 111,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 18
+        },
+        {
+          "name": "금리 인하",
+          "count": 7
+        },
+        {
+          "name": "환율",
+          "count": 7
+        },
+        {
+          "name": "배터리",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "트럼프",
+          "count": 4
+        },
+        {
+          "name": "하이브",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-15",
+      "total": 5,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "6G",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-16",
+      "total": 22,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "OTT",
+          "count": 2
+        },
+        {
+          "name": "인공지능",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "로봇",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-17",
+      "total": 114,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 19
+        },
+        {
+          "name": "인공지능",
+          "count": 9
+        },
+        {
+          "name": "환율",
+          "count": 8
+        },
+        {
+          "name": "공급망",
+          "count": 3
+        },
+        {
+          "name": "5G",
+          "count": 2
+        },
+        {
+          "name": "넷플릭스",
+          "count": 2
+        },
+        {
+          "name": "트럼프",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "ETF",
+          "count": 1
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-18",
+      "total": 104,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 12
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "공급망",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 4
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        },
+        {
+          "name": "자율주행",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-19",
+      "total": 104,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 18
+        },
+        {
+          "name": "인공지능",
+          "count": 11
+        },
+        {
+          "name": "ETF",
+          "count": 7
+        },
+        {
+          "name": "로봇",
+          "count": 6
+        },
+        {
+          "name": "환율",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "K-컬처",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-20",
+      "total": 99,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 21
+        },
+        {
+          "name": "인공지능",
+          "count": 7
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "배터리",
+          "count": 4
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "5G",
+          "count": 2
+        },
+        {
+          "name": "PF 위기",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-21",
+      "total": 79,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "인공지능",
+          "count": 3
+        },
+        {
+          "name": "환율",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 2
+        },
+        {
+          "name": "미분양",
+          "count": 2
+        },
+        {
+          "name": "배터리",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-22",
+      "total": 3,
+      "items": [
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "하이브",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-23",
+      "total": 23,
+      "items": [
+        {
+          "name": "ETF",
+          "count": 7
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        },
+        {
+          "name": "반도체",
+          "count": 3
+        },
+        {
+          "name": "로봇",
+          "count": 1
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-24",
+      "total": 100,
+      "items": [
+        {
+          "name": "환율",
+          "count": 12
+        },
+        {
+          "name": "반도체",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "하이브",
+          "count": 5
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "6G",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-11-25",
+      "total": 81,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 15
+        },
+        {
+          "name": "환율",
+          "count": 7
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "하이브",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "UAM",
+          "count": 1
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-26",
+      "total": 80,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 12
+        },
+        {
+          "name": "환율",
+          "count": 7
+        },
+        {
+          "name": "인공지능",
+          "count": 6
+        },
+        {
+          "name": "공급망",
+          "count": 5
+        },
+        {
+          "name": "2차전지",
+          "count": 3
+        },
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "OTT",
+          "count": 2
+        },
+        {
+          "name": "자율주행",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-27",
+      "total": 112,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 13
+        },
+        {
+          "name": "가상자산",
+          "count": 8
+        },
+        {
+          "name": "인공지능",
+          "count": 8
+        },
+        {
+          "name": "밸류업",
+          "count": 7
+        },
+        {
+          "name": "배터리",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "HBM",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 4
+        },
+        {
+          "name": "공급망",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "date": "2025-11-28",
+      "total": 81,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 10
+        },
+        {
+          "name": "환율",
+          "count": 6
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "배터리",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "가상자산",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        },
+        {
+          "name": "하이브",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-29",
+      "total": 6,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-30",
+      "total": 22,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "공매도",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "인공지능",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-01",
+      "total": 90,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 15
+        },
+        {
+          "name": "IPO",
+          "count": 5
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "환율",
+          "count": 5
+        },
+        {
+          "name": "로봇",
+          "count": 3
+        },
+        {
+          "name": "2차전지",
+          "count": 2
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 2
+        },
+        {
+          "name": "밸류업",
+          "count": 2
+        },
+        {
+          "name": "자율주행",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-12-02",
+      "total": 94,
+      "items": [
+        {
+          "name": "환율",
+          "count": 12
+        },
+        {
+          "name": "ETF",
+          "count": 11
+        },
+        {
+          "name": "인공지능",
+          "count": 9
+        },
+        {
+          "name": "반도체",
+          "count": 7
+        },
+        {
+          "name": "HBM",
+          "count": 3
+        },
+        {
+          "name": "생성형 AI",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "로봇",
+          "count": 2
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        },
+        {
+          "name": "공매도",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-03",
+      "total": 83,
+      "items": [
+        {
+          "name": "HBM",
+          "count": 8
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "밸류업",
+          "count": 4
+        },
+        {
+          "name": "반도체",
+          "count": 3
+        },
+        {
+          "name": "재개발",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "IPO",
+          "count": 1
+        },
+        {
+          "name": "OTT",
+          "count": 1
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-04",
+      "total": 90,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 9
+        },
+        {
+          "name": "로봇",
+          "count": 7
+        },
+        {
+          "name": "자율주행",
+          "count": 6
+        },
+        {
+          "name": "인공지능",
+          "count": 5
+        },
+        {
+          "name": "ETF",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        },
+        {
+          "name": "5G",
+          "count": 1
+        },
+        {
+          "name": "OTT",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-05",
+      "total": 81,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 7
+        },
+        {
+          "name": "인공지능",
+          "count": 7
+        },
+        {
+          "name": "자율주행",
+          "count": 6
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "공급망",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 2
+        },
+        {
+          "name": "환율",
+          "count": 2
+        },
+        {
+          "name": "가상자산",
+          "count": 1
+        },
+        {
+          "name": "공매도",
+          "count": 1
+        },
+        {
+          "name": "미분양",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-06",
+      "total": 8,
+      "items": [
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "재개발",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-07",
+      "total": 21,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 6
+        },
+        {
+          "name": "ETF",
+          "count": 3
+        },
+        {
+          "name": "금리 인하",
+          "count": 3
+        },
+        {
+          "name": "인공지능",
+          "count": 2
+        },
+        {
+          "name": "2차전지",
+          "count": 1
+        },
+        {
+          "name": "의대 증원",
+          "count": 1
+        },
+        {
+          "name": "환율",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-08",
+      "total": 106,
+      "items": [
+        {
+          "name": "로봇",
+          "count": 10
+        },
+        {
+          "name": "HBM",
+          "count": 9
+        },
+        {
+          "name": "2차전지",
+          "count": 7
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "반도체",
+          "count": 5
+        },
+        {
+          "name": "가상자산",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 2
+        },
+        {
+          "name": "K-컬처",
+          "count": 2
+        },
+        {
+          "name": "넷플릭스",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-12-09",
+      "total": 93,
+      "items": [
+        {
+          "name": "반도체",
+          "count": 18
+        },
+        {
+          "name": "ETF",
+          "count": 10
+        },
+        {
+          "name": "로봇",
+          "count": 4
+        },
+        {
+          "name": "배터리",
+          "count": 4
+        },
+        {
+          "name": "인공지능",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 2
+        },
+        {
+          "name": "HBM",
+          "count": 1
+        },
+        {
+          "name": "고령화",
+          "count": 1
+        },
+        {
+          "name": "공급망",
+          "count": 1
+        },
+        {
+          "name": "금리 인하",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-10",
+      "total": 94,
+      "items": [
+        {
+          "name": "인공지능",
+          "count": 11
+        },
+        {
+          "name": "환율",
+          "count": 8
+        },
+        {
+          "name": "반도체",
+          "count": 7
+        },
+        {
+          "name": "배터리",
+          "count": 5
+        },
+        {
+          "name": "HBM",
+          "count": 4
+        },
+        {
+          "name": "로봇",
+          "count": 4
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        },
+        {
+          "name": "ETF",
+          "count": 2
+        },
+        {
+          "name": "숏폼",
+          "count": 2
+        },
+        {
+          "name": "트럼프",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-12-11",
+      "total": 101,
+      "items": [
+        {
+          "name": "인공지능",
+          "count": 9
+        },
+        {
+          "name": "반도체",
+          "count": 6
+        },
+        {
+          "name": "ETF",
+          "count": 5
+        },
+        {
+          "name": "로봇",
+          "count": 5
+        },
+        {
+          "name": "배터리",
+          "count": 5
+        },
+        {
+          "name": "HBM",
+          "count": 4
+        },
+        {
+          "name": "가상자산",
+          "count": 4
+        },
+        {
+          "name": "환율",
+          "count": 4
+        },
+        {
+          "name": "5G",
+          "count": 3
+        },
+        {
+          "name": "IPO",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "date": "2025-12-12",
+      "total": 0,
+      "items": []
+    },
+    {
+      "date": "2025-12-13",
+      "total": 9,
+      "items": [
+        {
+          "name": "하이브",
+          "count": 5
+        },
+        {
+          "name": "넷플릭스",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

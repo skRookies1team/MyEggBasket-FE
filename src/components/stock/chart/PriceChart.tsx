@@ -54,16 +54,17 @@ const normalizeTime = (time: string | number, period: Period): any => {
   if (period === "minute") {
     if (!isNaN(Number(str))) return Number(str);
 
-    // 🔥 [수정 1] "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss" 변환
-    // Safari 등 일부 브라우저는 공백이 있는 날짜 문자열을 new Date()로 파싱하지 못할 수 있음
+    // [수정] "YYYY-MM-DD HH:mm:ss" 포맷 처리
     const d = new Date(str.replace(" ", "T"));
-    return Math.floor(d.getTime() / 1000);
+
+    // ✅ [핵심] UTC 타임스탬프(초)에 9시간(32400초)을 더해 KST로 보정
+    // lightweight-charts는 기본적으로 UTC로 렌더링하므로, 값을 강제로 +9시간 이동시킴
+    return Math.floor(d.getTime() / 1000) + 32400;
   }
 
-  // 🔥 [수정 2] 공백(" ")이 포함된 날짜 문자열 처리 (일봉 전환 시 에러 방지)
-  // 기존: if (str.includes("T")) return str.split("T")[0];
+  // 일봉 등 날짜 문자열인 경우 기존 로직 유지
   if (str.includes("T")) return str.split("T")[0];
-  if (str.includes(" ")) return str.split(" ")[0]; // "2025-12-30 11:10:00" -> "2025-12-30"
+  if (str.includes(" ")) return str.split(" ")[0];
 
   return str;
 };

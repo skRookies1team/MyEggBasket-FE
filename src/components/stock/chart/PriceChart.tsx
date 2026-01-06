@@ -115,6 +115,7 @@ export function PriceChart({
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
+        fixRightEdge: true,
       },
       crosshair: { mode: 1 },
 

@@ -64,6 +64,7 @@ export function VolumeChart({
         visible: false, // 공용 X축 (PriceChart만 표시)
         timeVisible: true,
         secondsVisible: false,
+        fixRightEdge: true,
       },
       crosshair: { mode: 1 },
 

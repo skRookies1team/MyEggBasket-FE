@@ -227,8 +227,8 @@ export default function HistoryAsset() {
   // 수익률에 따른 아이콘 로직 (기존 유지)
   const successRate = history?.successRate ?? 0;
   const eggIcon = successRate >= 10 
-    ? <img src={Egg1} className="ml-2 h-7 w-7" alt="egg1" /> 
-    : <img src={Egg2} className="ml-2 h-7 w-7" alt="egg2" />;
+    ? <img src={Egg1} className="ml-2 h-7 w-5" alt="egg1" /> 
+    : <img src={Egg2} className="ml-2 h-7 w-5" alt="egg2" />;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">

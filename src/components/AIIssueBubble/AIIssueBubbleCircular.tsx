@@ -27,7 +27,7 @@ export default function AIIssueBubbleCircular({ bubbles, onSelect }: Props) {
       ...item,
       x: 50 + (Math.random() - 0.5) * 20,
       y: 50 + (Math.random() - 0.5) * 20,
-      r: (item.size / 400) * 50, // 컨테이너 높이 400px 기준 반지름 % 환산
+      r: (item.size / 600) * 50, // 컨테이너 높이 400px 기준 반지름 % 환산
     }));
 
     // 2. 물리 시뮬레이션 (300회 반복하여 겹침 해소)
@@ -74,7 +74,7 @@ export default function AIIssueBubbleCircular({ bubbles, onSelect }: Props) {
       sx={{
         position: "relative",
         width: "100%",
-        height: 400,
+        height: "100%",
         bgcolor: "#0f0f15",
         border: "1px solid #2a2a35",
         borderRadius: 2,

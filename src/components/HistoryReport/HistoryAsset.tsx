@@ -149,7 +149,7 @@ export default function HistoryAsset() {
   
   // API로부터 받아온 원본 데이터 상태
   const [holdings, setHoldings] = useState<any[]>([]);
-  const [accountSummary, setAccountSummary] = useState<any>(null);
+  const [setAccountSummary] = useState<any>(null);
   
   const [existingTargets, setExistingTargets] = useState<any[]>([]);
   const [priceMap, setPriceMap] = useState<Record<string, number>>({});

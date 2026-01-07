@@ -1,13 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStockInfoFromDB } from "../../api/stocksApi";
+
+interface StockJsonItem {
+  code: string;
+  name: string;
+}
 
 interface RecentStock {
   code: string;
   name: string;
 }
 
-function loadRecentStocks(): string[] {
+/* =====================
+ * localStorage → state
+ * ===================== */
+function readRecentCodes(): string[] {
   try {
     return JSON.parse(localStorage.getItem("recent_stocks") || "[]");
   } catch {
@@ -18,46 +25,68 @@ function loadRecentStocks(): string[] {
 export default function RecentTab() {
   const navigate = useNavigate();
 
-  /* 초기 상태는 useState에서 계산 */
-  const [recent, setRecent] = useState<RecentStock[]>(() => {
-    const codes = loadRecentStocks();
-    return codes.map((code) => ({
-      code,
-      name: code, // 초기엔 코드로 표시 (즉시 렌더)
-    }));
-  });
+  /* 최근 본 종목 코드 */
+  const [recentCodes, setRecentCodes] = useState<string[]>(() =>
+    readRecentCodes()
+  );
+
+  /* 종목 코드 → 이름 Map */
+  const [stockNameMap, setStockNameMap] = useState<Map<string, string>>(
+    () => new Map()
+  );
 
   /* =====================
-   * 외부 이벤트 콜백
-   * ===================== */
-  const sync = async () => {
-    const codes = loadRecentStocks();
-
-    const results = await Promise.all(
-      codes.map(async (code) => {
-        const stock = await getStockInfoFromDB(code);
-        return {
-          code,
-          name: stock?.name ?? code,
-        };
-      })
-    );
-
-    setRecent(results);
-  };
-
-  /* =====================
-   * effect는 "구독"만
+   * stocks.json 로드 (캐시 차단)
    * ===================== */
   useEffect(() => {
-    window.addEventListener("focus", sync);
-    document.addEventListener("visibilitychange", sync);
+    fetch("data/stocks.json", { cache: "no-store" }) 
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`stocks.json load failed: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data: StockJsonItem[]) => {
+
+        const map = new Map<string, string>();
+        data.forEach((item) => {
+          map.set(item.code, item.name);
+        });
+
+        setStockNameMap(map);
+      })
+      .catch((err) => {
+        console.error("stocks.json 로드 실패", err);
+      });
+  }, []);
+
+  /* =====================
+   * focus / 탭 변경 시
+   * localStorage → state
+   * ===================== */
+  useEffect(() => {
+    const syncCodes = () => {
+      setRecentCodes(readRecentCodes());
+    };
+
+    window.addEventListener("focus", syncCodes);
+    document.addEventListener("visibilitychange", syncCodes);
 
     return () => {
-      window.removeEventListener("focus", sync);
-      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("focus", syncCodes);
+      document.removeEventListener("visibilitychange", syncCodes);
     };
   }, []);
+
+  /* =====================
+   * 파생 데이터
+   * ===================== */
+  const recent: RecentStock[] = useMemo(() => {
+    return recentCodes.map((code) => ({
+      code,
+      name: stockNameMap.get(code) ?? code,
+    }));
+  }, [recentCodes, stockNameMap]);
 
   return (
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">

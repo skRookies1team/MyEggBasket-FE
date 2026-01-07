@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, TrendingUp, TrendingDown, Check, Pencil } from "lucide-react";
 import { useFavoriteStore } from "../../store/favoriteStore";
-// [중요] 아래 import 줄에 fetchTargetPriceByCode가 포함되어야 합니다.
 import { fetchLowerTarget, fetchUpperTarget, fetchTargetPriceByCode } from "../../api/targetPriceApi";
 
 import favoriteOn from "../../assets/icons/egg3.png";
@@ -28,7 +27,7 @@ export function StockHeader({
                             }: StockHeaderProps) {
   /* ---------------- util ---------------- */
   const safeNum = (v?: number) =>
-    typeof v === "number" && Number.isFinite(v) ? v : 0;
+      typeof v === "number" && Number.isFinite(v) ? v : 0;
 
   const isPositive = safeNum(changeAmount) >= 0;
   const ColorIcon = isPositive ? TrendingUp : TrendingDown;
@@ -44,10 +43,14 @@ export function StockHeader({
     let isMounted = true;
 
     const loadTarget = async () => {
+      console.log(`[StockHeader] 목표가 조회 시작: ${stockCode}`); // 디버깅 로그
+
       // API 호출
       const myTarget = await fetchTargetPriceByCode(stockCode);
 
       if (!isMounted) return;
+
+      console.log(`[StockHeader] 조회 결과:`, myTarget); // 디버깅 로그
 
       if (myTarget) {
         // 설정된 목표가가 있으면 설정
@@ -60,6 +63,7 @@ export function StockHeader({
           setIsLowerConfirmed(true);
         }
       } else {
+        // 값이 없을 때 제안값 설정 (단, 이미 사용자가 입력 중이면 건드리지 않음)
         setUpperPrice((prev) => prev || (currentPrice > 0 ? Math.floor(currentPrice * 1.05).toString() : ""));
         setLowerPrice((prev) => prev || (currentPrice > 0 ? Math.floor(currentPrice * 0.95).toString() : ""));
       }
@@ -70,8 +74,7 @@ export function StockHeader({
     }
 
     return () => { isMounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stockCode]);
+  }, [stockCode]); // currentPrice 제거됨 (입력 중 리셋 방지)
 
   const handleUpperConfirm = async () => {
     if (!upperPrice) return;
@@ -99,8 +102,8 @@ export function StockHeader({
   const loadFavorites = useFavoriteStore((s) => s.loadFavorites);
 
   const isFavorite = useMemo(
-    () => favorites.some((f) => f.stockCode === stockCode),
-    [favorites, stockCode]
+      () => favorites.some((f) => f.stockCode === stockCode),
+      [favorites, stockCode]
   );
 
   useEffect(() => {
@@ -111,6 +114,10 @@ export function StockHeader({
     if (!stockCode || stockCode === "undefined") return;
     toggleFavorite(stockCode);
   };
+
+  // [수정] 목표가가 설정되어 있다면(값이 있다면) 관심종목 로딩 전이라도 패널을 보여줍니다.
+  // 이렇게 하면 "설정해뒀는데 안 보이는" 현상을 방지할 수 있습니다.
+  const showTargetPanel = isFavorite || isUpperConfirmed || isLowerConfirmed;
 
   return (
       <header className="border-b border-[#232332] bg-gradient-to-b from-[#14141c] to-[#0a0a0f]">
@@ -144,77 +151,77 @@ export function StockHeader({
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <p className={`text-2xl font-bold text-gray-100 tabular-nums transition-colors duration-300 rounded px-1 -ml-1 ${flashClass}`}>
-                  ₩{safeNum(currentPrice).toLocaleString()}
-                </p>
-                <div className={`flex items-center gap-2 ${colorClass}`}>
-                  <ColorIcon className="h-5 w-5" />
-                  <span className="font-medium tabular-nums">
+                <div className="flex flex-wrap items-center gap-4">
+                  <p className={`text-2xl font-bold text-gray-100 tabular-nums transition-colors duration-300 rounded px-1 -ml-1 ${flashClass}`}>
+                    ₩{safeNum(currentPrice).toLocaleString()}
+                  </p>
+                  <div className={`flex items-center gap-2 ${colorClass}`}>
+                    <ColorIcon className="h-5 w-5" />
+                    <span className="font-medium tabular-nums">
                     {isPositive ? "+" : ""}{safeNum(changeAmount).toLocaleString()} ({isPositive ? "+" : ""}{safeNum(changeRate)}%)
                   </span>
-                </div>
-                {isLive && (
-                  <div className="ml-2 flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-sm text-red-400">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                    LIVE
                   </div>
-                )}
+                  {isLive && (
+                      <div className="ml-2 flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-sm text-red-400">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                        LIVE
+                      </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-            {/* 우측 목표가 설정 영역 (관심종목일 때만 노출) */}
-            {isFavorite && (
-              <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[#1a1a24]/50 p-4 border border-[#232332]">
-                <p className="text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">관심종목 알림 설정</p>
-                
-                {/* 상한 목표가 */}
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-red-400 border border-red-400/30 px-1.5 py-0.5 rounded bg-red-400/5">상한</span>
-                  {isUpperConfirmed ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-200 text-sm font-semibold">{Number(upperPrice).toLocaleString()}원</span>
-                      <button onClick={() => setIsUpperConfirmed(false)} className="text-gray-500 hover:text-red-400 transition-colors">
-                        <Pencil size={12} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="number" 
-                        value={upperPrice} 
-                        onChange={(e) => setUpperPrice(e.target.value)} 
-                        className="w-24 rounded bg-[#0a0a0f] border border-[#2a2a35] px-2 py-1 text-right text-xs text-gray-200 focus:outline-none focus:border-red-500" 
-                      />
-                      <button onClick={handleUpperConfirm} className="p-1 text-gray-500 hover:text-green-400"><Check size={16} /></button>
-                    </div>
-                  )}
-                </div>
+            {/* 목표가 설정 패널 */}
+            {showTargetPanel && (
+                <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[#1a1a24]/50 p-4 border border-[#232332]">
+                  <p className="text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">관심종목 알림 설정</p>
 
-                {/* 하한 목표가 */}
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-blue-400 border border-blue-400/30 px-1.5 py-0.5 rounded bg-blue-400/5">하한</span>
-                  {isLowerConfirmed ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-200 text-sm font-semibold">{Number(lowerPrice).toLocaleString()}원</span>
-                      <button onClick={() => setIsLowerConfirmed(false)} className="text-gray-500 hover:text-blue-400 transition-colors">
-                        <Pencil size={12} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="number" 
-                        value={lowerPrice} 
-                        onChange={(e) => setLowerPrice(e.target.value)} 
-                        className="w-24 rounded bg-[#0a0a0f] border border-[#2a2a35] px-2 py-1 text-right text-xs text-gray-200 focus:outline-none focus:border-blue-500" 
-                      />
-                      <button onClick={handleLowerConfirm} className="p-1 text-gray-500 hover:text-green-400"><Check size={16} /></button>
-                    </div>
-                  )}
+                  {/* 상한 */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-red-400 border border-red-400/30 px-1.5 py-0.5 rounded bg-red-400/5">상한</span>
+                    {isUpperConfirmed ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-200 text-sm font-semibold">{Number(upperPrice).toLocaleString()}원</span>
+                          <button onClick={() => setIsUpperConfirmed(false)} className="text-gray-500 hover:text-red-400 transition-colors">
+                            <Pencil size={12} />
+                          </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1">
+                          <input
+                              type="number"
+                              value={upperPrice}
+                              onChange={(e) => setUpperPrice(e.target.value)}
+                              className="w-24 rounded bg-[#0a0a0f] border border-[#2a2a35] px-2 py-1 text-right text-xs text-gray-200 focus:outline-none focus:border-red-500"
+                          />
+                          <button onClick={handleUpperConfirm} className="p-1 text-gray-500 hover:text-green-400"><Check size={16} /></button>
+                        </div>
+                    )}
+                  </div>
+
+                  {/* 하한 */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-blue-400 border border-blue-400/30 px-1.5 py-0.5 rounded bg-blue-400/5">하한</span>
+                    {isLowerConfirmed ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-200 text-sm font-semibold">{Number(lowerPrice).toLocaleString()}원</span>
+                          <button onClick={() => setIsLowerConfirmed(false)} className="text-gray-500 hover:text-blue-400 transition-colors">
+                            <Pencil size={12} />
+                          </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1">
+                          <input
+                              type="number"
+                              value={lowerPrice}
+                              onChange={(e) => setLowerPrice(e.target.value)}
+                              className="w-24 rounded bg-[#0a0a0f] border border-[#2a2a35] px-2 py-1 text-right text-xs text-gray-200 focus:outline-none focus:border-blue-500"
+                          />
+                          <button onClick={handleLowerConfirm} className="p-1 text-gray-500 hover:text-green-400"><Check size={16} /></button>
+                        </div>
+                    )}
+                  </div>
                 </div>
-              </div>
             )}
           </div>
         </div>

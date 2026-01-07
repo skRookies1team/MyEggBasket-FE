@@ -35,11 +35,14 @@ export default function FavoritesTab() {
             >
               {/* Stock Info */}
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">
-                  {item.stockCode}
-                </span>
+                {/* 종목명 */}
                 <span className="text-sm font-medium text-gray-100 group-hover:text-white">
                   {item.name}
+                </span>
+
+                {/* 종목코드 */}
+                <span className="text-xs text-gray-400">
+                  {item.stockCode}
                 </span>
               </div>
 

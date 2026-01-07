@@ -73,7 +73,7 @@ export default function LiveStockPanel({ data }: Props) {
         >
           <Typography
             variant="h6"
-            sx={{ fontWeight: 600, color: "#ffffff" }} // 🔥 흰색
+            sx={{ fontWeight: 600, color: "#ffffff" }} 
           >
             실시간 종목 주가
           </Typography>
@@ -105,7 +105,7 @@ export default function LiveStockPanel({ data }: Props) {
             <Typography
               variant="caption"
               sx={{
-                color: "#ffffff", // 🔥 레이블 흰색
+                color: "#ffffff", 
                 fontSize: "0.8rem",
               }}
             >
@@ -131,7 +131,7 @@ export default function LiveStockPanel({ data }: Props) {
               sx={{
                 py: 4,
                 textAlign: "center",
-                color: "#ffffff", // 🔥 흰색
+                color: "#ffffff", 
                 fontSize: "0.9rem",
               }}
             >

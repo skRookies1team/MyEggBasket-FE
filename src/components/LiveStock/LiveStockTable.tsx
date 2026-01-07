@@ -16,6 +16,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
   const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
   const navigate = useNavigate();
 
+  /* ================= 유틸 ================= */
   const isFavorite = (code: string) =>
     favorites.some((f) => f.stockCode === code);
 
@@ -24,7 +25,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
 
   return (
     <Box>
-      {/* 🔹 헤더 (레이블) */}
+      {/* ================= 헤더 ================= */}
       <Stack
         direction="row"
         spacing={2}
@@ -32,17 +33,18 @@ export default function LiveStockTable({ stocks, category }: Props) {
           px: 2,
           py: 1,
           mb: 1,
-          color: "#ffffff", 
+          color: "#ffffff",
           fontSize: "0.75rem",
           fontWeight: 600,
           borderBottom: "1px solid #2a2a35",
         }}
       >
-        <Box sx={{ width: 36 }} />
+        <Box sx={{ width: 36, textAlign: "left" }}>관심</Box>
         <Box sx={{ width: 36, textAlign: "right" }}>순위</Box>
         <Box sx={{ flex: 1 }}>종목</Box>
         <Box sx={{ width: 100, textAlign: "right" }}>현재가</Box>
         <Box sx={{ width: 90, textAlign: "right" }}>등락률</Box>
+
         {category === "volume" && (
           <Box sx={{ width: 100, textAlign: "right" }}>거래량</Box>
         )}
@@ -51,11 +53,15 @@ export default function LiveStockTable({ stocks, category }: Props) {
         )}
       </Stack>
 
-      {/* 🔹 행 */}
+      {/* ================= 행 ================= */}
       <Stack spacing={0.5}>
         {stocks.map((s, idx) => {
           const up = s.change >= 0;
           const fav = isFavorite(s.code);
+
+          // ✅ 거래대금 = 현재가 × 거래량
+          const tradeAmount =
+            Number(s.price || 0) * Number(s.volume || 0);
 
           return (
             <Stack
@@ -83,12 +89,17 @@ export default function LiveStockTable({ stocks, category }: Props) {
                   e.stopPropagation();
                   toggleFavorite(s.code);
                 }}
+                sx={{ p: 0.5, mr: 0.5 }}
               >
                 <Box
                   component="img"
                   src={fav ? Egg3 : Egg2}
                   alt="fav"
-                  sx={{ width: 20, height: 20 }}
+                  sx={{
+                    height: 22,
+                    width: 20,
+                    objectFit: "contain",
+                  }}
                 />
               </IconButton>
 
@@ -163,7 +174,7 @@ export default function LiveStockTable({ stocks, category }: Props) {
                     color: "#d0d0dd",
                   }}
                 >
-                  {formatToEok(s.amount)}억
+                  {formatToEok(tradeAmount)}억
                 </Typography>
               )}
             </Stack>

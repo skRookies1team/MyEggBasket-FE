@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getStockInfoFromDB } from "../../api/stocksApi";
+
+interface RecentStock {
+  code: string;
+  name: string;
+}
 
 function loadRecentStocks(): string[] {
   try {
@@ -10,19 +16,40 @@ function loadRecentStocks(): string[] {
 }
 
 export default function RecentTab() {
-  // 초기값을 useState에서 계산 (effect 아님)
-  const [recent, setRecent] = useState<string[]>(() =>
-    loadRecentStocks()
-  );
-
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // 외부 시스템 이벤트에 "구독"
-    const sync = () => {
-      setRecent(loadRecentStocks());
-    };
+  /* 초기 상태는 useState에서 계산 */
+  const [recent, setRecent] = useState<RecentStock[]>(() => {
+    const codes = loadRecentStocks();
+    return codes.map((code) => ({
+      code,
+      name: code, // 초기엔 코드로 표시 (즉시 렌더)
+    }));
+  });
 
+  /* =====================
+   * 외부 이벤트 콜백
+   * ===================== */
+  const sync = async () => {
+    const codes = loadRecentStocks();
+
+    const results = await Promise.all(
+      codes.map(async (code) => {
+        const stock = await getStockInfoFromDB(code);
+        return {
+          code,
+          name: stock?.name ?? code,
+        };
+      })
+    );
+
+    setRecent(results);
+  };
+
+  /* =====================
+   * effect는 "구독"만
+   * ===================== */
+  useEffect(() => {
     window.addEventListener("focus", sync);
     document.addEventListener("visibilitychange", sync);
 
@@ -44,15 +71,18 @@ export default function RecentTab() {
         </p>
       ) : (
         <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2e2e44] scrollbar-track-transparent">
-          {recent.map((code) => (
+          {recent.map((stock) => (
             <li
-              key={code}
-              onClick={() => navigate(`/stock/${code}`)}
+              key={stock.code}
+              onClick={() => navigate(`/stock/${stock.code}`)}
               className="cursor-pointer rounded-xl bg-[#1f1f2e] px-3 py-2 text-sm
                          text-gray-200 transition-all
                          hover:bg-[#26263a] hover:text-white hover:shadow-md"
             >
-              {code}
+              <div className="font-medium">{stock.name}</div>
+              <div className="text-[11px] text-gray-400">
+                {stock.code}
+              </div>
             </li>
           ))}
         </ul>

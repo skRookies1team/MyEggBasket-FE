@@ -89,7 +89,7 @@ export default function RecentTab() {
   }, [recentCodes, stockNameMap]);
 
   return (
-    <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+    <div className="h-[90%] rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
       <h3 className="mb-3 text-sm font-semibold tracking-wide text-indigo-300">
         최근 본 주식
       </h3>
@@ -99,7 +99,7 @@ export default function RecentTab() {
           최근 본 종목이 없습니다.
         </p>
       ) : (
-        <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2e2e44] scrollbar-track-transparent">
+        <ul className="h-full space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2e2e44] scrollbar-track-transparent">
           {recent.map((stock) => (
             <li
               key={stock.code}

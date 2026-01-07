@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import Sidebar from "../pages/Sidebar";
 import { useAuthStore } from "../store/authStore";
 import { type ReactNode } from "react";
+import { PriceAlertManager } from "../components/alert/PriceAlertManager";
 
 interface LayoutProps {
   children: ReactNode;
@@ -34,6 +35,8 @@ export default function Layout({ children }: LayoutProps) {
       <div className={`main-content ${sidebarOpen ? "shift" : ""}`}>
         {children}
       </div>
+
+        <PriceAlertManager />
     </div>
   );
 }

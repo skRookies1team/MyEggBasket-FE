@@ -99,10 +99,7 @@ const Nav: React.FC<NavProps> = ({
             zIndex: 1200,
           }}
       >
-        {/* [수정] px 값을 추가하여 양옆 여백 확보
-        xs(모바일): 2 (16px), md(태블릿/PC): 6 (48px)
-      */}
-        <Toolbar sx={{ gap: 30, px: { xs: 2, md: 20 } }}>
+        <Toolbar sx={{ gap: 2 }}>
           {/* 좌측: 브랜드 + 메뉴 */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
@@ -118,25 +115,25 @@ const Nav: React.FC<NavProps> = ({
 
             {["포트폴리오", "내 자산", "히스토리"].map((label) => (
                 <Button
-                    key={label}
-                    onClick={() =>
-                        navigate(
-                            label === "포트폴리오"
-                                ? "/portfolio"
-                                : label === "내 자산"
-                                    ? "/myassets"
-                                    : "/history"
-                        )
-                    }
-                    sx={{
-                      color: "#b5b5c5",
-                      fontSize: "0.9rem",
-                      "&:hover": { color: "#ffffff" },
-                    }}
-                >
-                  {label}
-                </Button>
-            ))}
+                key={label}
+              onClick={() =>
+              navigate(
+              label === "포트폴리오"
+              ? "/portfolio"
+              : label === "내 자산"
+              ? "/myassets"
+              : "/history"
+              )
+            }
+              sx={{
+              color: "#b5b5c5",
+              fontSize: "0.9rem",
+              "&:hover": { color: "#ffffff" },
+            }}
+            >
+            {label}
+            </Button>
+              ))}
           </Box>
 
           {/* 중앙: 검색 */}
@@ -156,38 +153,38 @@ const Nav: React.FC<NavProps> = ({
                   placeholder="종목명 · 종목코드 검색"
                   size="small"
                   fullWidth
-                  sx={{
-                    input: { color: "#ffffff" },
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "#1a1a24",
-                      "& fieldset": { borderColor: "#2a2a35" },
-                      "&:hover fieldset": { borderColor: "#7c3aed" },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#7c3aed",
-                      },
-                    },
-                  }}
+              sx={{
+                input: { color: "#ffffff" },
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "#1a1a24",
+                  "& fieldset": { borderColor: "#2a2a35" },
+                  "&:hover fieldset": { borderColor: "#7c3aed" },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#7c3aed",
+                  },
+                },
+              }}
               />
             </form>
 
             {/* 검색 자동완성 */}
             {showDropdown && searchResults.length > 0 && (
                 <Paper
-                    sx={{
-                      position: "absolute",
-                      top: "44px",
-                      width: "100%",
-                      bgcolor: "#1a1a24",
-                      border: "1px solid #2a2a35",
-                      zIndex: 1300,
-                    }}
-                >
+              sx={{
+                position: "absolute",
+                top: "44px",
+                width: "100%",
+                bgcolor: "#1a1a24",
+                border: "1px solid #2a2a35",
+                zIndex: 1300,
+              }}
+          >
                   <List dense>
                     {searchResults.map((s) => (
                         <ListItemButton
                             key={s.stockCode}
                             onClick={() => handleStockClick(s.stockCode)}
-                        >
+                  >
                           <ListItemText
                               primary={
                                 <Typography sx={{ color: "#ffffff" }}>

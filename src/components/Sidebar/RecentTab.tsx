@@ -99,7 +99,7 @@ export default function RecentTab() {
           최근 본 종목이 없습니다.
         </p>
       ) : (
-        <ul className="h-full space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2e2e44] scrollbar-track-transparent">
+        <ul className="h-200 space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#2e2e44] scrollbar-track-transparent">
           {recent.map((stock) => (
             <li
               key={stock.code}

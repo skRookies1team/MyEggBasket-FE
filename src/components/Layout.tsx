@@ -7,8 +7,8 @@ import Sidebar from "../pages/Sidebar";
 import { useAuthStore } from "../store/authStore";
 import { usePortfolioStore } from "../store/portfolioStore";
 
-import { PriceAlertManager } from "../components/alert/PriceAlertManager";
-import { AIRecommendationAlertManager } from "../components/alert/AIRebalanceAlertManager";
+import { PriceAlertManager } from "./alert/PriceAlertManager";
+import { AIRebalanceAlertManager } from "./alert/AIRebalanceAlertManager";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,10 +18,10 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const portfolioId = usePortfolioStore(
-    (s) => s.selectedPortfolioId
-  );
+  const portfolioId = usePortfolioStore((s) => s.selectedPortfolioId);
 
+  console.log("Layout 렌더링 상태:", { isAuthenticated, portfolioId });
+  
   const toggleSidebar = () => {
     if (!isAuthenticated) return;
     setSidebarOpen((prev) => !prev);
@@ -52,7 +52,7 @@ export default function Layout({ children }: LayoutProps) {
       {isAuthenticated && portfolioId && (
         <>
           <PriceAlertManager />
-          <AIRecommendationAlertManager portfolioId={portfolioId} />
+          <AIRebalanceAlertManager portfolioId={portfolioId} />
         </>
       )}
     </div>

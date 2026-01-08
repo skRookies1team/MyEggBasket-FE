@@ -10,7 +10,9 @@ import { addPortfolio, deletePortfolio } from "../api/portfolioApi";
 import { addHolding } from "../api/holdingApi";
 import { getStockInfoFromDB } from "../api/stocksApi";
 
-import { useHoldingStore, usePortfolioStore } from "../store/historyStore";
+// [중요] HistoryStore(목록용)와 GlobalStore(알림 연동용) 구분 import
+import { usePortfolioStore as useHistoryPortfolioStore, useHoldingStore } from "../store/historyStore";
+import { usePortfolioStore as useGlobalPortfolioStore } from "../store/portfolioStore";
 
 import { ProtfolioSummary } from "../components/Portfolio/PortfolioSummary";
 import { PortfolioCharts } from "../components/Portfolio/PortfolioCharts";
@@ -19,7 +21,6 @@ import { PortfolioStockList } from "../components/Portfolio/PortfolioStockList";
 import { AddPortfolioModal } from "../components/Portfolio/AddPortfolioModal";
 import { AddHoldingModal } from "../components/Portfolio/AddHoldingModal";
 
-// [수정] AI 추천 데이터 타입 정의 (제공해주신 JSON에 맞춰 필드 확장)
 export interface AiRecommendation {
   recommendationId: number;
   portfolioId: number;
@@ -27,9 +28,9 @@ export interface AiRecommendation {
   stockName: string;
   aiScore: number;
   actionType: "BUY" | "SELL" | "HOLD";
-  currentHolding: number;          // 현재 보유금액
-  targetHoldingDisplay: string;    // 예: "116,070원 (11.8%)"
-  adjustmentAmount: number;        // 조정 금액 (매수/매도 금액)
+  currentHolding: number;
+  targetHoldingDisplay: string;
+  adjustmentAmount: number;
   reasonSummary: string;
   riskWarning: string;
   createdAt: string;
@@ -42,8 +43,6 @@ export function PortfolioPage() {
   const [balanceData, setBalanceData] = useState<AccountBalanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sectorCompositionData, setSectorCompositionData] = useState<{ name: string; value: number; color: string }[]>([]);
-
-  // AI 분석 데이터를 저장할 Map
   const [aiAnalysisMap, setAiAnalysisMap] = useState<Record<string, AiRecommendation>>({});
 
   const [showAddPortfolio, setShowAddPortfolio] = useState(false);
@@ -53,18 +52,41 @@ export function PortfolioPage() {
   /* =========================
      Store
   ========================= */
-  const portfolios = usePortfolioStore((s) => s.portfolioList);
-  const fetchPortfolios = usePortfolioStore((s) => s.fetchPortfolios);
+  // 1. HistoryStore (목록 조회용)
+  const portfolios = useHistoryPortfolioStore((s) => s.portfolioList);
+  const fetchPortfolios = useHistoryPortfolioStore((s) => s.fetchPortfolios);
 
+  // 2. GlobalStore (Layout 알림 연동용)
+  const setSelectedPortfolioId = useGlobalPortfolioStore((s) => s.setSelectedPortfolioId);
+
+  // 3. HoldingStore
   const holdings = useHoldingStore((s) => s.holdingList);
   const fetchHoldings = useHoldingStore((s) => s.fetchHoldings);
 
   /* =========================
-     초기 로딩
+     초기 로딩 (수정된 부분)
   ========================= */
+
+  // [복구됨] 이 코드가 없어서 포트폴리오 목록이 안 보였습니다.
   useEffect(() => {
     fetchPortfolios();
   }, [fetchPortfolios]);
+
+  // [추가] 포트폴리오 목록이 로드되면 첫 번째 포트폴리오를 자동으로 선택 (UX 개선)
+  useEffect(() => {
+    if (!activePortfolioId && portfolios.length > 0) {
+      const firstId = portfolios[0].portfolioId;
+      setActivePortfolioId(firstId);
+      fetchHoldings(firstId); // 해당 포트폴리오의 종목도 같이 로드
+    }
+  }, [portfolios, activePortfolioId, fetchHoldings]);
+
+  // 선택된 포트폴리오가 변경되면 전역 스토어(Layout)에 알림
+  useEffect(() => {
+    if (activePortfolioId) {
+      setSelectedPortfolioId(activePortfolioId);
+    }
+  }, [activePortfolioId, setSelectedPortfolioId]);
 
   useEffect(() => {
     const loadBalance = async () => {
@@ -102,7 +124,6 @@ export function PortfolioPage() {
         const data = response.data;
         const latestMap: Record<string, AiRecommendation> = {};
 
-        // 최신순 정렬 후 종목별 하나만 저장
         const sortedData = data.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -116,11 +137,6 @@ export function PortfolioPage() {
         setAiAnalysisMap(latestMap);
 
       } catch (error: any) {
-        if (axios.isAxiosError(error) && error.response?.status === 403) {
-          console.error("AI 데이터 접근 권한이 없습니다.");
-        } else {
-          console.error("AI 추천 데이터 로딩 실패:", error);
-        }
         setAiAnalysisMap({});
       }
     };
@@ -150,7 +166,10 @@ export function PortfolioPage() {
 
     const totalCash = summary.totalCashAmount;
     const total = totalCash + totalStockEval;
-    const profitRate = totalStockEval > 0 ? (totalProfit / (totalStockEval - totalProfit)) * 100 : 0;
+
+    // 전체 자산 기준 수익률 (현금 포함)
+    const totalPrincipal = total - totalProfit;
+    const profitRate = totalPrincipal > 0 ? (totalProfit / totalPrincipal) * 100 : 0;
 
     return { total, totalCash, D1Cash: summary.d1CashAmount, D2Cash: summary.d2CashAmount, profit: totalProfit, profitRate, stockEval: totalStockEval };
   }, [balanceData, holdings]);
@@ -188,8 +207,8 @@ export function PortfolioPage() {
     loadSectors();
   }, [holdings]);
 
-  // (모달 핸들러 생략 - 기존 동일)
-  const addNewHolding = async (selectedHoldings: AccountHolding[]) => { /*...*/
+  // 핸들러들
+  const addNewHolding = async (selectedHoldings: AccountHolding[]) => {
     if (!activePortfolioId) return;
     try {
       await Promise.all(
@@ -211,7 +230,8 @@ export function PortfolioPage() {
       setShowAddHolding(false);
     }
   };
-  const addNewPortfolio = async (data: any) => { /*...*/
+
+  const addNewPortfolio = async (data: any) => {
     const { selectedHoldings, ...portfolioData } = data;
     try {
       const newPortfolio = await addPortfolio(portfolioData);
@@ -235,11 +255,14 @@ export function PortfolioPage() {
       setShowAddPortfolio(false);
     }
   };
-  const removePortfolio = async (id: number) => { /*...*/
+
+  const removePortfolio = async (id: number) => {
     if (!confirm("삭제하시겠습니까?")) return;
     await deletePortfolio(id);
     await fetchPortfolios();
+    if (activePortfolioId === id) setActivePortfolioId(undefined);
   };
+
   const activePortfolio = portfolios.find((p) => p.portfolioId === activePortfolioId);
 
   return (
@@ -256,7 +279,15 @@ export function PortfolioPage() {
           <div className="flex flex-wrap gap-2">
             {portfolios.map((p) => (
                 <div key={p.portfolioId} className="flex items-center gap-1 rounded-lg bg-[#14141c] px-2 py-1">
-                  <button onClick={async () => { setActivePortfolioId(p.portfolioId); await fetchHoldings(p.portfolioId); }} className={`rounded-md px-3 py-1 text-sm transition ${activePortfolioId === p.portfolioId ? "bg-purple-500/20 text-purple-300" : "text-gray-400 hover:text-gray-200"}`}>{p.name}</button>
+                  <button
+                      onClick={async () => {
+                        setActivePortfolioId(p.portfolioId);
+                        await fetchHoldings(p.portfolioId);
+                      }}
+                      className={`rounded-md px-3 py-1 text-sm transition ${activePortfolioId === p.portfolioId ? "bg-purple-500/20 text-purple-300" : "text-gray-400 hover:text-gray-200"}`}
+                  >
+                    {p.name}
+                  </button>
                   {portfolios.length > 1 && <button onClick={() => removePortfolio(p.portfolioId)} className="rounded-md p-1 hover:bg-red-500/10"><X size={12} className="text-red-400" /></button>}
                 </div>
             ))}
@@ -311,7 +342,6 @@ export function PortfolioPage() {
                   </div>
                 </div>
 
-                {/* AI 포트폴리오 판단 리스트 */}
                 <PortfolioStockList
                     stocks={activePortfolio.holdings}
                     aiAnalysisMap={aiAnalysisMap}

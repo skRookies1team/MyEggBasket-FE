@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Brain, X } from "lucide-react";
+import { Brain, X } from "lucide-react"; // TestTube 아이콘 삭제
 import { fetchAIRecommendations } from "../../api/aiRecommendationApi";
 import type { AIRecommendationResponse } from "../../types/aiRecommendation";
 
@@ -7,154 +7,160 @@ interface Props {
   portfolioId: number;
 }
 
-export function AIRecommendationAlertManager({ portfolioId }: Props) {
-  const [alerts, setAlerts] = useState<AIRecommendationResponse[]>([]);
+interface AIAlert extends AIRecommendationResponse {
+  uniqueAlertId: string;
+  triggeredAt: Date;
+}
+
+export function AIRebalanceAlertManager({ portfolioId }: Props) {
+  const [alerts, setAlerts] = useState<AIAlert[]>([]);
+  // 중복 알림 방지를 위한 ID 기록
   const seenIds = useRef<Set<number>>(new Set());
 
+  // [디버그] 컴포넌트 마운트 확인 (개발자 도구 콘솔에서 확인 가능)
+  useEffect(() => {
+    console.log(`[AI-Alert] 모니터링 시작 (PortfolioID: ${portfolioId})`);
+  }, [portfolioId]);
+
   /* =========================
-   * API 조회 + 신규 알림 감지
+   * 알림 제거 핸들러
+   * ========================= */
+  const removeAlert = (uniqueAlertId: string) => {
+    setAlerts((prev) => prev.filter((a) => a.uniqueAlertId !== uniqueAlertId));
+  };
+
+  /* =========================
+   * API 조회 및 알림 생성 로직
    * ========================= */
   const fetchAndNotify = async () => {
-    console.log("[AI-Alert] 추천 조회 시작", portfolioId);
+    if (!portfolioId) return;
 
     try {
       const data = await fetchAIRecommendations(portfolioId);
-      console.log("[AI-Alert] API 응답", data);
 
-      data.forEach((rec) => {
-        if (seenIds.current.has(rec.recommendationId)) return;
+      // 1. 최신순 정렬
+      const sortedData = data.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
 
-        console.log(
-          "[AI-Alert] 신규 추천 감지",
-          rec.recommendationId,
-          rec.stockName
-        );
-
-        seenIds.current.add(rec.recommendationId);
-        addAlert(rec);
+      // 2. 종목별 최신 데이터 1개만 필터링
+      const latestMap: Record<string, AIRecommendationResponse> = {};
+      sortedData.forEach((item) => {
+        if (!latestMap[item.stockCode]) {
+          latestMap[item.stockCode] = item;
+        }
       });
+      const latestList = Object.values(latestMap);
+
+      // 3. 새로운 알림 선별
+      const newAlerts: AIAlert[] = [];
+      latestList.forEach((rec) => {
+        // 이전에 본 적 없는 ID라면 알림 큐에 추가
+        if (!seenIds.current.has(rec.recommendationId)) {
+          seenIds.current.add(rec.recommendationId);
+          newAlerts.push({
+            ...rec,
+            uniqueAlertId: `ai-${rec.recommendationId}-${Date.now()}`,
+            triggeredAt: new Date(),
+          });
+        }
+      });
+
+      // 4. 상태 업데이트 및 자동 사라짐 타이머 설정
+      if (newAlerts.length > 0) {
+        console.log(`[AI-Alert] 🔔 신규 알림 ${newAlerts.length}건 발생`);
+
+        setAlerts((prev) => [...newAlerts, ...prev]);
+
+        // [중요] 각 새 알림마다 5초 뒤 사라지게 설정
+        newAlerts.forEach((alert) => {
+          setTimeout(() => {
+            removeAlert(alert.uniqueAlertId);
+          }, 5000); // 5초 후 제거
+        });
+      }
+
     } catch (err) {
-      console.error("[AI-Alert] 추천 조회 실패", err);
+      console.error("[AI-Alert] 조회 중 오류 발생:", err);
     }
   };
 
   /* =========================
-   * 최초 + 5분 주기 Polling
+   * 주기적 실행 (5분)
    * ========================= */
   useEffect(() => {
-    if (!portfolioId) return;
-
-    console.log("[AI-Alert] 초기 로딩");
+    // 1. 컴포넌트 로드 시 즉시 1회 실행
     fetchAndNotify();
 
-    const interval = setInterval(fetchAndNotify, 5 * 60 * 1000); // 5분
+    // 2. 5분(300,000ms)마다 주기적 실행
+    const intervalId = setInterval(fetchAndNotify, 5 * 60 * 1000);
 
-    return () => clearInterval(interval);
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => clearInterval(intervalId);
   }, [portfolioId]);
 
-  /* =========================
-   * 알림 추가
-   * ========================= */
-  const addAlert = (rec: AIRecommendationResponse) => {
-    setAlerts((prev) => [rec, ...prev]);
-
-    setTimeout(() => {
-      removeAlert(rec.recommendationId);
-    }, 8000);
-  };
-
-  /* =========================
-   * 알림 제거
-   * ========================= */
-  const removeAlert = (id: number) => {
-    setAlerts((prev) =>
-      prev.filter((a) => a.recommendationId !== id)
-    );
-  };
-
-  if (alerts.length === 0) return null;
-
   return (
-    <div className="fixed top-20 right-96 z-[9999] flex flex-col gap-4">
-      {alerts.map((rec) => (
-        <div
-          key={rec.recommendationId}
-          className="w-[440px] rounded-xl border border-purple-500/30 bg-[#1a1a24]/95 p-4 shadow-xl backdrop-blur"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-purple-400">
-              <Brain size={18} />
-              <span className="font-bold text-sm">
-                AI 포트폴리오 리밸런싱
+      <div className="fixed top-20 right-4 z-[9990] flex flex-col gap-2 w-80 pointer-events-none">
+        {alerts.map((alert) => (
+            <div
+                key={alert.uniqueAlertId}
+                className="pointer-events-auto animate-slide-in relative flex items-start gap-3 rounded-xl bg-[#14141c]/95 p-4 shadow-lg backdrop-blur-md transition-all hover:bg-[#1f1f2e] border border-[#2a2a35]"
+            >
+              {/* 아이콘 */}
+              <div
+                  className={`mt-1 rounded-full p-2 ${
+                      alert.actionType === "BUY"
+                          ? "bg-red-500/10 text-red-400"
+                          : alert.actionType === "SELL"
+                              ? "bg-blue-500/10 text-blue-400"
+                              : "bg-gray-500/10 text-gray-400"
+                  }`}
+              >
+                <Brain size={20} />
+              </div>
+
+              {/* 내용 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-bold text-gray-100 truncate">
+                    {alert.stockName}
+                  </h4>
+                  <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                {alert.triggeredAt.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </span>
+                </div>
+
+                <p className="mt-1 text-sm font-medium text-gray-200">
+                  {alert.actionType === "BUY" && "🚀 비중 확대 추천"}
+                  {alert.actionType === "SELL" && "📉 비중 축소 추천"}
+                  {alert.actionType === "HOLD" && "🔒 관망(HOLD) 추천"}
+                </p>
+
+                <div className="mt-1.5 flex flex-col gap-0.5 text-xs text-gray-400">
+                  <p>
+                    목표 비중:{" "}
+                    <span className="text-gray-300">
+                  {alert.targetHoldingDisplay}
+                </span>
+                  </p>
+                  <p>
+                    점수: <span className="text-purple-400">{alert.aiScore}점</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 닫기 버튼 */}
+              <button
+                  onClick={() => removeAlert(alert.uniqueAlertId)}
+                  className="text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <button onClick={() => removeAlert(rec.recommendationId)}>
-              <X size={14} className="text-gray-400 hover:text-gray-200" />
-            </button>
-          </div>
-
-          {/* 종목 + 액션 */}
-          <div className="mt-2 flex items-center justify-between text-sm">
-            <span className="font-semibold text-gray-100">
-              {rec.stockName}
-            </span>
-            <span
-              className={
-                rec.actionType === "BUY"
-                  ? "text-red-400"
-                  : rec.actionType === "SELL"
-                  ? "text-blue-400"
-                  : "text-gray-400"
-              }
-            >
-              {rec.actionType === "BUY" && "비중 확대"}
-              {rec.actionType === "SELL" && "비중 축소"}
-              {rec.actionType === "HOLD" && "유지"}
-            </span>
-          </div>
-
-          {/* 요약 사유 */}
-          {rec.reasonSummary && (
-            <p className="mt-2 text-xs text-gray-300">
-              {rec.reasonSummary}
-            </p>
-          )}
-
-          {/* 목표 비중 */}
-          <div className="mt-2 text-xs text-gray-400">
-            목표 비중: {rec.targetHoldingDisplay}
-          </div>
-
-          {/* 조정 금액 */}
-          <div className="mt-1 text-xs text-gray-400">
-            조정 금액:{" "}
-            <span
-              className={
-                rec.adjustmentAmount > 0
-                  ? "text-red-400"
-                  : rec.adjustmentAmount < 0
-                  ? "text-blue-400"
-                  : "text-gray-400"
-              }
-            >
-              {rec.adjustmentAmount.toLocaleString()}원
-            </span>
-          </div>
-
-          {/* 리스크 경고 */}
-          {rec.riskWarning && (
-            <div className="mt-2 text-[11px] text-yellow-400">
-              ⚠ {rec.riskWarning}
-            </div>
-          )}
-
-          {/* AI 점수 */}
-          <div className="mt-2 text-[10px] text-gray-500">
-            AI 점수 {rec.aiScore.toFixed(1)}
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
   );
 }

@@ -11,7 +11,7 @@ export async function createAIRecommendation(
   payload: AIRecommendationCreateRequest
 ): Promise<AIRecommendationResponse> {
   const res = await api.post<AIRecommendationResponse>(
-    "/api/app/ai-recommendations",
+    "/ai-recommendations",
     payload
   );
   return res.data;
@@ -24,7 +24,7 @@ export async function fetchAIRecommendations(
   portfolioId: number
 ): Promise<AIRecommendationResponse[]> {
   const res = await api.get<AIRecommendationResponse[]>(
-    `/api/app/portfolios/${portfolioId}/ai-recommendations`
+    `/portfolios/${portfolioId}/ai-recommendations`
   );
   return res.data;
 }

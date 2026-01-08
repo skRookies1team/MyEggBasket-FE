@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Brain, X } from "lucide-react"; // TestTube 아이콘 삭제
+import { Brain, X, TestTube } from "lucide-react"; // TestTube 아이콘 유지 (테스트용)
 import { fetchAIRecommendations } from "../../api/aiRecommendationApi";
 import type { AIRecommendationResponse } from "../../types/aiRecommendation";
 
@@ -17,7 +17,7 @@ export function AIRebalanceAlertManager({ portfolioId }: Props) {
   // 중복 알림 방지를 위한 ID 기록
   const seenIds = useRef<Set<number>>(new Set());
 
-  // [디버그] 컴포넌트 마운트 확인 (개발자 도구 콘솔에서 확인 가능)
+  // [디버그] 모니터링 시작 로그
   useEffect(() => {
     console.log(`[AI-Alert] 모니터링 시작 (PortfolioID: ${portfolioId})`);
   }, [portfolioId]);
@@ -95,72 +95,83 @@ export function AIRebalanceAlertManager({ portfolioId }: Props) {
     // 2. 5분(300,000ms)마다 주기적 실행
     const intervalId = setInterval(fetchAndNotify, 5 * 60 * 1000);
 
-    // 컴포넌트 언마운트 시 타이머 정리
     return () => clearInterval(intervalId);
   }, [portfolioId]);
 
   return (
-      <div className="fixed top-20 right-4 z-[9990] flex flex-col gap-2 w-80 pointer-events-none">
-        {alerts.map((alert) => (
-            <div
-                key={alert.uniqueAlertId}
-                className="pointer-events-auto animate-slide-in relative flex items-start gap-3 rounded-xl bg-[#14141c]/95 p-4 shadow-lg backdrop-blur-md transition-all hover:bg-[#1f1f2e] border border-[#2a2a35]"
-            >
-              {/* 아이콘 */}
+      <>
+        {/* 알림 배너 영역 */}
+        <div className="fixed top-20 right-4 z-[9990] flex flex-col gap-2 w-80 pointer-events-none">
+          {alerts.map((alert) => (
               <div
-                  className={`mt-1 rounded-full p-2 ${
-                      alert.actionType === "BUY"
-                          ? "bg-red-500/10 text-red-400"
-                          : alert.actionType === "SELL"
-                              ? "bg-blue-500/10 text-blue-400"
-                              : "bg-gray-500/10 text-gray-400"
-                  }`}
+                  key={alert.uniqueAlertId}
+                  className="pointer-events-auto animate-slide-in relative flex items-start gap-3 rounded-xl bg-[#14141c]/95 p-4 shadow-lg backdrop-blur-md transition-all hover:bg-[#1f1f2e] border border-[#2a2a35]"
               >
-                <Brain size={20} />
-              </div>
-
-              {/* 내용 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-bold text-gray-100 truncate">
-                    {alert.stockName}
-                  </h4>
-                  <span className="text-[10px] text-gray-500 whitespace-nowrap">
-                {alert.triggeredAt.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
+                {/* 아이콘 */}
+                <div
+                    className={`mt-1 rounded-full p-2 ${
+                        alert.actionType === "BUY"
+                            ? "bg-red-500/10 text-red-400"
+                            : alert.actionType === "SELL"
+                                ? "bg-blue-500/10 text-blue-400"
+                                : "bg-gray-500/10 text-gray-400"
+                    }`}
+                >
+                  <Brain size={20} />
                 </div>
 
-                <p className="mt-1 text-sm font-medium text-gray-200">
-                  {alert.actionType === "BUY" && "🚀 비중 확대 추천"}
-                  {alert.actionType === "SELL" && "📉 비중 축소 추천"}
-                  {alert.actionType === "HOLD" && "🔒 관망(HOLD) 추천"}
-                </p>
-
-                <div className="mt-1.5 flex flex-col gap-0.5 text-xs text-gray-400">
-                  <p>
-                    목표 비중:{" "}
-                    <span className="text-gray-300">
-                  {alert.targetHoldingDisplay}
+                {/* 내용 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-bold text-gray-100 truncate">
+                      {alert.stockName}
+                    </h4>
+                    <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                  {alert.triggeredAt.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
-                  </p>
-                  <p>
-                    점수: <span className="text-purple-400">{alert.aiScore}점</span>
-                  </p>
-                </div>
-              </div>
+                  </div>
 
-              {/* 닫기 버튼 */}
-              <button
-                  onClick={() => removeAlert(alert.uniqueAlertId)}
-                  className="text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-        ))}
-      </div>
+                  <p className="mt-1 text-sm font-medium text-gray-200">
+                    {alert.actionType === "BUY" && "🚀 비중 확대 추천"}
+                    {alert.actionType === "SELL" && "📉 비중 축소 추천"}
+                    {alert.actionType === "HOLD" && "🔒 관망(HOLD) 추천"}
+                  </p>
+
+                  <div className="mt-1.5 flex flex-col gap-0.5 text-xs text-gray-400">
+                    <p>
+                      목표 비중:{" "}
+                      <span className="text-gray-300">
+                    {alert.targetHoldingDisplay}
+                  </span>
+                    </p>
+                    <p>
+                      점수: <span className="text-purple-400">{alert.aiScore}점</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* 닫기 버튼 */}
+                <button
+                    onClick={() => removeAlert(alert.uniqueAlertId)}
+                    className="text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+          ))}
+        </div>
+
+        {/* [테스트용] AI 알림 강제 실행 버튼 (필요 시 주석 해제하여 사용) */}
+      {/*  <button*/}
+      {/*  onClick={fetchAndNotify}*/}
+      {/*  className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95"*/}
+      {/*  >*/}
+      {/*  <TestTube size={20} />*/}
+      {/*  AI 알림 강제 실행*/}
+      {/*</button>*/}
+      </>
   );
 }

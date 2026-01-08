@@ -49,7 +49,7 @@ export default function MarketIndexTicker({ indices }: Props) {
         }}
       >
         {data.map((item, i) => {
-          const color = item.isUp ? "#ff4d6a" : "#00e676";
+          const color = item.isUp ? "#ff4d6a" : "#3ca8ff";
 
           return (
             <Box

@@ -46,7 +46,10 @@ export function AddPortfolioModal({
     const loadData = async () => {
       try {
         const data = await fetchUserBalance();
-        if (data) setHoldings(data.holdings ?? []);
+        if (data)
+          setHoldings(
+            (data.holdings ?? []).filter((h: AccountHolding) => h.quantity > 0)
+          );
       } catch (error) {
         console.error("잔고 로딩 실패", error);
       } finally {
@@ -84,7 +87,7 @@ export function AddPortfolioModal({
     <ModalBackdrop onClose={onClose}>
       <div className="space-y-6">
         {/* Title */}
-        <h2 className="text-lg font-semibold tracking-wide text-indigo-300">
+        <h2 className="text-lg font-semibold tracking-wide text-purple-300">
           새 포트폴리오 추가
         </h2>
 
@@ -96,7 +99,7 @@ export function AddPortfolioModal({
             placeholder="예: 나의 첫 번째 포트폴리오"
             className="w-full rounded-lg bg-[#1f1f2e] px-3 py-2 text-sm
                        text-gray-100 outline-none
-                       focus:ring-2 focus:ring-indigo-500/40"
+                       focus:ring-2 focus:ring-purple-500/40"
           />
         </Field>
 
@@ -109,7 +112,7 @@ export function AddPortfolioModal({
             }
             className="w-full rounded-lg bg-[#1f1f2e] px-3 py-2 text-sm
                        text-gray-100 outline-none
-                       focus:ring-2 focus:ring-indigo-500/40"
+                       focus:ring-2 focus:ring-purple-500/40"
           >
             <option value="AGGRESSIVE">
               위험형 (고수익 추구)
@@ -150,7 +153,7 @@ export function AddPortfolioModal({
                       onChange={() =>
                         handleStockSelection(stock.stockCode)
                       }
-                      className="mt-1 accent-indigo-500"
+                      className="mt-1 accent-purple-500"
                     />
 
                     <div className="text-gray-200">
@@ -177,9 +180,9 @@ export function AddPortfolioModal({
         <div className="flex gap-2">
           <button
             onClick={handleAdd}
-            className="flex-1 rounded-lg bg-indigo-500/30 py-2
-                       text-sm font-semibold text-indigo-200
-                       transition hover:bg-indigo-500/40"
+            className="flex-1 rounded-lg bg-purple-500/30 py-2
+                       text-sm font-semibold text-purple-200
+                       transition hover:bg-purple-500/40"
           >
             추가
           </button>

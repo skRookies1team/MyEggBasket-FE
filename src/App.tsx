@@ -1,15 +1,12 @@
-import { useEffect } from "react";
 import Router from "./routes/Routes.tsx";
-import { useFavoriteStore } from "./store/favoriteStore";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  const loadFavorites = useFavoriteStore((s) => s.loadFavorites);
-
-  useEffect(() => {
-    loadFavorites();   
-  }, []);
-
-  return <Router />;
+  return (
+    <>
+      <Router />
+    </>
+  );
 }
 
 export default App;

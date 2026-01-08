@@ -38,11 +38,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed right-0 top-16 z-50
+        className={`fixed right-0 top-16 z-1101
           h-[calc(100vh-64px)] w-[320px] transform
           bg-[#0a0a0f]
           shadow-[-8px_0_24px_rgba(0,0,0,0.6)]
           transition-transform duration-300 ease-out
+          flex flex-col
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Tabs */}
@@ -70,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Content */}
-        <div className="h-[calc(100%-48px)] overflow-y-auto p-3">
+        <div className="h-[calc(100%-40)] overflow-y-auto p-3">
           {renderTab()}
         </div>
       </aside>

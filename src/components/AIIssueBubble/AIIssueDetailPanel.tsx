@@ -1,11 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
-  CardContent,
   Typography,
   Divider,
-  List,
-  ListItem,
+  Pagination,
 } from "@mui/material";
 import {
   LineChart,
@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from "recharts";
 
+/* ================= 타입 ================= */
 interface BubbleItem {
   name: string;
   size: number;
@@ -29,73 +30,166 @@ interface Props {
   bubbles?: BubbleItem[];
 }
 
+interface ValueChainStock {
+  name: string;
+  code: string;
+}
+
+interface ValueChainNode {
+  sector: string;
+  stage1?: string;
+  stage2?: string;
+  stage3?: string;
+  stocks: ValueChainStock[];
+}
+
+/* ---- 트렌드 JSON 타입 ---- */
+interface DailyItem {
+  name: string;
+  count: number;
+}
+
+interface DailyTrend {
+  date: string;
+  total: number;
+  items: DailyItem[];
+}
+
+interface TrendResponse {
+  period: string;
+  period_start: string;
+  period_end: string;
+  daily_items: DailyTrend[];
+}
+
+/* ================= 상수 ================= */
+const PANEL_HEIGHT = 720;
+const HEADER_HEIGHT = 64;
+const PAGINATION_HEIGHT = 48;
+
+const NODES_PER_PAGE = 3;
+const STOCKS_PER_NODE = 4;
+
+/* ================= 컴포넌트 ================= */
 export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
-  /* ---------------- 안전한 버블 선택 ---------------- */
-  const sortedByMention = [...bubbles].sort(
-    (a, b) => b.mentions - a.mentions
-  );
-  const activeBubble = bubble ?? sortedByMention[0] ?? null;
+  const navigate = useNavigate();
 
-  if (!activeBubble) {
-    return (
-      <Card
-        sx={{
-          bgcolor: "#1a1a24",
-          border: "1px solid #2a2a35",
-          p: 4,
-        }}
-      >
-        <Typography sx={{ color: "#b5b5c5", textAlign: "center" }}>
-          표시할 AI 이슈 데이터가 없습니다.
-        </Typography>
-      </Card>
-    );
-  }
+  /* ---------------- 대표 이슈 ---------------- */
+  const activeBubble = useMemo(() => {
+    if (bubble) return bubble;
+    if (!bubbles.length) return null;
+    return [...bubbles].sort((a, b) => b.mentions - a.mentions)[0];
+  }, [bubble, bubbles]);
 
-  /* ---------------- 더미 데이터 ---------------- */
-  const searchTrend = Array.from({ length: 14 }).map((_, i) => ({
-    day: `${i + 1}`,
-    value: Math.floor(Math.random() * 100) + 20,
-  }));
+  /* ---------------- 원본 데이터 ---------------- */
+  const [issueMap, setIssueMap] = useState<Record<string, string[]> | null>(null);
+  const [valueChainData, setValueChainData] = useState<ValueChainNode[]>([]);
+  const [trendData, setTrendData] = useState<TrendResponse | null>(null);
+  const [panelPage, setPanelPage] = useState(1);
 
-  const priceTrend = Array.from({ length: 14 }).map((_, i) => ({
-    day: `${i + 1}`,
-    change: Number((Math.sin(i / 3) * 5 + Math.random() * 2).toFixed(2)),
-  }));
+  /* ---------------- 외부 데이터 fetch ---------------- */
+  useEffect(() => {
+    fetch("/data/daily_items_3_months.json")
+      .then((r) => r.json())
+      .then(setTrendData)
+      .catch(() => setTrendData(null));
 
-  const newsSamples = [
-    `${activeBubble.name} 관련 이슈가 증가하고 있습니다.`,
-    `${activeBubble.name} 업계에서 새로운 동향이 감지됨.`,
-    `${activeBubble.name} 기업 실적 발표 예정.`,
-  ];
+    Promise.all([
+      fetch("/data/issue_sector_map.json").then((r) => r.json()),
+      fetch("/data/value_chain.json").then((r) => r.json()),
+    ])
+      .then(([issueMapRes, valueChainRes]) => {
+        setIssueMap(issueMapRes);
+        setValueChainData(valueChainRes);
+      })
+      .catch(() => {
+        setIssueMap(null);
+        setValueChainData([]);
+      });
+  }, []);
+
+  /* ---------------- 파생 데이터 ---------------- */
+  const valueChain = useMemo(() => {
+    if (!activeBubble || !issueMap) return [];
+
+    const keywords = issueMap[activeBubble.name] ?? [];
+
+    return valueChainData.filter((node) => {
+      const fields = [
+        node.sector,
+        node.stage1,
+        node.stage2,
+        node.stage3,
+      ].filter(Boolean) as string[];
+
+      return keywords.some((kw) =>
+        fields.some((f) => f.includes(kw))
+      );
+    });
+  }, [activeBubble, issueMap, valueChainData]);
+
+  const totalPanelPages = Math.ceil(valueChain.length / NODES_PER_PAGE);
+
+  const pagedValueChain = useMemo(() => {
+    const start = (panelPage - 1) * NODES_PER_PAGE;
+    return valueChain.slice(start, start + NODES_PER_PAGE);
+  }, [valueChain, panelPage]);
+
+  const searchTrend = useMemo(() => {
+    if (!trendData || !activeBubble) return [];
+
+    return trendData.daily_items.map((day) => {
+      const found = day.items.find(
+        (item) => item.name === activeBubble.name
+      );
+      return { date: day.date, value: found?.count ?? 0 };
+    });
+  }, [trendData, activeBubble]);
+
+  if (!activeBubble) return null;
 
   return (
     <Card
       sx={{
+        height: PANEL_HEIGHT,
         bgcolor: "#1a1a24",
         border: "1px solid #2a2a35",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        {/* 🔹 타이틀 */}
-        <Typography variant="h6" sx={{ fontWeight: 700, color: "#ffffff", mb: 1 }}>
+      {/* ===== Header ===== */}
+      <Box sx={{ px: 3, py: 2, height: HEADER_HEIGHT }}>
+        <Typography sx={{ fontWeight: 700, color: "#fff" }}>
           <span style={{ color: "#7c3aed" }}>{activeBubble.name}</span> 상세 분석
         </Typography>
+      </Box>
 
-        <Divider sx={{ borderColor: "#2a2a35", mb: 3 }} />
+      <Divider sx={{ borderColor: "#2a2a35" }} />
 
-        {/* 🔹 검색 추이 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
-          >
+      {/* ===== Scroll Area ===== */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          px: 3,
+          py: 2,
+        }}
+      >
+        {/* 검색 추이 */}
+        <Box sx={{ mb: 3 }}>
+          <Typography sx={{ color: "#fff", fontWeight: 600, mb: 1 }}>
             검색 빈도 추이
           </Typography>
 
-          <Box sx={{ width: "100%", height: 180 }}>
+          <Box sx={{ height: 150 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={searchTrend}>
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#b5b5c5" }} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10, fill: "#b5b5c5" }}
+                  tickFormatter={(v) => v.slice(5)}
+                />
                 <YAxis tick={{ fontSize: 10, fill: "#b5b5c5" }} />
                 <Tooltip
                   contentStyle={{
@@ -116,62 +210,95 @@ export default function AIIssueDetailPanel({ bubble, bubbles = [] }: Props) {
           </Box>
         </Box>
 
-        {/* 🔹 등락률 추이 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
-          >
-            누적 등락률 추이
-          </Typography>
+        {/* 밸류체인 */}
+        <Typography sx={{ color: "#fff", fontWeight: 600, mb: 1 }}>
+          관련 주식
+        </Typography>
 
-          <Box sx={{ width: "100%", height: 180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={priceTrend}>
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#b5b5c5" }} />
-                <YAxis tick={{ fontSize: 10, fill: "#b5b5c5" }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#232332",
-                    border: "1px solid #2a2a35",
-                    color: "#fff",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="change"
-                  stroke="#ff4d6a"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
-        </Box>
+        {pagedValueChain.map((node, idx) => {
+          const stageLabel =
+            node.stage3 || node.stage2 || node.stage1 || "기타";
 
-        {/* 🔹 관련 뉴스 */}
-        <Box>
-          <Typography
-            sx={{ color: "#ffffff", fontWeight: 600, mb: 1 }}
-          >
-            관련 뉴스
-          </Typography>
-
-          <List dense>
-            {newsSamples.map((n, i) => (
-              <ListItem
-                key={i}
+          return (
+            <Box key={`${node.sector}-${idx}`} sx={{ mb: 2 }}>
+              <Typography
                 sx={{
-                  color: "#b5b5c5",
-                  fontSize: "0.85rem",
-                  pl: 0,
+                  fontSize: "0.8rem",
+                  color: "#7c3aed",
+                  fontWeight: 600,
+                  mb: 1,
                 }}
               >
-                • {n}
-              </ListItem>
-            ))}
-          </List>
+                {node.sector} · {stageLabel}
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 1,
+                }}
+              >
+                {node.stocks.slice(0, STOCKS_PER_NODE).map((stock) => (
+                  <Box
+                    key={stock.code}
+                    onClick={() => navigate(`/stock/${stock.code}`)}
+                    sx={{
+                      px: 1.2,
+                      py: 0.8,
+                      bgcolor: "#232332",
+                      border: "1px solid #2a2a35",
+                      borderRadius: 1,
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: "#2a2a3d" },
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        color: "#fff",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {stock.name}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {/* ===== Pagination (고정) ===== */}
+      {totalPanelPages > 1 && (
+        <Box
+          sx={{
+            height: PAGINATION_HEIGHT,
+            borderTop: "1px solid #2a2a35",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Pagination
+            size="small"
+            count={totalPanelPages}
+            page={panelPage}
+            onChange={(_, v) => setPanelPage(v)}
+            sx={{
+              "& .MuiPaginationItem-root": { color: "#b5b5c5" },
+              "& .Mui-selected": {
+                bgcolor: "#7c3aed !important",
+                color: "#fff",
+              },
+            }}
+          />
         </Box>
-      </CardContent>
+      )}
     </Card>
   );
 }

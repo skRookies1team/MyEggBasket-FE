@@ -28,8 +28,8 @@ export function PortfolioCharts({
     <div className="rounded-2xl bg-gradient-to-b from-[#1a1a24] to-[#14141c] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
       {/* Header */}
       <div className="mb-3 flex items-center gap-2">
-        <PieChartIcon className="h-4 w-4 text-indigo-400" />
-        <h3 className="text-sm font-semibold tracking-wide text-indigo-300">
+        <PieChartIcon className="h-4 w-4 text-purple-400" />
+        <h3 className="text-sm font-semibold tracking-wide text-purple-300">
           {title}
         </h3>
       </div>
@@ -51,6 +51,7 @@ export function PortfolioCharts({
                 outerRadius={85}
                 paddingAngle={4}
                 dataKey="value"
+                stroke="none"
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

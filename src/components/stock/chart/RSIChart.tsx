@@ -22,6 +22,10 @@ import { normalizeTime } from "./utils";
 interface RSIChartProps {
   indicator: RSIIndicator;
   height?: number;
+
+  /** ChartPanel에서 timeScale 동기화 */
+  onChartReady?: (chart: IChartApi) => void;
+  onChartDispose?: (chart: IChartApi) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -30,12 +34,13 @@ interface RSIChartProps {
 export function RSIChart({
   indicator,
   height = 140,
+  onChartReady,
+  onChartDispose,
 }: RSIChartProps) {
+  /* ------------------ refs ------------------ */
   const containerRef = useRef<HTMLDivElement | null>(null);
-
   const chartRef = useRef<IChartApi | null>(null);
-  const rsiSeriesRef =
-    useRef<ISeriesApi<"Line"> | null>(null);
+  const rsiSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   /* ------------------ chart init ------------------ */
   useEffect(() => {
@@ -56,15 +61,28 @@ export function RSIChart({
         scaleMargins: { top: 0.15, bottom: 0.15 },
       },
       timeScale: {
+        visible: false, // ⬅️ 공용 X축
         timeVisible: true,
         secondsVisible: false,
       },
       crosshair: { mode: 1 },
+
+      /* 🔑 드래그/휠 안정화 */
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        axisPressedMouseMove: true,
+      },
     });
 
     const rsiSeries = chart.addSeries(LineSeries, {
       color: "#a855f7",
       lineWidth: 2,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
     });
 
     // 기준선
@@ -84,17 +102,19 @@ export function RSIChart({
       title: "30",
     });
 
-    chart.timeScale().fitContent();
-
     chartRef.current = chart;
     rsiSeriesRef.current = rsiSeries;
 
+    onChartReady?.(chart);
+
     return () => {
+      onChartDispose?.(chart); // ⭐ 핵심
       chart.remove();
+
       chartRef.current = null;
       rsiSeriesRef.current = null;
     };
-  }, [height]);
+  }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ data update ------------------ */
   useEffect(() => {
@@ -110,5 +130,11 @@ export function RSIChart({
     rsiSeriesRef.current.setData(seriesData);
   }, [indicator]);
 
-  return <div ref={containerRef} style={{ width: "100%" }} />;
-}
+  return (
+      <div className="relative w-full">
+        <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
+          RSI (14)
+        </div>
+        <div ref={containerRef} className="w-full" />
+      </div>
+  );}

@@ -45,7 +45,14 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/naver-api/, ''), // 경로 재작성
         secure: false,
       },
-      // 4.dart api 공시데이터
+      // 4. NewsAPI (실시간 뉴스)
+      '/news-api': {
+        target: 'https://newsapi.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/news-api/, ''),
+        secure: false,
+      },
+      // 5. Dart API 공시데이터
       '/dart-api': { // '/naver-api' 경로로 들어오는 요청을
         target: 'https://opendart.fss.or.kr/api', // 네이버 API로 포워딩
         changeOrigin: true, // 헤더 변경

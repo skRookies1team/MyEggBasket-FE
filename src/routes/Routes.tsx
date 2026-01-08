@@ -15,27 +15,31 @@ export default function Router() {
 
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        
-        <Route element={<PrivateRoute />}>
-          <Route path="/" element={<MainPage />} />
-          <Route
-                    path="/portfolio"
-                    element={<PortfolioPage/>}
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+
+      <Route element={<PrivateRoute />}>
+        <Route
+          path="/*"
+          element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<MainPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/mypage" element={<MyPage />} />
+                <Route path="/stock/:stockCode" element={<StockDetailPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/myassets" element={<MyAssetPage />} />
+                <Route
+                  path="*"
+                  element={<div style={{ padding: 24 }}>No match</div>}
                 />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/stock/:code" element={<StockDetailPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/myassets" element={<MyAssetPage />} />
-          <Route
-            path="*"
-            element={<div style={{ padding: 24 }}>No match</div>}
-          />
-        </Route>
-      </Routes>
-    </Layout>
+              </Routes>
+            </Layout>
+          }
+        />
+      </Route>
+    </Routes>
   );
 }

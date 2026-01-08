@@ -36,13 +36,14 @@ export interface StockItem {
 
 export interface OrderItem {
     price: number;
-    volume: number;
-    percent: number; // 시각적 바 길이 (0-100)
+    volume: number; 
 }
 
 export interface OrderBookData {
-    sell: OrderItem[];
-    buy: OrderItem[];
+    sell: OrderItem[];      // 백엔드의 'asks'
+    buy: OrderItem[];       // 백엔드의 'bids'
+    totalAskQty: number;    // 매도 총 잔량 (추가)
+    totalBidQty: number;    // 매수 총 잔량 (추가)
 }
 
 export interface NewsItem {
@@ -81,15 +82,17 @@ export interface ReportItem {
 
 // 메인 페이지에 전달될 전체 데이터 구조
 export interface StockDetailData {
-    currentPrice: number;
-    changeAmount: number;
-    changeRate: number;
-    chartData: StockPriceData[];
-    orderBook?: OrderBookData;
-    news: NewsItem[];
-    financials: FinancialData;
-    reports: ReportItem[];
+  currentPrice: number;
+  changeAmount: number;
+  changeRate: number;
+  chartData: StockCandle[];
+  news: NewsItem[];
+  financials: {
+    revenue: number[];
+    profit: number[];
+  };
 }
+
 export interface AccountHolding {
     stockCode: string;           // 종목번호 (005930)
     stockName: string;      // 종목명 (삼성전자)
@@ -153,3 +156,19 @@ export interface StockCurrentPrice {
     closePrice:number;
 }
 
+export interface StockTick {
+  type: "STOCK_TICK";
+  code: string;       // stckShrnIscd
+  price: number;      // stckPrpr
+  time: string;       // stckCntgHour
+  change_rate: number; // prdyCtrt (추가)
+  volume: number;      // acmlVol (추가)
+  trade_value: number; // acmlTrPbmn (추가)
+}
+
+// S3에 저장된 리포트 정보
+export interface S3ReportItem {
+  title: string;
+  file: string;
+  date: string;
+}

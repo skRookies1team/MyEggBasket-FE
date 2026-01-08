@@ -9,6 +9,14 @@ export interface KisStockOrderRequest {
   triggerSource: TriggerSource;
 }
 
+export interface KisStockLimitPriceOrderRequest {
+  stockCode: string;
+  orderType: OrderType;
+  quantity: number;
+  limitPrice: number;
+  triggerSource: TriggerSource;
+}
+
 export interface KisStockOrderResponse {
   orderId: string;
   stockCode: string;

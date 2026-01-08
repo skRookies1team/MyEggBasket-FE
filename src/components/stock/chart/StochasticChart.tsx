@@ -139,7 +139,6 @@ export function StochasticChart({
 
     kRef.current.setData(kData);
     dRef.current.setData(dData);
-    chartRef.current?.timeScale().fitContent();
 
   }, [indicator]);
 

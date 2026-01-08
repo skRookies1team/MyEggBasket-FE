@@ -1,10 +1,9 @@
-// src/components/stock/chart/PriceChart.tsx
 import { useEffect, useRef, useState } from "react";
 import {
   createChart,
   ColorType,
   CandlestickSeries,
-  CandlestickData, // [추가] 타입 필요
+  type CandlestickData,
 } from "lightweight-charts";
 
 import type { IChartApi, ISeriesApi } from "lightweight-charts";
@@ -38,10 +37,7 @@ interface Props {
   bollinger?: BollingerIndicator | null;
   height?: number;
 
-  /** 마우스 호버(크로스헤어 이동) 시 OHLC 전달 */
   onHover?: (ohlc: HoverOHLC | null) => void;
-
-  /** ChartPanel 동기화 */
   onChartReady?: (chart: IChartApi) => void;
   onChartDispose?: (chart: IChartApi) => void;
 }
@@ -54,15 +50,11 @@ const normalizeTime = (time: string | number, period: Period): any => {
 
   if (period === "minute") {
     if (!isNaN(Number(str))) return Number(str);
-
-    // "YYYY-MM-DD HH:mm:ss" 포맷 처리
     const d = new Date(str.replace(" ", "T"));
-
-    // UTC 타임스탬프(초)에 9시간(32400초)을 더해 KST로 보정
+    // KST 보정 등 필요 시 로직 유지
     return Math.floor(d.getTime() / 1000) + 32400;
   }
 
-  // 일봉 등 날짜 문자열인 경우
   if (str.includes("T")) return str.split("T")[0];
   if (str.includes(" ")) return str.split(" ")[0];
 
@@ -86,13 +78,10 @@ export function PriceChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  // [신규] 초기 데이터 로딩 여부를 추적하여 줌 리셋 방지
+  // 초기 줌 설정 여부 확인용
   const isLoadedRef = useRef(false);
 
-  // 1. onHover를 ref에 저장
   const onHoverRef = useRef(onHover);
-
-  // 2. onHover prop이 바뀔 때마다 ref 업데이트
   useEffect(() => {
     onHoverRef.current = onHover;
   }, [onHover]);
@@ -103,7 +92,6 @@ export function PriceChart({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 차트 생성
     const chart = createChart(containerRef.current, {
       height,
       layout: {
@@ -120,11 +108,10 @@ export function PriceChart({
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
+        // 오른쪽 공간을 비우지 않고 꽉 채우거나, 여백을 주고 싶다면 rightOffset 사용
         fixRightEdge: true,
       },
       crosshair: { mode: 1 },
-
-      /* 드래그/휠 안정화 */
       handleScroll: {
         mouseWheel: true,
         pressedMouseMove: true,
@@ -148,47 +135,40 @@ export function PriceChart({
     candleSeriesRef.current = candleSeries;
     setChartState(chart);
 
-    /* ------------------ Hover ------------------ */
     const handleCrosshairMove = (param: any) => {
       if (!param?.time || !candleSeriesRef.current) {
         onHover?.(null);
         return;
       }
-
-      const prices = param.seriesData as Map<any, any> | undefined;
-      const price = prices?.get(candleSeriesRef.current);
-
-      if (!price) {
+      const prices = param.seriesData.get(candleSeriesRef.current);
+      if (prices) {
+        onHoverRef.current?.({
+          open: Number(prices.open),
+          high: Number(prices.high),
+          low: Number(prices.low),
+          close: Number(prices.close),
+        });
+      } else {
         onHover?.(null);
-        return;
       }
-
-      onHoverRef.current?.({
-        open: Number(price.open),
-        high: Number(price.high),
-        low: Number(price.low),
-        close: Number(price.close),
-      });
     };
 
     chart.subscribeCrosshairMove(handleCrosshairMove);
-
     onChartReady?.(chart);
 
     return () => {
       chart.unsubscribeCrosshairMove(handleCrosshairMove);
       onChartDispose?.(chart);
       chart.remove();
-
       chartRef.current = null;
       candleSeriesRef.current = null;
       setChartState(null);
-      isLoadedRef.current = false; // 컴포넌트 제거 시 초기화
+      isLoadedRef.current = false;
     };
   }, [height, onChartReady, onChartDispose]);
 
   /* ------------------ Period Change Reset ------------------ */
-  // 기간(일/주/월/분)이 바뀌면 차트를 리셋하고 다시 fitContent 해야 함
+  // 기간이 변경되면 줌 상태를 리셋하여 다시 오른쪽 끝으로 이동하게 함
   useEffect(() => {
     isLoadedRef.current = false;
   }, [period]);
@@ -196,6 +176,7 @@ export function PriceChart({
   /* ------------------ Data update ------------------ */
   useEffect(() => {
     if (!candleSeriesRef.current || !chartRef.current) return;
+    if (candles.length === 0) return;
 
     // 1. 데이터 정규화
     const normalized = candles.map((c) => ({
@@ -203,13 +184,9 @@ export function PriceChart({
       time: normalizeTime(c.time, period),
     }));
 
-    // 2. 중복 제거
+    // 2. 중복 제거 및 정렬
     const uniqueDataMap = new Map();
-    normalized.forEach((item) => {
-      uniqueDataMap.set(item.time, item);
-    });
-
-    // 3. 정렬
+    normalized.forEach((item) => uniqueDataMap.set(item.time, item));
     const formatted = Array.from(uniqueDataMap.values()).sort((a, b) => {
       const ta = typeof a.time === "number" ? a.time : new Date(a.time).getTime();
       const tb = typeof b.time === "number" ? b.time : new Date(b.time).getTime();
@@ -218,33 +195,32 @@ export function PriceChart({
 
     if (formatted.length === 0) return;
 
-    // [핵심 로직 수정]
-    // 처음 로드되거나, 데이터가 완전히 바뀐 경우(isLoadedRef가 false일 때)에만 setData 호출
+    // [수정 1] update() 대신 항상 setData() 사용
+    // 기간 변경 시 데이터 포맷이 완전히 바뀌므로 update()를 쓰면 "Cannot update oldest data" 에러가 발생합니다.
+    candleSeriesRef.current.setData(formatted as CandlestickData[]);
+
+    // [수정 2] fitContent() 제거 및 setVisibleLogicalRange 사용
+    // 최초 로드 시(혹은 기간 변경 시)에만 강제로 오른쪽 끝으로 줌을 이동
     if (!isLoadedRef.current) {
-      candleSeriesRef.current.setData(formatted as CandlestickData[]);
-      chartRef.current.timeScale().fitContent(); // 줌 초기화
+      const totalBars = formatted.length;
+      const visibleRange = 100; // 한 화면에 보여줄 캔들 개수 (조절 가능)
+
+      chartRef.current.timeScale().setVisibleLogicalRange({
+        from: totalBars - visibleRange,
+        to: totalBars,
+      });
+
       isLoadedRef.current = true;
-    } else {
-      // 이미 로드된 상태라면 마지막 데이터만 update (줌 유지)
-      const latestCandle = formatted[formatted.length - 1];
-      candleSeriesRef.current.update(latestCandle as CandlestickData);
     }
+    // 이미 로드된 상태에서는 setData만 호출해도 사용자가 보고 있는 줌/스크롤 위치가 유지됩니다.
 
   }, [candles, period]);
 
   return (
       <>
         <div ref={containerRef} style={{ width: "100%" }} />
-
-        {/* MA Overlay */}
-        {showMA && chartState && (
-            <MAChart chart={chartState} indicators={maIndicators} />
-        )}
-
-        {/* Bollinger Overlay */}
-        {showBollinger && chartState && (
-            <BollingerChart chart={chartState} bollinger={bollinger} />
-        )}
+        {showMA && chartState && <MAChart chart={chartState} indicators={maIndicators} />}
+        {showBollinger && chartState && <BollingerChart chart={chartState} bollinger={bollinger} />}
       </>
   );
 }

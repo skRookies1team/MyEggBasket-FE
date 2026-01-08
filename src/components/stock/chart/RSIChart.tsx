@@ -128,7 +128,6 @@ export function RSIChart({
       }));
 
     rsiSeriesRef.current.setData(seriesData);
-    chartRef.current?.timeScale().fitContent();
   }, [indicator]);
 
   return (

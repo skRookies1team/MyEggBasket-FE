@@ -314,7 +314,6 @@ function StockDetailView({
         changeRate={data.changeRate}
         onBack={onBack}
         isLive={true}
-        acmlVol={0}
       />
 
       {/* Tabs */}

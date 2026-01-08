@@ -104,26 +104,27 @@ export function VolumeChart({
     if (!candles?.length) return;
 
     const volumeData: HistogramData<UTCTimestamp>[] = candles.map((c) => ({
-      time: normalizeTime(c.time),
+      time: normalizeTime(c.time), // 여기 period 인자가 필요할 수 있으나, 보통 날짜만 맞으면 됩니다.
       value: c.volume,
       color:
-        c.close >= c.open
-          ? "rgba(239,68,68,0.6)"   // 상승
-          : "rgba(59,130,246,0.6)", // 하락
+          c.close >= c.open
+              ? "rgba(239,68,68,0.6)"
+              : "rgba(59,130,246,0.6)",
     }));
 
     volumeRef.current.setData(volumeData);
-    chartRef.current?.timeScale().fitContent();
+
+    // [중요] 아래 줄을 반드시 삭제하거나 주석 처리하세요!
+    // chartRef.current?.timeScale().fitContent();
+
   }, [candles]);
 
   return (
       <div className="relative w-full">
-        {/* 🔹 지표 이름 라벨 추가 */}
         <div className="absolute left-3 top-2 z-10 text-xs font-semibold text-white">
           Volume
         </div>
-
-        {/* 차트 컨테이너 */}
         <div ref={containerRef} className="w-full" />
       </div>
-  );}
+  );
+}

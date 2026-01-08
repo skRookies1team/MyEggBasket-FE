@@ -156,18 +156,24 @@ export function ChartPanel({
     [candles, indicators.stochastic]
   );
 
-  if (!candles.length) {
-    return (
-      <div className="flex h-[420px] items-center justify-center text-sm text-gray-400">
-        차트 데이터가 없습니다.
-      </div>
-    );
-  }
+  // if (!candles.length) {
+  //   return (
+  //     <div className="flex h-[420px] items-center justify-center text-sm text-gray-400">
+  //       차트 데이터가 없습니다.
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex flex-col gap-4">
       {/* ===================== Price ===================== */}
       <div className="relative rounded-xl bg-[#0f0f17] p-3">
+        {!candles.length && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[#0f0f17]/80 backdrop-blur-sm text-sm text-gray-400">
+              차트 데이터가 없습니다.
+            </div>
+        )}
+
         {/* OHLC Overlay */}
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg bg-black/40 px-3 py-1 text-xs text-gray-200 backdrop-blur">
           {hoverOHLC ? (

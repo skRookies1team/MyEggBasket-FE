@@ -166,7 +166,6 @@ export function MACDChart({
     macdRef.current.setData(macdData);
     signalRef.current.setData(signalData);
     histRef.current.setData(histData);
-    chartRef.current?.timeScale().fitContent();
 
   }, [indicator]);
 

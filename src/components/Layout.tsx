@@ -49,7 +49,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* 알림 영역 (인증 + 포트폴리오 있을 때만) */}
-      {isAuthenticated && portfolioId && (
+      {isAuthenticated && (
         <>
           <PriceAlertManager />
           <AIRebalanceAlertManager portfolioId={portfolioId} />

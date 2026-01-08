@@ -47,13 +47,18 @@ function HoldingStockRow({ holdingStock, initialTargets, currentPrice }: Holding
   }, [initialTargets]);
 
   // 2. [제안값] 저장된 목표가가 없고, 현재가만 로드되었을 때 ±5% 자동 제안
+  // (단, 사용자가 이미 값을 수정했거나, 서버 값을 받은 상태라면 건너뜀)
   useEffect(() => {
+    // 조건: 현재가 로드됨 AND 서버 데이터 없음 AND 아직 제안값 세팅 안 함 AND 입력창 비어있음
     if (currentPrice > 0 && !initialTargets && !isDefaultsSet && !upperPrice && !lowerPrice) {
       setUpperPrice(Math.floor(currentPrice * 1.05).toString());
       setLowerPrice(Math.floor(currentPrice * 0.95).toString());
+
+      // 제안값이므로 확정 상태는 false (사용자가 직접 체크 누르게 유도)
       setIsUpperConfirmed(false);
       setIsLowerConfirmed(false);
-      setIsDefaultsSet(true);
+
+      setIsDefaultsSet(true); // 반복 실행 방지
     }
   }, [currentPrice, initialTargets, isDefaultsSet, upperPrice, lowerPrice]);
 
@@ -143,8 +148,9 @@ function HoldingStockRow({ holdingStock, initialTargets, currentPrice }: Holding
 ========================= */
 export default function HistoryAsset() {
   const history = useHistoryStore((s) => s.historyReport);
-  // [수정 1] holdings 초기값을 빈 배열로 유지
   const [holdings, setHoldings] = useState<any[]>([]);
+
+  // [수정 완료] 기존 코드의 문법 오류 수정 (배열 구조 분해 할당)
   const [accountSummary, setAccountSummary] = useState<any>(null);
 
   const [existingTargets, setExistingTargets] = useState<any[]>([]);
@@ -160,19 +166,18 @@ export default function HistoryAsset() {
       // 1. 내 잔고 조회
       const balanceData = await fetchUserBalance();
       if (balanceData) {
-        // [수정 2] balanceData.holdings가 null일 경우 빈 배열 할당 (forEach 에러 방지)
-        const safeHoldings = balanceData.holdings || [];
-        setHoldings(safeHoldings);
+        setHoldings(balanceData.holdings);
         setAccountSummary(balanceData.summary);
 
         const initialPrices: Record<string, number> = {};
-        safeHoldings.forEach((h: any) => {
+        balanceData.holdings.forEach((h: any) => {
           initialPrices[h.stockCode] = h.currentPrice;
         });
         setPriceMap(initialPrices);
       }
 
-      // 2. 내 목표가 목록 조회
+      // 2. 내 목표가 목록 조회 (GET /price-targets)
+      // 이 API가 호출되어야 저장해둔 목표가를 불러올 수 있습니다.
       const targets = await fetchPriceTargets();
       if (targets) {
         setExistingTargets(targets);
@@ -185,8 +190,7 @@ export default function HistoryAsset() {
   // 실시간 시세 업데이트 로직 (10초 주기)
   useEffect(() => {
     const fetchAllPricesAndCalc = async () => {
-      // [수정 3] holdings가 없거나 빈 배열이면 실행하지 않음
-      if (!holdings || holdings.length === 0) return;
+      if (holdings.length === 0) return;
 
       const priceResults = await Promise.all(
           holdings.map((h) => fetchStockCurrentPrice(h.stockCode))
@@ -277,14 +281,14 @@ export default function HistoryAsset() {
               </tr>
               </thead>
               <tbody>
-              {/* [수정 4] holdings가 null일 경우를 대비해 OR 연산자 사용 (방어 코드) */}
-              {(holdings || []).map((h) => (
+              {holdings.map((h) => (
                   <HoldingStockRow
                       key={h.stockCode}
                       holdingStock={{
                         ...h,
                         stock: { name: h.stockName, stockCode: h.stockCode }
                       }}
+                      // 내 전체 목표가 목록(existingTargets)에서 현재 종목 코드와 일치하는 것을 찾아 전달
                       initialTargets={existingTargets.find(t => t.stockCode === h.stockCode)}
                       currentPrice={priceMap[h.stockCode] || h.currentPrice}
                   />

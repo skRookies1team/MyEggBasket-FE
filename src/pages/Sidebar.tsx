@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Content */}
-        <div className="h-full p-3">
+        <div className="h-[calc(100%-40)] overflow-y-auto p-3">
           {renderTab()}
         </div>
       </aside>

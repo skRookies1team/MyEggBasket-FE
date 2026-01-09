@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type ReactNode } from "react";
 
 import Nav from "../components/Nav";
@@ -9,6 +9,7 @@ import { usePortfolioStore } from "../store/portfolioStore";
 
 import { PriceAlertManager } from "./alert/PriceAlertManager";
 import { AIRebalanceAlertManager } from "./alert/AIRebalanceAlertManager";
+import { GlobalStockSubscriptionManager } from "./GlobalStockSubscriptionManager";
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,7 +22,16 @@ export default function Layout({ children }: LayoutProps) {
   const portfolioId = usePortfolioStore((s) => s.selectedPortfolioId);
 
   console.log("Layout 렌더링 상태:", { isAuthenticated, portfolioId });
-  
+
+  // [추가] 새로고침 시 유저 정보 복구 (Hydration)
+  useEffect(() => {
+    // 토큰은 있는데 유저 정보가 없으면 로드 시도
+    if (isAuthenticated && !useAuthStore.getState().user) {
+      console.log("Layout: 유저 정보 복구 시도 (Hydration)");
+      useAuthStore.getState().fetchUser();
+    }
+  }, [isAuthenticated]);
+
   const toggleSidebar = () => {
     if (!isAuthenticated) return;
     setSidebarOpen((prev) => !prev);
@@ -52,7 +62,8 @@ export default function Layout({ children }: LayoutProps) {
       {isAuthenticated && (
         <>
           <PriceAlertManager />
-          <AIRebalanceAlertManager portfolioId={portfolioId} />
+          <AIRebalanceAlertManager />
+          <GlobalStockSubscriptionManager />
         </>
       )}
     </div>

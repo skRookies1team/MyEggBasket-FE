@@ -39,7 +39,7 @@ export default function RecentTab() {
    * stocks.json 로드 (캐시 차단)
    * ===================== */
   useEffect(() => {
-    fetch("data/stocks.json", { cache: "no-store" }) 
+    fetch("/data/stocks.json", { cache: "no-store" })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`stocks.json load failed: ${res.status}`);

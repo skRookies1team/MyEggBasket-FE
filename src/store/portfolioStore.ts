@@ -12,11 +12,17 @@ interface PortfolioState {
 }
 
 export const usePortfolioStore = create<PortfolioState>((set) => ({
-  selectedPortfolioId: null,
+  selectedPortfolioId: localStorage.getItem("selectedPortfolioId")
+    ? Number(localStorage.getItem("selectedPortfolioId"))
+    : null,
 
-  setSelectedPortfolioId: (id: number) =>
-    set({ selectedPortfolioId: id }),
+  setSelectedPortfolioId: (id: number) => {
+    localStorage.setItem("selectedPortfolioId", String(id));
+    set({ selectedPortfolioId: id });
+  },
 
-  clearPortfolio: () =>
-    set({ selectedPortfolioId: null }),
+  clearPortfolio: () => {
+    localStorage.removeItem("selectedPortfolioId");
+    set({ selectedPortfolioId: null });
+  },
 }));

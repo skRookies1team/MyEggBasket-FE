@@ -28,3 +28,17 @@ export async function fetchAIRecommendations(
   );
   return res.data;
 }
+
+/* =========================
+   글로벌 리밸런싱 상태 체크
+   ========================= */
+export async function checkRebalancingStatus(): Promise<{
+  hasRebalancing: boolean;
+  portfolioIds: number[];
+}> {
+  const res = await api.get<{
+    hasRebalancing: boolean;
+    portfolioIds: number[];
+  }>("/ai-recommendations/status");
+  return res.data;
+}
